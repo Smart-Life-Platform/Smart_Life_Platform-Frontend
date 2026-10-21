@@ -1,0 +1,4 @@
+:root { --ink: #252735; --muted: #8a8d9a; --line: #e9eaf0; --purple: #625cf4; --soft-purple: #f0efff; --panel: #f8f8fb; }
+* { box-sizing: border-box; }
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }
