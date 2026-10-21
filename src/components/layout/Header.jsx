@@ -1,10 +1,16 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { UilChart, UilCreateDashboard, UilPlus, UilSchedule, UilSignout, UilUser } from '@iconscout/react-unicons';
 import { useAuth } from '../../context/AuthContext';
 
-const items = [['planner', '▦', 'Planner'], ['budget', '◒', 'Budget'], ['profile', '♙', 'My profile'], ['statistics', '◔', 'Statistics']];
+const items = [
+  ['planner', UilSchedule, 'Planner'],
+  ['budget', UilCreateDashboard, 'Budget'],
+  ['profile', UilUser, 'My profile'],
+  ['statistics', UilChart, 'Statistics'],
+];
 
 export default function Header({ onCreate }) {
-  const { user, isAuthenticated, signOut } = useAuth();
+  const { isAuthenticated, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -16,29 +22,11 @@ export default function Header({ onCreate }) {
   return (
     <header className="topbar">
       <button className="brand brand-button" onClick={() => navigate(isAuthenticated ? '/planner' : '/login')}>
-        <strong>smart life</strong>
+        <span className="brand-mark small">sl</span><strong>smart life</strong>
       </button>
-      {isAuthenticated && (
-        <nav>
-          {items.map(([path, icon, label]) => (
-            <NavLink key={path} to={`/${path}`} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-              <span>{icon}</span>{label}
-            </NavLink>
-          ))}
-        </nav>
-      )}
+      {isAuthenticated && <nav>{items.map(([path, Icon, label]) => <NavLink key={path} to={`/${path}`} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}><Icon size="17" /><span>{label}</span></NavLink>)}</nav>}
       <div className="user-actions">
-        {isAuthenticated ? (
-          <>
-            {location.pathname === '/planner' && <button className="create-button" onClick={onCreate}>+ Create <span>⌄</span></button>}
-            <button className="avatar" title="Sign out" onClick={logout}>{(user?.email || 'U').slice(0, 1).toUpperCase()}</button>
-          </>
-        ) : (
-          <>
-            <NavLink className="header-auth-link" to="/login">Sign in</NavLink>
-            <NavLink className="header-auth-button" to="/register">Create account</NavLink>
-          </>
-        )}
+        {isAuthenticated ? <>{location.pathname === '/planner' && <button className="create-button" onClick={onCreate}><UilPlus size="17" /> Create</button>}<button className="avatar" title="Sign out" onClick={logout}><UilSignout size="17" /></button></> : <><NavLink className="header-auth-link" to="/login">Sign in</NavLink><NavLink className="header-auth-button" to="/register">Create account</NavLink></>}
       </div>
     </header>
   );
