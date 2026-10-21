@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext(null);
@@ -12,7 +12,8 @@ export function AuthProvider({ children }) {
 
     supabase.auth.getSession().then(({ data, error }) => {
       if (error) {
-        throw error;
+        setLoading(false);
+        return;
       }
 
       if (mounted) {
@@ -21,33 +22,59 @@ export function AuthProvider({ children }) {
       }
     });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession);
-      setLoading(false);
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (mounted) {
+        setSession(nextSession);
+        setLoading(false);
+      }
     });
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      authListener.subscription.unsubscribe();
     };
+  }, []);
+
+  const signIn = useCallback(
+    async ({ email, password }) => {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+    },
+    []
+  );
+
+  const signUp = useCallback(
+    async ({ email, password }) => {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { username: email } },
+      });
+      if (error) throw error;
+      if (!data.session) {
+        throw new Error('Реєстрацію завершено. Підтвердіть email і увійдіть.');
+      }
+    },
+    []
+  );
+
+  const signOut = useCallback(async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
   }, []);
 
   const value = useMemo(
     () => ({
       session,
-      user: session?.user ?? null,
+      token: session?.access_token || null,
+      user: session?.user || null,
       loading,
-      signIn: (email, password) =>
-        supabase.auth.signInWithPassword({ email, password }),
-      signUp: (email, password) =>
-        supabase.auth.signUp({ email, password }),
-      signInWithGoogle: () =>
-        supabase.auth.signInWithOAuth({ provider: 'google' }),
-      signOut: () => supabase.auth.signOut(),
+      isAuthenticated: Boolean(session),
+      signIn,
+      signUp,
+      signOut,
     }),
-    [loading, session]
+    [loading, session, signIn, signOut, signUp]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -55,10 +82,6 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error('useAuth must be used inside AuthProvider');
-  }
-
+  if (!context) throw new Error('useAuth must be used inside AuthProvider');
   return context;
 }
