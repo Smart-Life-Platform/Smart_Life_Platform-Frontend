@@ -3,6 +3,7 @@ name: Trigger Vercel
 on:
   push:
     branches:
+      - developer
       - main
 
 jobs:
