@@ -6,6 +6,7 @@ import RegisterPage from '../pages/RegisterPage';
 import PlannerPage from '../pages/PlannerPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import SectionPage from '../pages/SectionPage';
+import BudgetPage from '../pages/BudgetPage';
 import { TaskProvider } from '../context/TaskContext';
 
 function TaskProviderRoute() {
@@ -26,7 +27,7 @@ export default function AppRoutes() {
           <Route element={<TaskProviderRoute />}>
             <Route path="/" element={<Navigate to="/planner" replace />} />
             <Route path="/planner" element={<PlannerPage />} />
-            <Route path="/budget" element={<SectionPage title="Budget" />} />
+            <Route path="/budget" element={<BudgetPage />} />
             <Route path="/profile" element={<SectionPage title="My profile" />} />
             <Route path="/statistics" element={<SectionPage title="Statistics" />} />
           </Route>
