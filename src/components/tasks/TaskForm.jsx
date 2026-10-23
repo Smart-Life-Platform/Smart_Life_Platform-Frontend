@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { UilEditAlt, UilTimes } from '@iconscout/react-unicons';
 
-export default function TaskForm({ date, task, onClose, onSubmit }) {
+export default function TaskForm({ date, task, statuses, categories, onClose, onSubmit }) {
   const [form, setForm] = useState({
     title: task?.title || '',
     description: task?.description || '',
     due_date: task?.due_date || date,
+    due_time: task?.due_time?.slice(0, 5) || '09:00',
     priority: task?.priority || 'medium',
+    status_id: task?.status_id || task?.status?.id || 1,
+    category_id: task?.category_id || task?.category?.id || '',
   });
   const [error, setError] = useState('');
   const isEditing = Boolean(task);
@@ -36,7 +39,10 @@ export default function TaskForm({ date, task, onClose, onSubmit }) {
         <label>Description<textarea rows="3" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} placeholder="Add details (optional)" /></label>
         <div className="form-grid">
           <label>Date<input type="date" required value={form.due_date} onChange={(event) => setForm({ ...form, due_date: event.target.value })} /></label>
+          <label>Time<input type="time" required value={form.due_time} onChange={(event) => setForm({ ...form, due_time: event.target.value })} /></label>
           <label>Priority<select value={form.priority} onChange={(event) => setForm({ ...form, priority: event.target.value })}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></label>
+          <label>Status<select value={form.status_id} onChange={(event) => setForm({ ...form, status_id: Number(event.target.value) })}>{statuses.map((status) => <option key={status.id} value={status.id}>{status.name}</option>)}</select></label>
+          <label>Category<select value={form.category_id} onChange={(event) => setForm({ ...form, category_id: event.target.value ? Number(event.target.value) : '' })}><option value="">No category</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
         </div>
         {error && <p className="form-error">{error}</p>}
         <button className="primary-button full-width"><UilEditAlt size="17" /> {isEditing ? 'Save changes' : 'Create task'}</button>

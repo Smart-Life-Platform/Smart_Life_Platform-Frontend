@@ -1,20 +1,33 @@
 import { createContext, useCallback, useContext, useState } from 'react';
 import { deleteTask as deleteTaskRequest, getTasks, createTask as createTaskRequest, updateTask as updateTaskRequest } from '../api/tasksApi';
+import { getCategories } from '../api/categoriesApi';
+import { getStatuses } from '../api/statusesApi';
+import { getPriorities } from '../api/prioritiesApi';
 
 const TaskContext = createContext(null);
 
 export function TaskProvider({ children }) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [statuses, setStatuses] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [priorities, setPriorities] = useState([]);
 
-  const loadTasks = useCallback(async () => {
+  const loadTasks = useCallback(async (params) => {
     setLoading(true);
     try {
-      const data = await getTasks();
+      const data = await getTasks(params);
       setTasks(Array.isArray(data) ? data : data?.results || []);
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  const loadMetadata = useCallback(async () => {
+    const [statusData, categoryData, priorityData] = await Promise.all([getStatuses(), getCategories(), getPriorities()]);
+    setStatuses(Array.isArray(statusData) ? statusData : statusData?.results || []);
+    setCategories(Array.isArray(categoryData) ? categoryData : categoryData?.results || []);
+    setPriorities(Array.isArray(priorityData) ? priorityData : priorityData?.results || []);
   }, []);
 
   const createTask = useCallback(async (payload) => {
@@ -35,7 +48,7 @@ export function TaskProvider({ children }) {
   }, []);
 
   return (
-    <TaskContext.Provider value={{ tasks, loading, loadTasks, createTask, updateTask, deleteTask }}>
+    <TaskContext.Provider value={{ tasks, statuses, categories, priorities, loading, loadTasks, loadMetadata, createTask, updateTask, deleteTask }}>
       {children}
     </TaskContext.Provider>
   );
