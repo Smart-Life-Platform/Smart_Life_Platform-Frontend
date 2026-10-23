@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { UilChart, UilCreateDashboard, UilPlus, UilSchedule, UilSignout, UilUser } from '@iconscout/react-unicons';
+import { UilChart, UilCreateDashboard, UilPlus, UilSchedule, UilUser } from '@iconscout/react-unicons';
 import { useAuth } from '../../context/AuthContext';
 import UserMenu from './UserMenu';
 
@@ -11,7 +11,7 @@ const items = [
 ];
 
 export default function Header({ onCreate }) {
-  const { isAuthenticated, signOut } = useAuth();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
