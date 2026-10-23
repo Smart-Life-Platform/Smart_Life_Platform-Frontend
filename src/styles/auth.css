@@ -1,1 +1,97 @@
-.auth-page { min-height: calc(100vh - 68px); display: grid; place-items: center; padding: 24px; background: linear-gradient(140deg,#f5f4ff,#fbfbfd 45%,#f7f9ff); }.auth-card { width: min(100%,410px); padding: 42px; border: 1px solid var(--line); border-radius: 20px; background: #fff; box-shadow: 0 22px 60px #47438c12; }.auth-card .brand-mark { margin: 0 auto 20px; }.eyebrow { margin: 0 0 8px; color: var(--purple); font-size: 10px; font-weight: 800; letter-spacing: 1.5px; }.auth-card h1 { margin: 0; text-align: center; font-size: 27px; }.auth-subtitle { margin: 10px 0 28px; color: var(--muted); text-align: center; font-size: 13px; }label { display: block; margin-bottom: 16px; color: #616472; font-size: 12px; font-weight: 600; }label input,label textarea,label select { display: block; width: 100%; margin-top: 7px; padding: 12px 13px; border: 1px solid #dedfe8; border-radius: 8px; outline: none; color: var(--ink); background: #fff; font-size: 14px; font-weight: 400; }.primary-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 13px 18px; border: 0; border-radius: 8px; color: #fff; background: var(--purple); font-weight: 700; }.full-width { width: 100%; }.text-button { display: block; margin: 18px auto 0; border: 0; background: transparent; color: var(--purple); font-size: 12px; text-decoration: none; }.form-error { color: #bd4e59; font-size: 12px; }
+.auth-page {
+    min-height: calc(100vh - 68px);
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: linear-gradient(140deg, #f5f4ff, #fbfbfd 45%, #f7f9ff);
+}
+
+.auth-card {
+    width: min(100%, 410px);
+    padding: 42px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 22px 60px #47438c12;
+}
+
+.auth-card .brand-mark {
+    margin: 0 auto 20px;
+}
+
+.eyebrow {
+    margin: 0 0 8px;
+    color: var(--purple);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+}
+
+.auth-card h1 {
+    margin: 0;
+    text-align: center;
+    font-size: 27px;
+}
+
+.auth-subtitle {
+    margin: 10px 0 28px;
+    color: var(--muted);
+    text-align: center;
+    font-size: 13px;
+}
+
+label {
+    display: block;
+    margin-bottom: 16px;
+    color: #616472;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+label input,
+label textarea,
+label select {
+    display: block;
+    width: 100%;
+    margin-top: 7px;
+    padding: 12px 13px;
+    border: 1px solid #dedfe8;
+    border-radius: 8px;
+    outline: none;
+    color: var(--ink);
+    background: #fff;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.primary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 13px 18px;
+    border: 0;
+    border-radius: 8px;
+    color: #fff;
+    background: var(--purple);
+    font-weight: 700;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.text-button {
+    display: block;
+    margin: 18px auto 0;
+    border: 0;
+    background: transparent;
+    color: var(--purple);
+    font-size: 12px;
+    text-decoration: none;
+}
+
+.form-error {
+    color: #bd4e59;
+    font-size: 12px;
+}
