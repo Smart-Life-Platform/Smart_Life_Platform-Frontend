@@ -1,6 +1,7 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { UilChart, UilCreateDashboard, UilPlus, UilSchedule, UilSignout, UilUser } from '@iconscout/react-unicons';
+import { UilChart, UilCreateDashboard, UilPlus, UilSchedule, UilUser } from '@iconscout/react-unicons';
 import { useAuth } from '../../context/AuthContext';
+import UserMenu from './UserMenu';
 
 const items = [
   ['planner', UilSchedule, 'Planner'],
@@ -10,14 +11,9 @@ const items = [
 ];
 
 export default function Header({ onCreate }) {
-  const { isAuthenticated, signOut } = useAuth();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
-  async function logout() {
-    await signOut();
-    navigate('/login');
-  }
 
   return (
     <header className="topbar">
@@ -26,7 +22,7 @@ export default function Header({ onCreate }) {
       </button>
       {isAuthenticated && <nav>{items.map(([path, Icon, label]) => <NavLink key={path} to={`/${path}`} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}><Icon size="17" /><span>{label}</span></NavLink>)}</nav>}
       <div className="user-actions">
-        {isAuthenticated ? <>{location.pathname === '/planner' && <button className="create-button" onClick={onCreate}><UilPlus size="17" /> Create</button>}<button className="avatar" title="Sign out" onClick={logout}><UilSignout size="17" /></button></> : <><NavLink className="header-auth-link" to="/login">Sign in</NavLink><NavLink className="header-auth-button" to="/register">Create account</NavLink></>}
+        {isAuthenticated ? <>{location.pathname === '/planner' && <button className="create-button" onClick={onCreate}><UilPlus size="17" /> Create</button>}<UserMenu /></> : <><NavLink className="header-auth-link" to="/login">Sign in</NavLink><NavLink className="header-auth-button" to="/register">Create account</NavLink></>}
       </div>
     </header>
   );

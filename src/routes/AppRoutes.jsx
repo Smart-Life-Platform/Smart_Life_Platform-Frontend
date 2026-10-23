@@ -7,6 +7,7 @@ import PlannerPage from '../pages/PlannerPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import SectionPage from '../pages/SectionPage';
 import BudgetPage from '../pages/BudgetPage';
+import SettingsPage from '../pages/SettingsPage';
 import { TaskProvider } from '../context/TaskContext';
 
 function TaskProviderRoute() {
@@ -30,6 +31,7 @@ export default function AppRoutes() {
             <Route path="/budget" element={<BudgetPage />} />
             <Route path="/profile" element={<SectionPage title="My profile" />} />
             <Route path="/statistics" element={<SectionPage title="Statistics" />} />
+            <Route path="/settings" element={<SettingsPage />} />
           </Route>
         </Route>
         <Route path="*" element={<NotFoundPage />} />
