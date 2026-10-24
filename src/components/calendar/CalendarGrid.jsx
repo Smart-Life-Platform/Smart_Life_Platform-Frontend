@@ -25,7 +25,7 @@ export default function CalendarGrid({ days, tasksByDate, onSelectDate, onSelect
           {days.map((day) => {
             const key = dateKey(day);
             return <button className="day-column" key={key} onClick={() => onSelectDate(key)}>
-              {(tasksByDate[key] || []).map((task) => <span role="button" tabIndex="0" className={`calendar-task status-${task.status_id || task.status?.id || 1} priority-${task.priority || 'medium'}`}
+              {(tasksByDate[key] || []).map((task) => <span role="button" tabIndex="0" className={`calendar-task status-${task.status_id ?? task.status?.id ?? task.status ?? 'unknown'} priority-${task.priority || 'medium'}`}
                 style={{ top: taskTop(task) }} key={task.id} onClick={(event) => { event.stopPropagation(); onSelectTask(task); }} onKeyDown={(event) => {
                   if (event.key === 'Enter') {
                     event.stopPropagation(); onSelectTask(task);

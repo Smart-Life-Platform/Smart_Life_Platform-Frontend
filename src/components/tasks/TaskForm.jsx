@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import { UilEditAlt, UilTimes } from '@iconscout/react-unicons';
 
+const relationId = (value) => {
+  if (Array.isArray(value)) return relationId(value[0]);
+  if (value && typeof value === 'object') return relationId(value.id);
+  if (value === '' || value === null || value === undefined) return '';
+  const id = Number(value);
+  return Number.isInteger(id) ? id : '';
+};
+
 export default function TaskForm({ date, task, statuses, categories, onClose, onSubmit }) {
   const [form, setForm] = useState({
     title: task?.title || '',
@@ -8,8 +16,8 @@ export default function TaskForm({ date, task, statuses, categories, onClose, on
     due_date: task?.due_date || date,
     due_time: task?.due_time?.slice(0, 5) || '09:00',
     priority: task?.priority || 'medium',
-    status_id: task?.status_id || task?.status?.id || 1,
-    category_id: task?.category_id || task?.category?.id || '',
+    status_id: relationId(task?.status_id ?? task?.status?.id ?? task?.status ?? statuses[0]?.id),
+    category_id: relationId(task?.category_id ?? task?.category?.id ?? task?.category),
   });
   const [error, setError] = useState('');
   const isEditing = Boolean(task);

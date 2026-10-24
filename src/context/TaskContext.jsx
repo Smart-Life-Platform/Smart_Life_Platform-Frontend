@@ -27,7 +27,11 @@ export function TaskProvider({ children }) {
     const [statusData, categoryData, priorityData] = await Promise.all([getStatuses(), getCategories(), getPriorities()]);
     setStatuses(Array.isArray(statusData) ? statusData : statusData?.results || []);
     setCategories(Array.isArray(categoryData) ? categoryData : categoryData?.results || []);
-    setPriorities(Array.isArray(priorityData) ? priorityData : priorityData?.results || []);
+    const availablePriorities = Array.isArray(priorityData) ? priorityData : priorityData?.results || [];
+    setPriorities(availablePriorities.map((priority, index) => {
+      if (typeof priority === 'string') return priority;
+      return ['low', 'medium', 'high'][index] || String(priority);
+    }));
   }, []);
 
   const createTask = useCallback(async (payload) => {
