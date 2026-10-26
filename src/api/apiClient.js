@@ -28,7 +28,14 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
-    if (status === 401) return Promise.reject(new Error('Сесія завершилася. Увійдіть знову.'));
+    if (status === 401) {
+      supabase.auth.signOut().finally(() => {
+        if (window.location.pathname !== '/login') {
+          window.location.replace('/login');
+        }
+      });
+      return Promise.reject(new Error('Сесія завершилася. Перенаправлення на сторінку входу.'));
+    }
     if (status === 403) return Promise.reject(new Error('Недостатньо прав для цієї операції.'));
     if (error.response) {
       return Promise.reject(new Error(error.response.data?.error || error.response.data?.detail || 'Сервер відхилив запит.'));

@@ -40,9 +40,15 @@ function normalizeTaskParams(params) {
   return normalized;
 }
 
-export const getTasks = (params = {}) => apiClient.get('/tasks/tasks/', {
-  params: { ordering: 'due_date', ...normalizeTaskParams(params) },
-}).then((response) => response.data);
+export const getTasks = (params = {}) => {
+  const normalizedParams = normalizeTaskParams(params);
+  delete normalizedParams.ordering;
+  return apiClient.get('/tasks/tasks/', { params: normalizedParams }).then((response) => response.data);
+};
+export const getOverdueTasks = () => apiClient.get('/tasks/tasks/overdue/').then((response) => response.data);
+export const getTasksByDay = (params = {}) => apiClient.get('/tasks/tasks/by_day/', { params }).then((response) => response.data);
+export const getTasksByWeek = (params = {}) => apiClient.get('/tasks/tasks/by_week/', { params }).then((response) => response.data);
+export const getTasksByMonth = (params = {}) => apiClient.get('/tasks/tasks/by_month/', { params }).then((response) => response.data);
 export const createTask = (payload) => apiClient.post('/tasks/tasks/', normalizeTaskPayload(payload)).then((response) => response.data);
 export const updateTask = (id, payload) => apiClient.put(`/tasks/tasks/${id}/`, normalizeTaskPayload(payload)).then((response) => response.data);
 export const deleteTask = (id) => apiClient.delete(`/tasks/tasks/${id}/`);

@@ -173,6 +173,36 @@ nav {
     font-size: 18px;
 }
 
+.calendar-view-select {
+    min-width: 130px;
+    padding: 7px 10px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    color: #4643a7;
+    background: #fff;
+    font-size: 12px;
+}
+
+.calendar-date-picker input {
+    padding: 7px 9px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    color: #656878;
+    background: #fff;
+    font-size: 12px;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 .tasks-panel {
     padding: 24px 18px;
     overflow-y: auto;
@@ -265,6 +295,14 @@ nav {
 .task-row-content {
     flex: 1;
     min-width: 0;
+}
+
+.task-row.overdue strong {
+    color: #b4232f;
+}
+
+.task-row.overdue .task-dot {
+    background: #d92d3a;
 }
 
 .task-dot {
