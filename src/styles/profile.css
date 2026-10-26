@@ -1,0 +1,7 @@
+.profile-page { min-height: calc(100vh - 68px); padding: 40px 20px; background: var(--panel); }
+.profile-card { max-width: 480px; margin: 0 auto; padding: 28px; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
+.profile-photo { display: block; width: 112px; height: 112px; border-radius: 50%; object-fit: cover; }
+.profile-initial { display: grid; place-items: center; background: var(--soft-purple); color: var(--purple); font-size: 40px; }
+.profile-card label { display: block; margin: 24px 0 10px; font-weight: 600; }
+.profile-card input { max-width: 100%; }
+.profile-card [role="alert"] { color: #b42318; }
