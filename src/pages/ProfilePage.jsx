@@ -96,7 +96,7 @@ export default function ProfilePage() {
             <p className="profile-email">{user?.email}</p>
           </div>
           {previewUrl
-            ? <img className="profile-photo" src={previewUrl} alt="Preview of your new profile photo" />
+            ? <img className="profile-photo" src={previewUrl} alt="New profile avatar" />
             : avatarUrl
               ? <img className="profile-photo" src={avatarUrl} alt="Your profile" />
             : <div className="profile-photo profile-initial" aria-label="No profile photo">{fallback}</div>}
