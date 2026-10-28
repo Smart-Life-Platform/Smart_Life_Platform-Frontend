@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getAvatarUrl } from '../../api/avatarApi';
 
 const COLORS = ['#e8710a', '#1a73e8', '#188038', '#d93025', '#9334e6', '#007b83', '#c2185b', '#5f6368'];
 
@@ -17,7 +18,7 @@ export function getDisplayName(user) {
 export default function Avatar({ user, size = 38 }) {
   const [broken, setBroken] = useState(false);
   const meta = user?.user_metadata || {};
-  const photo = meta.avatar_url || meta.picture;
+  const photo = getAvatarUrl(user) || meta.avatar_url || meta.picture;
   const name = getDisplayName(user);
   const letters = name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 
