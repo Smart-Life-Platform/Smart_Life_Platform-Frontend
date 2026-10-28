@@ -1,4 +1,102 @@
-:root { --ink: #252735; --muted: #8a8d9a; --line: #e9eaf0; --purple: #625cf4; --soft-purple: #f0efff; --panel: #f8f8fb; }
+:root {
+  --ink: var(--color-text-primary);
+  --muted: var(--color-text-muted);
+  --line: var(--color-border-subtle);
+  --purple: var(--color-brand-primary);
+  --soft-purple: var(--color-brand-soft);
+  --panel: var(--color-surface-muted);
+}
 * { box-sizing: border-box; }
 button, input, textarea, select { font: inherit; }
 button { cursor: pointer; }
+
+/* Semantic palette: update these values to retheme the application. */
+:root {
+  --color-text-primary: #252735;
+  --color-text-muted: #8a8d9a;
+  --color-border-subtle: #e9eaf0;
+  --color-brand-primary: #625cf4;
+  --color-brand-soft: #f0efff;
+  --color-surface-muted: #f8f8fb;
+  --color-surface-lavender: #f5f4ff;
+  --color-surface-page: #fbfbfd;
+  --color-surface-blue-tint: #f7f9ff;
+  --color-white: #fff;
+  --color-shadow-auth: #47438c12;
+  --color-text-auth-muted: #616472;
+  --color-border-input: #dedfe8;
+  --color-status-error-muted: #bd4e59;
+  --color-budget-page: #f5f7f6;
+  --color-budget-text: #1f2a2e;
+  --color-budget-muted: #7a878d;
+  --color-budget-income: #1f8a5b;
+  --color-budget-expense: #d9534f;
+  --color-budget-border: #e3e8e6;
+  --color-budget-warning: #e8a33d;
+  --color-overlay-dark: rgba(0,0,0,.4);
+  --color-calendar-muted: #6f7280;
+  --color-calendar-subtle: #a2a4ae;
+  --color-calendar-border-strong: #c9cadd;
+  --color-calendar-text: #676a7b;
+  --color-calendar-surface: #f8f8fc;
+  --color-calendar-grid: #d7d8e2;
+  --color-calendar-grid-strong: #aeb0c4;
+  --color-calendar-heading: #4f5265;
+  --color-calendar-grid-major: #b7bacb;
+  --color-calendar-grid-minor: #e0e1e9;
+  --color-status-danger: #d92d3a;
+  --color-status-danger-ring: rgba(217, 45, 58, .2);
+  --color-surface-lavender-light: #fafaff;
+  --color-status-danger-surface: #fff3f3;
+  --color-status-danger-text: #b4232f;
+  --color-calendar-selected: #f6f5ff;
+  --color-calendar-selected-border: #aaa7e8;
+  --color-calendar-selected-strong: #625fd0;
+  --color-calendar-selected-glow: rgb(111 107 224 / 20%);
+  --color-calendar-highlight: rgb(255 255 255 / 70%);
+  --color-calendar-shadow: rgb(78 74 190 / 35%);
+  --color-brand-dark: #4643a7;
+  --color-category-default: #e8e8ff;
+  --color-status-warning: #f2b84b;
+  --color-task-text-muted: #5c6571;
+  --color-task-surface-muted: #edf0f2;
+  --color-status-danger-light: #ffe4e5;
+  --color-text-tertiary: #666;
+  --color-status-success-text: #39765a;
+  --color-surface-overlay-light: rgb(255 255 255 / 45%);
+  --color-control-muted: #777895;
+  --color-control-text: #55586a;
+  --color-surface-overlay: rgb(255 255 255 / 75%);
+  --color-border-brand-soft: #c9c7ef;
+  --color-shadow-brand: rgb(34 31 85 / 18%);
+  --color-brand-gradient-start: #726cf8;
+  --color-brand-gradient-end: #4e49d9;
+  --color-nav-text: #6b6e7b;
+  --color-nav-icon: #7174a0;
+  --color-avatar-fallback: #ed986f;
+  --color-control-muted-dark: #656878;
+  --color-badge-text: #c14d7a;
+  --color-badge-surface: #ffdae8;
+  --color-control-border: #dedfe7;
+  --color-control-placeholder: #777;
+  --color-control-surface: #f0f0f4;
+  --color-task-meta: #a0a2ac;
+  --color-priority-high: #ed7781;
+  --color-priority-low: #57ae80;
+  --color-control-icon: #9295a2;
+  --color-border-brand: #b8b7df;
+  --color-control-text-muted: #666977;
+  --color-modal-overlay: #1d203866;
+  --color-modal-shadow: #20203340;
+  --color-modal-muted: #8d8f9b;
+  --color-profile-shadow: rgba(37, 39, 53, 0.06);
+  --color-status-success: #188038;
+  --color-menu-border: #e5e7eb;
+  --color-menu-shadow: rgba(0, 0, 0, 0.12);
+  --color-menu-divider: #eee;
+  --color-menu-heading: #111827;
+  --color-menu-muted: #4b5563;
+  --color-menu-text: #1f2937;
+  --color-menu-hover: #f3f4f6;
+  --color-settings-muted: #6b7280;
+}

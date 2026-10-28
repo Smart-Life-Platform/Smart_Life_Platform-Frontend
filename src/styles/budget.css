@@ -1,13 +1,13 @@
 .budget-page {
-  --b-bg: #f5f7f6; 
-  --b-card: #fff; 
-  --b-text: #1f2a2e; 
-  --b-muted: #7a878d;
-  --b-accent: #1f8a5b; 
-  --b-income: #1f8a5b; 
-  --b-expense: #d9534f; 
-  --b-border: #e3e8e6; 
-  --b-warn: #e8a33d;
+  --b-bg: var(--color-budget-page); 
+  --b-card: var(--color-white); 
+  --b-text: var(--color-budget-text); 
+  --b-muted: var(--color-budget-muted);
+  --b-accent: var(--color-budget-income); 
+  --b-income: var(--color-budget-income); 
+  --b-expense: var(--color-budget-expense); 
+  --b-border: var(--color-budget-border); 
+  --b-warn: var(--color-budget-warning);
   max-width: 960px; 
   margin: 0 auto; 
   padding: 24px 16px; 
@@ -27,7 +27,7 @@
   padding: 8px 10px; 
   border: 1px solid var(--b-border); 
   border-radius: 8px; 
-  background: #fff; 
+  background: var(--color-white); 
   box-sizing: border-box;
 }
 
@@ -116,7 +116,7 @@
 
 .budget-tabs button.is-active { 
   background: var(--b-accent); 
-  color: #fff; 
+  color: var(--color-white); 
   border-color: var(--b-accent); 
 }
 
@@ -277,13 +277,13 @@
 .segmented button { 
   flex: 1; 
   padding: 8px; 
-  background: #fff; 
+  background: var(--color-white); 
   border: 0; 
 }
 
 .segmented button.is-active { 
   background: var(--b-accent); 
-  color: #fff; 
+  color: var(--color-white); 
 }
 .btn-primary { 
   display: inline-flex; 
@@ -291,7 +291,7 @@
   align-items: center; 
   justify-content: center; 
   background: var(--b-accent); 
-  color: #fff; 
+  color: var(--color-white); 
   border: 0; 
   border-radius: 10px; 
   padding: 10px 16px; 
@@ -342,7 +342,7 @@
 .modal-backdrop { 
   position: fixed; 
   inset: 0; 
-  background: rgba(0,0,0,.4); 
+  background: var(--color-overlay-dark); 
   display: flex; 
   align-items: center; 
   justify-content: center; 
@@ -350,7 +350,7 @@
 }
 
 .modal { 
-  background: #fff; 
+  background: var(--color-white); 
   border-radius: 16px; 
   padding: 16px 20px; 
   width: min(420px, 92vw); 

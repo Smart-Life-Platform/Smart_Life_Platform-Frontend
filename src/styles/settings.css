@@ -1,4 +1,4 @@
-/*Меню під аватаром*/
+/*Р СљР ВµР Р…РЎР‹ Р С—РЎвЂ“Р Т‘ Р В°Р Р†Р В°РЎвЂљР В°РЎР‚Р С•Р С*/
 .user-menu { position: relative; }
 
 .user-menu-button {
@@ -13,7 +13,7 @@
 .avatar-circle {
   border-radius: 50%;
   object-fit: cover;
-  color: #fff;
+  color: var(--color-white);
   font-weight: 600;
   display: inline-flex;
   align-items: center;
@@ -26,14 +26,14 @@
   right: 0;
   top: calc(100% + 10px);
   width: 280px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--color-white);
+  border: 1px solid var(--color-menu-border);
   border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 10px 30px var(--color-menu-shadow);
   z-index: 100;
   overflow: hidden;
 
-  /* закрите положення */
+  /* Р В·Р В°Р С”РЎР‚Р С‘РЎвЂљР Вµ Р С—Р С•Р В»Р С•Р В¶Р ВµР Р…Р Р…РЎРЏ */
   opacity: 0;
   transform: translateY(-8px) scale(0.97);
   transform-origin: top right;
@@ -54,13 +54,13 @@
   align-items: center;
   gap: 12px;
   padding: 16px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--color-menu-divider);
 }
 .user-menu-info { min-width: 0; }
-.user-menu-name { font-weight: 600; color: #111827; }
+.user-menu-name { font-weight: 600; color: var(--color-menu-heading); }
 .user-menu-email {
   font-size: 13px;
-  color: #4b5563;
+  color: var(--color-menu-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -75,14 +75,14 @@
   background: none;
   border: none;
   font-size: 15px;
-  color: #1f2937;
+  color: var(--color-menu-text);
   text-align: left;
   cursor: pointer;
 }
-.user-menu-item:hover { background: #f3f4f6; }
-.user-menu-divider { height: 1px; background: #eee; }
+.user-menu-item:hover { background: var(--color-menu-hover); }
+.user-menu-divider { height: 1px; background: var(--color-menu-divider); }
 
-/*Сторінка налаштувань*/
+/*Р РЋРЎвЂљР С•РЎР‚РЎвЂ“Р Р…Р С”Р В° Р Р…Р В°Р В»Р В°РЎв‚¬РЎвЂљРЎС“Р Р†Р В°Р Р…РЎРЉ*/
 .settings-page {
   max-width: 1000px;
   margin: 0 auto;
@@ -97,7 +97,7 @@
 }
 
 .settings-name { margin: 0; font-size: 20px; }
-.settings-email { color: #4b5563; }
+.settings-email { color: var(--color-menu-muted); }
 
 .settings-grid {
   display: grid;
@@ -105,13 +105,13 @@
   gap: 20px;
 }
 .settings-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--color-white);
+  border: 1px solid var(--color-menu-border);
   border-radius: 14px;
   padding: 24px;
 }
 .settings-card-title { margin: 12px 0 6px; font-size: 16px; }
-.settings-card-text { margin: 0; color: #6b7280; font-size: 15px; line-height: 1.5; }
+.settings-card-text { margin: 0; color: var(--color-settings-muted); font-size: 15px; line-height: 1.5; }
 
 @media (max-width: 800px) { .settings-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 520px) { .settings-grid { grid-template-columns: 1fr; } }

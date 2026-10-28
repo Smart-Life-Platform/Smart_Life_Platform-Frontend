@@ -1,7 +1,7 @@
 .app-shell {
     min-height: 100vh;
     color: var(--ink);
-    background: #fff;
+    background: var(--color-white);
 }
 
 .topbar {
@@ -34,8 +34,8 @@
     height: 48px;
     display: grid;
     place-items: center;
-    color: #fff;
-    background: linear-gradient(135deg, #726cf8, #4e49d9);
+    color: var(--color-white);
+    background: linear-gradient(135deg, var(--color-brand-gradient-start), var(--color-brand-gradient-end));
     border-radius: 15px;
     font-weight: 800;
 }
@@ -61,7 +61,7 @@ nav {
     height: 38px;
     padding: 0 14px;
     border-radius: 10px;
-    color: #6b6e7b;
+    color: var(--color-nav-text);
     text-decoration: none;
 }
 
@@ -72,7 +72,7 @@ nav {
 }
 
 .nav-link span {
-    color: #7174a0;
+    color: var(--color-nav-icon);
     font-size: 17px;
 }
 
@@ -99,8 +99,8 @@ nav {
     height: 34px;
     border: 0;
     border-radius: 50%;
-    color: #fff;
-    background: #ed986f;
+    color: var(--color-white);
+    background: var(--color-avatar-fallback);
     font-weight: 700;
 }
 
@@ -115,7 +115,7 @@ nav {
 .header-auth-button {
     padding: 9px 13px;
     border-radius: 8px;
-    color: #fff;
+    color: var(--color-white);
     background: var(--purple);
 }
 
@@ -147,8 +147,8 @@ nav {
 .round-button,
 .today-button {
     border: 1px solid var(--line);
-    background: #fff;
-    color: #656878;
+    background: var(--color-white);
+    color: var(--color-control-muted-dark);
 }
 
 .round-button {
@@ -178,8 +178,8 @@ nav {
     padding: 7px 10px;
     border: 1px solid var(--line);
     border-radius: 7px;
-    color: #4643a7;
-    background: #fff;
+    color: var(--color-brand-dark);
+    background: var(--color-white);
     font-size: 12px;
 }
 
@@ -187,8 +187,8 @@ nav {
     padding: 7px 9px;
     border: 1px solid var(--line);
     border-radius: 7px;
-    color: #656878;
-    background: #fff;
+    color: var(--color-control-muted-dark);
+    background: var(--color-white);
     font-size: 12px;
 }
 
@@ -223,8 +223,8 @@ nav {
 
 .beta {
     padding: 4px 10px;
-    color: #c14d7a;
-    background: #ffdae8;
+    color: var(--color-badge-text);
+    background: var(--color-badge-surface);
     border-radius: 20px;
     font-size: 11px;
 }
@@ -235,9 +235,9 @@ nav {
     gap: 8px;
     height: 44px;
     padding: 0 13px;
-    border: 1px solid #dedfe7;
+    border: 1px solid var(--color-control-border);
     border-radius: 22px;
-    background: #fff;
+    background: var(--color-white);
     color: var(--purple);
 }
 
@@ -252,7 +252,7 @@ nav {
     padding: 16px 12px;
     border: 1px solid var(--line);
     border-radius: 12px;
-    background: #fff;
+    background: var(--color-white);
 }
 
 .section-title {
@@ -267,8 +267,8 @@ nav {
     width: 21px;
     height: 21px;
     border-radius: 50%;
-    color: #777;
-    background: #f0f0f4;
+    color: var(--color-control-placeholder);
+    background: var(--color-control-surface);
     font-size: 11px;
 }
 
@@ -288,7 +288,7 @@ nav {
 .task-row small {
     display: block;
     margin-top: 4px;
-    color: #a0a2ac;
+    color: var(--color-task-meta);
     font-size: 11px;
 }
 
@@ -298,11 +298,11 @@ nav {
 }
 
 .task-row.overdue strong {
-    color: #b4232f;
+    color: var(--color-status-danger-text);
 }
 
 .task-row.overdue .task-dot {
-    background: #d92d3a;
+    background: var(--color-status-danger);
 }
 
 .task-dot {
@@ -314,11 +314,11 @@ nav {
 }
 
 .task-dot.high {
-    background: #ed7781;
+    background: var(--color-priority-high);
 }
 
 .task-dot.low {
-    background: #57ae80;
+    background: var(--color-priority-low);
 }
 
 .task-actions {
@@ -331,7 +331,7 @@ nav {
     place-items: center;
     padding: 2px;
     border: 0;
-    color: #9295a2;
+    color: var(--color-control-icon);
     background: transparent;
 }
 
@@ -349,7 +349,7 @@ nav {
     width: 100%;
     margin-top: 16px;
     padding: 12px;
-    border: 1px dashed #b8b7df;
+    border: 1px dashed var(--color-border-brand);
     border-radius: 9px;
     color: var(--purple);
     background: transparent;
@@ -366,10 +366,10 @@ nav {
 .filter-grid select {
     min-width: 0;
     padding: 8px 6px;
-    border: 1px solid #dedfe7;
+    border: 1px solid var(--color-control-border);
     border-radius: 7px;
-    color: #666977;
-    background: #fff;
+    color: var(--color-control-text-muted);
+    background: var(--color-white);
     font-size: 11px;
 }
 
@@ -379,7 +379,7 @@ nav {
     place-items: center;
     align-content: center;
     min-height: calc(100vh - 68px);
-    background: #fbfbfd;
+    background: var(--color-surface-page);
 }
 
 .placeholder-icon {

@@ -3,7 +3,7 @@
     display: grid;
     place-items: center;
     padding: 24px;
-    background: linear-gradient(140deg, #f5f4ff, #fbfbfd 45%, #f7f9ff);
+    background: linear-gradient(140deg, var(--color-surface-lavender), var(--color-surface-page) 45%, var(--color-surface-blue-tint));
 }
 
 .auth-card {
@@ -11,8 +11,8 @@
     padding: 42px;
     border: 1px solid var(--line);
     border-radius: 20px;
-    background: #fff;
-    box-shadow: 0 22px 60px #47438c12;
+    background: var(--color-white);
+    box-shadow: 0 22px 60px var(--color-shadow-auth);
 }
 
 .auth-card .brand-mark {
@@ -43,7 +43,7 @@
 label {
     display: block;
     margin-bottom: 16px;
-    color: #616472;
+    color: var(--color-text-auth-muted);
     font-size: 12px;
     font-weight: 600;
 }
@@ -55,11 +55,11 @@ label select {
     width: 100%;
     margin-top: 7px;
     padding: 12px 13px;
-    border: 1px solid #dedfe8;
+    border: 1px solid var(--color-border-input);
     border-radius: 8px;
     outline: none;
     color: var(--ink);
-    background: #fff;
+    background: var(--color-white);
     font-size: 14px;
     font-weight: 400;
 }
@@ -72,7 +72,7 @@ label select {
     padding: 13px 18px;
     border: 0;
     border-radius: 8px;
-    color: #fff;
+    color: var(--color-white);
     background: var(--purple);
     font-weight: 700;
 }
@@ -92,6 +92,6 @@ label select {
 }
 
 .form-error {
-    color: #bd4e59;
+    color: var(--color-status-error-muted);
     font-size: 12px;
 }
