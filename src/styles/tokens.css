@@ -99,4 +99,6 @@ button { cursor: pointer; }
   --color-menu-text: #1f2937;
   --color-menu-hover: #f3f4f6;
   --color-settings-muted: #6b7280;
+  --color-accent: #4f46e5;
+  --color-toggle-off: #d1d5db;
 }
