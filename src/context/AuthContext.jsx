@@ -63,6 +63,14 @@ export function AuthProvider({ children }) {
     if (error) throw error;
   }, []);
 
+  const signInWithGoogle = useCallback(async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/planner` },
+    });
+    if (error) throw error;
+  }, []);
+
   const value = useMemo(
     () => ({
       session,
@@ -73,8 +81,9 @@ export function AuthProvider({ children }) {
       signIn,
       signUp,
       signOut,
+      signInWithGoogle,
     }),
-    [loading, session, signIn, signOut, signUp]
+    [loading, session, signIn, signInWithGoogle, signOut, signUp]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
