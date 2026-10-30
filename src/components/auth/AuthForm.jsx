@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import GoogleLoginButton from './GoogleLoginButton';
 
 export default function AuthForm() {
   const isRegister = useLocation().pathname === '/register';
@@ -35,6 +36,9 @@ export default function AuthForm() {
           {error && <p className="form-error">{error}</p>}
           <button className="primary-button full-width" disabled={loading}>{loading ? 'Please wait…' : isRegister ? 'Create account' : 'Sign in'}</button>
         </form>
+        <div className="auth-divider"><span>or</span></div>
+        <GoogleLoginButton label={isRegister ? 'Sign up with Google' : 'Continue with Google'} />
+        <Link className="text-button" to={isRegister ? '/login' : '/register'}></Link>
         <Link className="text-button" to={isRegister ? '/login' : '/register'}>{isRegister ? 'Already have an account? Sign in' : 'New here? Create an account'}</Link>
       </section>
     </main>
