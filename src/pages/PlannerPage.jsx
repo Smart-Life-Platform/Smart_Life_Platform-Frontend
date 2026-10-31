@@ -17,7 +17,7 @@ const categoryColor = (task, categories) => task.category_color || task.category
 const isDone = (task, statuses) => {
   const status = task.status_name || task.status?.name || (typeof task.status === 'string' ? task.status : '') ||
     statuses.find((item) => String(item.id) === String(task.status_id ?? task.status?.id ?? task.status))?.name || '';
-  return status.toLowerCase() === 'done';
+  return ['done', 'completed'].includes(status.trim().toLowerCase());
 };
 export default function PlannerPage() {
   const {
@@ -33,7 +33,7 @@ export default function PlannerPage() {
   const [filters, setFilters] = useState({ search: '', status: '', category: '', priority: '', ordering: 'due_date' });
   const [error, setError] = useState('');
   const filteredTasks = useFilteredTasks(tasks, filters);
-  const filteredCalendarTasks = useFilteredTasks(calendarTasks.length ? calendarTasks : tasks, filters);
+  const filteredCalendarTasks = useFilteredTasks(calendarTasks, filters);
   const overdueTaskIds = new Set(overdueTasks.filter((task) => !isDone(task, statuses)).map((task) => String(task.id)));
   const calendarTasksByDate = tasksByDate(filteredCalendarTasks.map((task) => ({
     ...task,
@@ -51,8 +51,8 @@ export default function PlannerPage() {
   }, [filters, loadTasks]);
 
   useEffect(() => {
-    loadCalendarTasks(calendarView, dateKey(days[0])).catch((requestError) => setError(requestError.message));
-  }, [calendarView, days, loadCalendarTasks]);
+    loadCalendarTasks(calendarView, dateKey(week)).catch((requestError) => setError(requestError.message));
+  }, [calendarView, week, loadCalendarTasks]);
 
   const openCreate = (date = todayKey()) => { setEditingTask(null); setModalDate(date); };
   const selectCalendarDate = (date) => {
@@ -149,7 +149,7 @@ export default function PlannerPage() {
       </label>}
       <label className="calendar-date-picker">
         <span className="sr-only">Select date</span>
-        <input type="date" value={dateKey(days[0])} onChange={(event) => { goToDate(event.target.value); setCalendarView(calendarView === 'month' ? 'day' : calendarView); }} />
+        <input type="date" value={dateKey(week)} onChange={(event) => { goToDate(event.target.value); setCalendarView(calendarView === 'month' ? 'day' : calendarView); }} />
       </label>
     </div>
     <CalendarGrid days={days} tasksByDate={calendarTasksByDate} onSelectDate={selectCalendarDate} onSelectTask={openEdit} onMoveTask={moveTask} onAdvanceTaskStatus={advanceTaskStatus} statuses={statuses} view={calendarView} selectedHour={selectedHour} selectedBlock={selectedBlock} />

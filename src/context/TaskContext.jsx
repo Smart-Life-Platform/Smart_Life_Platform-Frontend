@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState } from 'react';
+import { createContext, useCallback, useContext, useRef, useState } from 'react';
 import { deleteTask as deleteTaskRequest, getOverdueTasks, getTasks, getTasksByDay, getTasksByMonth, getTasksByWeek, createTask as createTaskRequest, updateTask as updateTaskRequest } from '../api/tasksApi';
 import { getCategories } from '../api/categoriesApi';
 import { getStatuses } from '../api/statusesApi';
@@ -19,30 +19,36 @@ export function TaskProvider({ children }) {
   const [categories, setCategories] = useState([]);
   const [priorities, setPriorities] = useState([]);
   const [calendarTasks, setCalendarTasks] = useState([]);
+  const taskRequestId = useRef(0);
+  const calendarRequestId = useRef(0);
 
   const loadTasks = useCallback(async (params) => {
+    const requestId = ++taskRequestId.current;
     setLoading(true);
     try {
       const data = await getTasks(params);
+      if (requestId !== taskRequestId.current) return;
       setTasks(taskList(data));
 
       try {
         const overdueData = await getOverdueTasks();
-        setOverdueTasks(taskList(overdueData));
+        if (requestId === taskRequestId.current) setOverdueTasks(taskList(overdueData));
       } catch (overdueError) {
         console.error('Unable to load overdue tasks:', overdueError);
-        setOverdueTasks([]);
+        if (requestId === taskRequestId.current) setOverdueTasks([]);
       }
     } finally {
-      setLoading(false);
+      if (requestId === taskRequestId.current) setLoading(false);
     }
   }, []);
 
   const loadCalendarTasks = useCallback(async (view, date) => {
+    const requestId = ++calendarRequestId.current;
+    setCalendarTasks([]);
     const params = { date };
     const request = view === 'month' ? getTasksByMonth : view === 'week' ? getTasksByWeek : getTasksByDay;
     const data = await request(params);
-    setCalendarTasks(taskList(data));
+    if (requestId === calendarRequestId.current) setCalendarTasks(taskList(data));
   }, []);
 
   const loadMetadata = useCallback(async () => {
@@ -59,6 +65,7 @@ export function TaskProvider({ children }) {
   const createTask = useCallback(async (payload) => {
     const task = await createTaskRequest(payload);
     setTasks((current) => [...current, task]);
+    setCalendarTasks((current) => [...current, task]);
     getOverdueTasks().then((data) => setOverdueTasks(taskList(data))).catch((error) => {
       console.error('Unable to refresh overdue tasks:', error);
     });

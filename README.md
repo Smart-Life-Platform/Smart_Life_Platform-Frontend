@@ -2,7 +2,7 @@
 
 Smart Life Platform is a web application for personal planning, task
 management, and finance tracking. The project concept is described in
-[`ТЗ_Smart_Life_Platform.md`](../ТЗ_Smart_Life_Platform.md).
+[`ТЗ_Smart_Life_Platform.md`](ТЗ_Smart_Life_Platform.md).
 
 The React frontend combines a task planner, calendar, budget, shopping lists,
 user profile, and authentication in one interface.
@@ -54,7 +54,7 @@ user profile, and authentication in one interface.
 
 ## Requirements
 
-- Node.js 18 or newer.
+- Node.js 22 or newer (required by the locked Supabase dependencies).
 - npm 9 or newer.
 - Access to a Supabase project.
 - A running Django backend if tasks, categories, statuses, and priorities are
@@ -65,13 +65,13 @@ user profile, and authentication in one interface.
 Go to the frontend directory and install dependencies:
 
 ```bash
-cd smart_life_platform
-npm install
+cd Smart_Life_Platform-Frontend
+npm ci
 ```
 
 ## Environment Configuration
 
-Create a `.env.local` file in the `smart_life_platform` directory:
+Copy `.env.example` to `.env.local` in the repository root and fill in your Supabase values:
 
 ```dotenv
 REACT_APP_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
@@ -199,8 +199,7 @@ returns `401`, the frontend ends the session and redirects the user to
 
 For Vercel:
 
-1. Connect the repository and set the root directory to
-   `smart_life_platform`.
+1. Connect the repository and use the repository root as the root directory.
 2. Set the build command to `npm run build`.
 3. Set the output directory to `build`.
 4. Add the production environment variables.
