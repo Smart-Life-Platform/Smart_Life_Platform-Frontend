@@ -29,7 +29,7 @@ apiClient.interceptors.response.use(
   (error) => {
     const status = error.response?.status;
     if (status === 401) {
-      supabase.auth.signOut().finally(() => {
+      supabase.auth.signOut({ scope: 'local' }).catch(() => {}).finally(() => {
         if (window.location.pathname !== '/login') {
           window.location.replace('/login');
         }

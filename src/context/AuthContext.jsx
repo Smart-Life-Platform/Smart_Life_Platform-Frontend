@@ -11,6 +11,7 @@ export function AuthProvider({ children }) {
     let mounted = true;
 
     supabase.auth.getSession().then(({ data, error }) => {
+      if (!mounted) return;
       if (error) {
         setLoading(false);
         return;
@@ -18,6 +19,11 @@ export function AuthProvider({ children }) {
 
       if (mounted) {
         setSession(data.session);
+        setLoading(false);
+      }
+    }).catch(() => {
+      if (mounted) {
+        setSession(null);
         setLoading(false);
       }
     });
