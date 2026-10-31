@@ -2,7 +2,7 @@
 
 Smart Life Platform is a web application for personal planning, task
 management, and finance tracking. The project concept is described in
-[`ТЗ_Smart_Life_Platform.md`](../ТЗ_Smart_Life_Platform.md).
+[`ТЗ_Smart_Life_Platform.md`](ТЗ_Smart_Life_Platform.md).
 
 The React frontend combines a task planner, calendar, budget, shopping lists,
 user profile, and authentication in one interface.
