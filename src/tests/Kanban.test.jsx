@@ -157,6 +157,26 @@ describe('Kanban Components', () => {
     expect(screen.getByText('Test Task 1')).toBeInTheDocument();
   });
 
+  test('KanbanBoard supports status columns reordering (e.g. swap Start with Plain)', () => {
+    const handleOrderChange = jest.fn();
+    const columns = [
+      { id: 10, name: 'Start', position: 1 },
+      { id: 20, name: 'Plain', position: 2 },
+    ];
+
+    render(
+      <KanbanBoard
+        columns={columns}
+        tasks={[]}
+        categories={[]}
+        onColumnsOrderChange={handleOrderChange}
+      />
+    );
+
+    expect(screen.getByText('Start')).toBeInTheDocument();
+    expect(screen.getByText('Plain')).toBeInTheDocument();
+  });
+
   test('MetadataModal renders name and color fields without position input and submits correctly', async () => {
     const handleSubmit = jest.fn().mockResolvedValue();
     const handleClose = jest.fn();
