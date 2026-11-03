@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import Avatar, { getDisplayName } from '../common/Avatar';
 import '../../styles/settings.css';
 
-export default function UserMenu() {
+export default function UserMenu({ showDetails = false }) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -35,8 +35,10 @@ export default function UserMenu() {
 
   return (
     <div className="user-menu" ref={menuRef}>
-      <button className="user-menu-button" onClick={() => setOpen(!open)} title="Account">
+      <button className={`user-menu-button${showDetails ? ' user-menu-button-details' : ''}`} onClick={() => setOpen(!open)} title="Account">
         <Avatar user={user} size={38} />
+        {showDetails && <span className="user-menu-button-copy"><strong>{name}</strong><small>{user?.is_admin ? 'Administrator' : 'Personal plan'}</small></span>}
+        {showDetails && <span className="user-menu-button-chevron">⌄</span>}
       </button>
 
       <div className={`user-menu-dropdown${open ? ' open' : ''}`} aria-hidden={!open}>

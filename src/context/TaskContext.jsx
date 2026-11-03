@@ -1,8 +1,15 @@
 import { createContext, useCallback, useContext, useRef, useState } from 'react';
-import { deleteTask as deleteTaskRequest, getOverdueTasks, getTasks, getTasksByDay, getTasksByMonth, getTasksByWeek, createTask as createTaskRequest, updateTask as updateTaskRequest } from '../api/tasksApi';
-import { getCategories } from '../api/categoriesApi';
-import { getStatuses } from '../api/statusesApi';
+import { deleteTask as deleteTaskRequest, getOverdueTasks, getTasks, getTasksByDay, getTasksByMonth, getTasksByWeek, createTask as createTaskRequest, updateTask as updateTaskRequest, setTaskStatus as setTaskStatusRequest } from '../api/tasksApi';
+import { createBoard, getBoards, updateBoard } from '../api/boardsApi';
+import { createCategory, getCategories } from '../api/categoriesApi';
+import { createBoardStatus, getBoardStatuses, updateBoardStatus, saveBoardStatusesOrder } from '../api/boardStatusesApi';
 import { getPriorities } from '../api/prioritiesApi';
+import {
+  setStoredTaskBoard,
+  removeStoredTaskBoard,
+  setStoredCategoryBoard,
+  setStoredStatusBoard,
+} from '../utils/boardScope';
 
 const TaskContext = createContext(null);
 
@@ -18,6 +25,8 @@ export function TaskProvider({ children }) {
   const [statuses, setStatuses] = useState([]);
   const [categories, setCategories] = useState([]);
   const [priorities, setPriorities] = useState([]);
+  const [boards, setBoards] = useState([]);
+  const [activeBoard, setActiveBoard] = useState(null);
   const [calendarTasks, setCalendarTasks] = useState([]);
   const taskRequestId = useRef(0);
   const calendarRequestId = useRef(0);
@@ -26,7 +35,7 @@ export function TaskProvider({ children }) {
     const requestId = ++taskRequestId.current;
     setLoading(true);
     try {
-      const data = await getTasks(params);
+      const data = await getTasks({ ...(activeBoard ? { board: activeBoard.id } : {}), ...params });
       if (requestId !== taskRequestId.current) return;
       setTasks(taskList(data));
 
@@ -40,50 +49,207 @@ export function TaskProvider({ children }) {
     } finally {
       if (requestId === taskRequestId.current) setLoading(false);
     }
-  }, []);
+  }, [activeBoard]);
 
   const loadCalendarTasks = useCallback(async (view, date) => {
     const requestId = ++calendarRequestId.current;
     setCalendarTasks([]);
-    const params = { date };
+    const params = { ...(activeBoard ? { board: activeBoard.id } : {}), date };
     const request = view === 'month' ? getTasksByMonth : view === 'week' ? getTasksByWeek : getTasksByDay;
     const data = await request(params);
     if (requestId === calendarRequestId.current) setCalendarTasks(taskList(data));
-  }, []);
+  }, [activeBoard]);
 
   const loadMetadata = useCallback(async () => {
-    const [statusData, categoryData, priorityData] = await Promise.all([getStatuses(), getCategories(), getPriorities()]);
-    setStatuses(Array.isArray(statusData) ? statusData : statusData?.results || []);
-    setCategories(Array.isArray(categoryData) ? categoryData : categoryData?.results || []);
+    const boardData = await getBoards();
+    const availableBoards = Array.isArray(boardData) ? boardData : boardData?.results || [];
+    const board = activeBoard || availableBoards[0] || null;
+    setBoards(availableBoards);
+    setActiveBoard((current) => current?.id === board?.id ? current : board);
+    const [statusData, categoryData, priorityData] = await Promise.all([
+      getBoardStatuses(board?.id),
+      getCategories(board?.id),
+      getPriorities(),
+    ]);
+    const rawStatuses = (Array.isArray(statusData) ? statusData : statusData?.results || []);
+    const boardId = board?.id;
+    const scopedStatuses = rawStatuses.map((s) => {
+      const sBoardId = s.board_id ?? s.board?.id ?? s.board ?? boardId;
+      if (sBoardId && s.id) {
+        setStoredStatusBoard(s.id, sBoardId);
+      }
+      return { ...s, board_id: sBoardId };
+    });
+    setStatuses(scopedStatuses.sort((first, second) => Number(first.position || 0) - Number(second.position || 0)));
+
+    const rawCategories = Array.isArray(categoryData) ? categoryData : categoryData?.results || [];
+    const scopedCategories = rawCategories.map((c) => {
+      const cBoardId = c.board_id ?? c.board?.id ?? c.board ?? boardId;
+      if (cBoardId && c.id) {
+        setStoredCategoryBoard(c.id, cBoardId);
+      }
+      return { ...c, board_id: cBoardId };
+    });
+    setCategories(scopedCategories);
     const availablePriorities = Array.isArray(priorityData) ? priorityData : priorityData?.results || [];
-    setPriorities(availablePriorities.map((priority, index) => {
-      if (typeof priority === 'string') return priority;
-      return ['low', 'medium', 'high'][index] || String(priority);
+    setPriorities(availablePriorities.map((priority) => {
+      const value = Number(priority);
+      return ['low', 'medium', 'high', 'critical'][value - 1] || String(priority);
     }));
+  }, [activeBoard]);
+
+  const addCategory = useCallback(async (payload) => {
+    const categoryPayload = typeof payload === 'string' ? { name: payload } : payload;
+    const name = categoryPayload.name;
+    if (!activeBoard?.id || !name.trim()) return null;
+    const category = await createCategory({ board_id: activeBoard.id, ...categoryPayload, name: name.trim() });
+    const createdCategory = { board_id: activeBoard.id, ...category };
+    if (createdCategory?.id) {
+      setStoredCategoryBoard(createdCategory.id, activeBoard.id);
+    }
+    setCategories((current) => [...current, createdCategory]);
+    return createdCategory;
+  }, [activeBoard]);
+
+  const addStatus = useCallback(async (payload) => {
+    const statusPayload = typeof payload === 'string' ? { name: payload } : payload;
+    const name = statusPayload.name;
+    if (!activeBoard?.id || !name.trim()) return null;
+    const currentBoardStatuses = statuses.filter((s) => String(s.board_id) === String(activeBoard.id));
+    const nextPosition = statusPayload.position || currentBoardStatuses.length + 1;
+    const status = await createBoardStatus({
+      board_id: activeBoard.id,
+      ...statusPayload,
+      name: name.trim(),
+      position: nextPosition,
+      order: nextPosition,
+    });
+    const createdStatus = { board_id: activeBoard.id, position: nextPosition, order: nextPosition, ...status };
+    if (createdStatus?.id) {
+      setStoredStatusBoard(createdStatus.id, activeBoard.id);
+    }
+    setStatuses((current) => [...current.filter((s) => String(s.id) !== String(createdStatus.id)), createdStatus]);
+    return createdStatus;
+  }, [activeBoard, statuses]);
+
+  const saveStatusOrder = useCallback(async (orderedStatuses) => {
+    const boardId = activeBoard?.id;
+    const normalized = orderedStatuses.map((status, index) => ({
+      ...status,
+      position: index + 1,
+      order: index + 1,
+      board_id: status.board_id ?? boardId,
+    }));
+
+    setStatuses((current) => {
+      const reorderedIds = new Set(normalized.map((s) => String(s.id)));
+      const others = current.filter((s) => !reorderedIds.has(String(s.id)));
+      return [...others, ...normalized];
+    });
+
+    if (boardId) {
+      await saveBoardStatusesOrder(boardId, normalized).catch(() => {});
+    }
+
+    await Promise.all(
+      normalized.map((status) =>
+        updateBoardStatus(status.id, {
+          position: status.position,
+          order: status.order,
+          board_id: status.board_id ?? boardId,
+          name: status.name,
+        })
+      )
+    ).catch(() => {});
+  }, [activeBoard]);
+
+  const createBoardForUser = useCallback(async (payload) => {
+    const board = await createBoard(payload);
+    setBoards((current) => [...current, board]);
+    setActiveBoard(board);
+    return board;
+  }, []);
+
+  const saveBoard = useCallback(async (id, payload) => {
+    const board = await updateBoard(id, payload);
+    setBoards((current) => current.map((item) => item.id === id ? { ...item, ...board } : item));
+    setActiveBoard((current) => current?.id === id ? { ...current, ...board } : current);
+    return board;
   }, []);
 
   const createTask = useCallback(async (payload) => {
-    const task = await createTaskRequest(payload);
-    setTasks((current) => [...current, task]);
-    setCalendarTasks((current) => [...current, task]);
+    const boardId = activeBoard?.id;
+    const taskPayload = {
+      ...(boardId ? { board: boardId, board_id: boardId } : {}),
+      ...payload,
+    };
+    const task = await createTaskRequest(taskPayload);
+    const createdTask = {
+      ...(boardId ? { board: boardId, board_id: boardId } : {}),
+      ...task,
+    };
+    if (boardId && createdTask?.id) {
+      setStoredTaskBoard(createdTask.id, boardId);
+    }
+    setTasks((current) => [...current, createdTask]);
+    setCalendarTasks((current) => [...current, createdTask]);
     getOverdueTasks().then((data) => setOverdueTasks(taskList(data))).catch((error) => {
       console.error('Unable to refresh overdue tasks:', error);
     });
-    return task;
-  }, []);
+    return createdTask;
+  }, [activeBoard]);
 
   const updateTask = useCallback(async (id, payload) => {
-    const task = await updateTaskRequest(id, payload);
-    setTasks((current) => current.map((item) => (item.id === id ? { ...item, ...task } : item)));
-    setCalendarTasks((current) => current.map((item) => (item.id === id ? { ...item, ...task } : item)));
+    const currentTask = tasks.find((item) => item.id === id);
+    const boardId = currentTask?.board_id ?? currentTask?.board ?? activeBoard?.id;
+    const task = await updateTaskRequest(id, {
+      ...(boardId ? { board: boardId, board_id: boardId } : {}),
+      ...payload,
+    });
+    const updatedTask = {
+      ...(boardId ? { board: boardId, board_id: boardId } : {}),
+      ...task,
+    };
+    if (boardId) {
+      setStoredTaskBoard(id, boardId);
+    }
+    setTasks((current) => current.map((item) => (item.id === id ? { ...item, ...updatedTask } : item)));
+    setCalendarTasks((current) => current.map((item) => (item.id === id ? { ...item, ...updatedTask } : item)));
     getOverdueTasks().then((data) => setOverdueTasks(taskList(data))).catch((error) => {
       console.error('Unable to refresh overdue tasks:', error);
     });
-    return task;
+    return updatedTask;
+  }, [activeBoard, tasks]);
+
+  const setTaskStatus = useCallback(async (id, statusOrName, statusId) => {
+    const statusName = typeof statusOrName === 'string' ? statusOrName : statusOrName?.name;
+    const resolvedStatusId = statusId ?? (typeof statusOrName === 'object' ? statusOrName?.id : undefined);
+
+    let task;
+    try {
+      task = await setTaskStatusRequest(id, statusName);
+    } catch (setStatusError) {
+      if (resolvedStatusId !== undefined) {
+        task = await updateTaskRequest(id, { status_id: resolvedStatusId });
+      } else {
+        throw setStatusError;
+      }
+    }
+
+    const updatedTaskPatch = {
+      ...task,
+      ...(resolvedStatusId !== undefined ? { status_id: resolvedStatusId } : {}),
+      ...(statusName ? { status_name: statusName } : {}),
+    };
+
+    setTasks((current) => current.map((item) => (item.id === id ? { ...item, ...updatedTaskPatch } : item)));
+    setCalendarTasks((current) => current.map((item) => (item.id === id ? { ...item, ...updatedTaskPatch } : item)));
+    return updatedTaskPatch;
   }, []);
 
   const deleteTask = useCallback(async (id) => {
     await deleteTaskRequest(id);
+    removeStoredTaskBoard(id);
     setTasks((current) => current.filter((item) => item.id !== id));
     setCalendarTasks((current) => current.filter((item) => item.id !== id));
     getOverdueTasks().then((data) => setOverdueTasks(taskList(data))).catch((error) => {
@@ -92,7 +258,7 @@ export function TaskProvider({ children }) {
   }, []);
 
   return (
-    <TaskContext.Provider value={{ tasks, overdueTasks, calendarTasks, statuses, categories, priorities, loading, loadTasks, loadCalendarTasks, loadMetadata, createTask, updateTask, deleteTask }}>
+    <TaskContext.Provider value={{ tasks, overdueTasks, calendarTasks, statuses, categories, priorities, boards, activeBoard, setActiveBoard, loading, loadTasks, loadCalendarTasks, loadMetadata, addCategory, addStatus, saveStatusOrder, createBoardForUser, saveBoard, createTask, updateTask, setTaskStatus, deleteTask }}>
       {children}
     </TaskContext.Provider>
   );

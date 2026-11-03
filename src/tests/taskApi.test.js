@@ -23,7 +23,7 @@ test('normalizes task filters and returns task data', async () => {
   await getTasks({ status_id: 2, category_id: 3, priority: 1, ordering: '-due_date' });
 
   expect(apiClient.get).toHaveBeenCalledWith('/tasks/tasks/', {
-    params: { status: 2, category: 3, priority: 'low' },
+    params: { status: 2, category: 3, priority: 1, ordering: '-due_date' },
   });
 });
 

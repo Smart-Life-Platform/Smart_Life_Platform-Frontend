@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { loginUser, registerUser } from '../api/authApi';
+import { clearStoredAuth, readStoredAuth, storeAuth } from '../auth/authStorage';
 
 const AuthContext = createContext(null);
 
@@ -9,6 +11,11 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let mounted = true;
+    const storedAuth = readStoredAuth();
+    if (storedAuth?.access_token) {
+      setSession(storedAuth);
+      setLoading(false);
+    }
 
     supabase.auth.getSession().then(({ data, error }) => {
       if (!mounted) return;
@@ -18,7 +25,7 @@ export function AuthProvider({ children }) {
       }
 
       if (mounted) {
-        setSession(data.session);
+        if (data.session || !storedAuth?.access_token) setSession(data.session);
         setLoading(false);
       }
     }).catch(() => {
@@ -30,7 +37,7 @@ export function AuthProvider({ children }) {
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (mounted) {
-        setSession(nextSession);
+        if (nextSession || !readStoredAuth()?.access_token) setSession(nextSession);
         setLoading(false);
       }
     });
@@ -43,30 +50,32 @@ export function AuthProvider({ children }) {
 
   const signIn = useCallback(
     async ({ email, password }) => {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      const auth = await loginUser({ email, password });
+      if (!auth?.access_token) throw new Error('Відповідь API не містить access token.');
+      storeAuth(auth);
+      setSession(auth);
+      return auth;
     },
     []
   );
 
   const signUp = useCallback(
     async ({ email, password }) => {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { username: email } },
-      });
-      if (error) throw error;
-      if (!data.session) {
-        throw new Error('Реєстрацію завершено. Підтвердіть email і увійдіть.');
+      const auth = await registerUser({ email, password, username: email });
+      if (auth?.access_token) {
+        storeAuth(auth);
+        setSession(auth);
       }
+      return auth;
     },
     []
   );
 
   const signOut = useCallback(async () => {
+    clearStoredAuth();
+    setSession(null);
     const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    if (error && error.status !== 401) throw error;
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
@@ -75,6 +84,15 @@ export function AuthProvider({ children }) {
       options: { redirectTo: `${window.location.origin}/planner` },
     });
     if (error) throw error;
+  }, []);
+
+  const updateProfile = useCallback(async ({ name }) => {
+    const trimmedName = name.trim();
+    if (!trimmedName) throw new Error('Вкажіть імʼя.');
+    const { data, error } = await supabase.auth.updateUser({ data: { full_name: trimmedName, name: trimmedName, username: trimmedName } });
+    if (error) throw error;
+    setSession((current) => current ? { ...current, user: data.user } : current);
+    return data.user;
   }, []);
 
   const value = useMemo(
@@ -88,8 +106,9 @@ export function AuthProvider({ children }) {
       signUp,
       signOut,
       signInWithGoogle,
+      updateProfile,
     }),
-    [loading, session, signIn, signInWithGoogle, signOut, signUp]
+    [loading, session, signIn, signInWithGoogle, signOut, signUp, updateProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

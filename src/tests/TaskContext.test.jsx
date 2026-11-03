@@ -8,6 +8,8 @@ jest.mock('../api/tasksApi', () => ({
 }));
 jest.mock('../api/categoriesApi', () => ({ getCategories: jest.fn() }));
 jest.mock('../api/statusesApi', () => ({ getStatuses: jest.fn() }));
+jest.mock('../api/boardsApi', () => ({ getBoards: jest.fn() }));
+jest.mock('../api/boardStatusesApi', () => ({ getBoardStatuses: jest.fn() }));
 jest.mock('../api/prioritiesApi', () => ({ getPriorities: jest.fn() }));
 
 beforeEach(() => {
