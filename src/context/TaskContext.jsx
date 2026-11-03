@@ -1,35 +1,63 @@
-import { createContext, useCallback, useContext, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { deleteTask as deleteTaskRequest, getOverdueTasks, getTasks, getTasksByDay, getTasksByMonth, getTasksByWeek, createTask as createTaskRequest, updateTask as updateTaskRequest, setTaskStatus as setTaskStatusRequest } from '../api/tasksApi';
 import { createBoard, getBoards, updateBoard } from '../api/boardsApi';
 import { createCategory, getCategories } from '../api/categoriesApi';
-import { createBoardStatus, getBoardStatuses, updateBoardStatus, saveBoardStatusesOrder } from '../api/boardStatusesApi';
+import { createBoardStatus, getAllBoardStatuses, updateBoardStatus, saveBoardStatusesOrder } from '../api/boardStatusesApi';
 import { getPriorities } from '../api/prioritiesApi';
 import {
   setStoredTaskBoard,
   removeStoredTaskBoard,
   setStoredCategoryBoard,
   setStoredStatusBoard,
+  statusBelongsToBoard,
+  categoryBelongsToBoard,
 } from '../utils/boardScope';
 
 const TaskContext = createContext(null);
+
+const listOf = (data) => (Array.isArray(data) ? data : data?.results || []);
 
 function taskList(data) {
   if (Array.isArray(data)) return data;
   return data?.results || data?.tasks || data?.overdue_tasks || [];
 }
 
+const boardIdOf = (item) => {
+  const board = item?.board_id ?? item?.board;
+  if (board === undefined || board === null || board === '') return null;
+  return typeof board === 'object' ? board.id ?? null : board;
+};
+
+const byPosition = (first, second) =>
+  Number(first.position ?? first.order ?? 0) - Number(second.position ?? second.order ?? 0);
+
 export function TaskProvider({ children }) {
   const [tasks, setTasks] = useState([]);
   const [overdueTasks, setOverdueTasks] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [statuses, setStatuses] = useState([]);
-  const [categories, setCategories] = useState([]);
+  // Full lists for every board. `statuses` and `categories` below expose only the
+  // active board, so switching boards is a local operation with no extra requests.
+  const [allStatuses, setAllStatuses] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
   const [priorities, setPriorities] = useState([]);
   const [boards, setBoards] = useState([]);
   const [activeBoard, setActiveBoard] = useState(null);
   const [calendarTasks, setCalendarTasks] = useState([]);
   const taskRequestId = useRef(0);
   const calendarRequestId = useRef(0);
+
+  const activeBoardId = activeBoard?.id;
+  const defaultBoardId = boards[0]?.id;
+
+  const statuses = useMemo(() => {
+    if (!activeBoardId) return allStatuses;
+    return allStatuses.filter((status) => statusBelongsToBoard(status, activeBoardId, defaultBoardId));
+  }, [allStatuses, activeBoardId, defaultBoardId]);
+
+  const categories = useMemo(() => {
+    if (!activeBoardId) return allCategories;
+    return allCategories.filter((category) => categoryBelongsToBoard(category, activeBoardId, defaultBoardId));
+  }, [allCategories, activeBoardId, defaultBoardId]);
 
   const loadTasks = useCallback(async (params) => {
     const requestId = ++taskRequestId.current;
@@ -60,43 +88,49 @@ export function TaskProvider({ children }) {
     if (requestId === calendarRequestId.current) setCalendarTasks(taskList(data));
   }, [activeBoard]);
 
+  /**
+   * Loads every list once. Deliberately independent of `activeBoard`: re-running it
+   * on each board change was the source of the repeated request bursts. Statuses and
+   * categories arrive for all boards and are filtered locally by `board`.
+   */
   const loadMetadata = useCallback(async () => {
     const boardData = await getBoards();
-    const availableBoards = Array.isArray(boardData) ? boardData : boardData?.results || [];
-    const board = activeBoard || availableBoards[0] || null;
+    const availableBoards = listOf(boardData);
     setBoards(availableBoards);
-    setActiveBoard((current) => current?.id === board?.id ? current : board);
+
+    setActiveBoard((current) => {
+      if (!current) return availableBoards[0] || null;
+      return availableBoards.some((board) => String(board.id) === String(current.id))
+        ? current
+        : availableBoards[0] || null;
+    });
+
     const [statusData, categoryData, priorityData] = await Promise.all([
-      getBoardStatuses(board?.id),
-      getCategories(board?.id),
+      getAllBoardStatuses(),
+      getCategories(),
       getPriorities(),
     ]);
-    const rawStatuses = (Array.isArray(statusData) ? statusData : statusData?.results || []);
-    const boardId = board?.id;
-    const scopedStatuses = rawStatuses.map((s) => {
-      const sBoardId = s.board_id ?? s.board?.id ?? s.board ?? boardId;
-      if (sBoardId && s.id) {
-        setStoredStatusBoard(s.id, sBoardId);
-      }
-      return { ...s, board_id: sBoardId };
-    });
-    setStatuses(scopedStatuses.sort((first, second) => Number(first.position || 0) - Number(second.position || 0)));
 
-    const rawCategories = Array.isArray(categoryData) ? categoryData : categoryData?.results || [];
-    const scopedCategories = rawCategories.map((c) => {
-      const cBoardId = c.board_id ?? c.board?.id ?? c.board ?? boardId;
-      if (cBoardId && c.id) {
-        setStoredCategoryBoard(c.id, cBoardId);
-      }
-      return { ...c, board_id: cBoardId };
+    const nextStatuses = listOf(statusData).map((status) => {
+      const boardId = boardIdOf(status);
+      if (boardId && status.id) setStoredStatusBoard(status.id, boardId);
+      return { ...status, board_id: boardId };
     });
-    setCategories(scopedCategories);
-    const availablePriorities = Array.isArray(priorityData) ? priorityData : priorityData?.results || [];
+    setAllStatuses(nextStatuses.sort(byPosition));
+
+    const nextCategories = listOf(categoryData).map((category) => {
+      const boardId = boardIdOf(category);
+      if (boardId && category.id) setStoredCategoryBoard(category.id, boardId);
+      return { ...category, board_id: boardId };
+    });
+    setAllCategories(nextCategories);
+
+    const availablePriorities = listOf(priorityData);
     setPriorities(availablePriorities.map((priority) => {
       const value = Number(priority);
       return ['low', 'medium', 'high', 'critical'][value - 1] || String(priority);
     }));
-  }, [activeBoard]);
+  }, []);
 
   const addCategory = useCallback(async (payload) => {
     const categoryPayload = typeof payload === 'string' ? { name: payload } : payload;
@@ -107,7 +141,7 @@ export function TaskProvider({ children }) {
     if (createdCategory?.id) {
       setStoredCategoryBoard(createdCategory.id, activeBoard.id);
     }
-    setCategories((current) => [...current, createdCategory]);
+    setAllCategories((current) => [...current, createdCategory]);
     return createdCategory;
   }, [activeBoard]);
 
@@ -115,8 +149,7 @@ export function TaskProvider({ children }) {
     const statusPayload = typeof payload === 'string' ? { name: payload } : payload;
     const name = statusPayload.name;
     if (!activeBoard?.id || !name.trim()) return null;
-    const currentBoardStatuses = statuses.filter((s) => String(s.board_id) === String(activeBoard.id));
-    const nextPosition = statusPayload.position || currentBoardStatuses.length + 1;
+    const nextPosition = statusPayload.position || statuses.length + 1;
     const status = await createBoardStatus({
       board_id: activeBoard.id,
       ...statusPayload,
@@ -124,11 +157,13 @@ export function TaskProvider({ children }) {
       position: nextPosition,
       order: nextPosition,
     });
-    const createdStatus = { board_id: activeBoard.id, position: nextPosition, order: nextPosition, ...status };
+    const createdStatus = { ...status, board_id: status.board_id ?? activeBoard.id };
     if (createdStatus?.id) {
       setStoredStatusBoard(createdStatus.id, activeBoard.id);
     }
-    setStatuses((current) => [...current.filter((s) => String(s.id) !== String(createdStatus.id)), createdStatus]);
+    setAllStatuses((current) =>
+      [...current.filter((item) => String(item.id) !== String(createdStatus.id)), createdStatus].sort(byPosition)
+    );
     return createdStatus;
   }, [activeBoard, statuses]);
 
@@ -141,27 +176,34 @@ export function TaskProvider({ children }) {
       board_id: status.board_id ?? boardId,
     }));
 
-    setStatuses((current) => {
-      const reorderedIds = new Set(normalized.map((s) => String(s.id)));
-      const others = current.filter((s) => !reorderedIds.has(String(s.id)));
-      return [...others, ...normalized];
-    });
+    const previousPositions = new Map(
+      statuses.map((status) => [String(status.id), Number(status.position ?? status.order ?? 0)])
+    );
+    const positionsById = new Map(normalized.map((status) => [String(status.id), status]));
+    setAllStatuses((current) =>
+      current.map((status) => {
+        const next = positionsById.get(String(status.id));
+        return next ? { ...status, ...next } : status;
+      })
+    );
 
-    if (boardId) {
-      await saveBoardStatusesOrder(boardId, normalized).catch(() => {});
-    }
+    await saveBoardStatusesOrder(boardId, normalized).catch(() => {});
 
+    // Only statuses whose position actually changed are sent to the backend.
+    const changed = normalized.filter(
+      (status) => previousPositions.get(String(status.id)) !== status.position
+    );
     await Promise.all(
-      normalized.map((status) =>
+      changed.map((status) =>
         updateBoardStatus(status.id, {
           position: status.position,
           order: status.order,
           board_id: status.board_id ?? boardId,
           name: status.name,
-        })
+        }).catch(() => {})
       )
-    ).catch(() => {});
-  }, [activeBoard]);
+    );
+  }, [activeBoard, statuses]);
 
   const createBoardForUser = useCallback(async (payload) => {
     const board = await createBoard(payload);
@@ -257,11 +299,37 @@ export function TaskProvider({ children }) {
     });
   }, []);
 
-  return (
-    <TaskContext.Provider value={{ tasks, overdueTasks, calendarTasks, statuses, categories, priorities, boards, activeBoard, setActiveBoard, loading, loadTasks, loadCalendarTasks, loadMetadata, addCategory, addStatus, saveStatusOrder, createBoardForUser, saveBoard, createTask, updateTask, setTaskStatus, deleteTask }}>
-      {children}
-    </TaskContext.Provider>
-  );
+  const value = useMemo(() => ({
+    tasks,
+    overdueTasks,
+    calendarTasks,
+    statuses,
+    categories,
+    priorities,
+    boards,
+    activeBoard,
+    setActiveBoard,
+    loading,
+    loadTasks,
+    loadCalendarTasks,
+    loadMetadata,
+    addCategory,
+    addStatus,
+    saveStatusOrder,
+    createBoardForUser,
+    saveBoard,
+    createTask,
+    updateTask,
+    setTaskStatus,
+    deleteTask,
+  }), [
+    tasks, overdueTasks, calendarTasks, statuses, categories, priorities, boards,
+    activeBoard, loading, loadTasks, loadCalendarTasks, loadMetadata, addCategory,
+    addStatus, saveStatusOrder, createBoardForUser, saveBoard, createTask, updateTask,
+    setTaskStatus, deleteTask,
+  ]);
+
+  return <TaskContext.Provider value={value}>{children}</TaskContext.Provider>;
 }
 
 export function useTaskContext() {

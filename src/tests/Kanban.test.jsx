@@ -5,7 +5,8 @@ import TaskCard from '../components/kanban/TaskCard';
 import TaskDetailsPopover from '../components/kanban/TaskDetailsPopover';
 import DropZone from '../components/kanban/DropZone';
 import MetadataModal from '../components/kanban/MetadataModal';
-import { getBoardStatuses, createBoardStatus } from '../api/boardStatusesApi';
+import { getBoardStatuses, createBoardStatus, invalidateBoardStatuses } from '../api/boardStatusesApi';
+import { apiClient } from '../api/apiClient';
 import {
   taskBelongsToBoard,
   statusBelongsToBoard,
@@ -260,24 +261,33 @@ describe('Board Scoping Logic', () => {
     expect(categoryBelongsToBoard(globalCategory, 2, 1)).toBe(false);
   });
 
-  test('second board statuses API returns empty array initially, and only its own statuses when added', async () => {
-    window.localStorage.setItem('avenor_boards', JSON.stringify([
-      { id: 1, name: 'Board 1' },
-      { id: 2, name: 'Board 2' },
-    ]));
+  test('statuses are matched by their own board field and never leak between boards', async () => {
+    // The endpoint returns every status of the user, each one carrying its own board.
+    apiClient.get.mockImplementation((url) => {
+      if (url === '/tasks/board-statuses/') {
+        return Promise.resolve({
+          data: [
+            { id: 1, board: 1, name: 'To Do', position: 1 },
+            { id: 2, board: 2, name: 'Backlog', position: 1 },
+          ],
+        });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    apiClient.post.mockResolvedValue({ data: { id: 9, board: 2, name: 'Review', position: 2 } });
 
-    // Board 2 initially has NO statuses
-    const board2Statuses = await getBoardStatuses(2);
-    expect(board2Statuses).toEqual([]);
+    invalidateBoardStatuses();
 
-    // Board 1 gets default statuses
-    const board1Statuses = await getBoardStatuses(1);
-    expect(board1Statuses.length).toBeGreaterThan(0);
+    expect((await getBoardStatuses(1)).map((status) => status.id)).toEqual([1]);
+    expect((await getBoardStatuses(2)).map((status) => status.id)).toEqual([2]);
 
-    // When status is created on Board 2, only Board 2 has it
-    await createBoardStatus({ board_id: 2, name: 'Backlog', position: 1 });
-    const updatedBoard2Statuses = await getBoardStatuses(2);
-    expect(updatedBoard2Statuses.length).toBe(1);
-    expect(updatedBoard2Statuses[0].name).toBe('Backlog');
+    // A status created on board 2 belongs to board 2 only.
+    await createBoardStatus({ board_id: 2, name: 'Review', position: 2 });
+
+    expect((await getBoardStatuses(2)).map((status) => status.id)).toEqual([2, 9]);
+    expect((await getBoardStatuses(1)).map((status) => status.id)).toEqual([1]);
+
+    // Every board is served from the same single list request.
+    expect(apiClient.get).toHaveBeenCalledTimes(1);
   });
 });

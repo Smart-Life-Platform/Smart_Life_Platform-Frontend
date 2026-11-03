@@ -29,7 +29,7 @@ export default function AuthForm() {
   return (
     <main className="auth-page">
       <section className="auth-card">
-        <img className="auth-logo" src={logo} alt="Avenor" />
+        {/* <img className="auth-logo" src={logo} alt="Avenor" /> */}
         <h1>{isRegister ? 'Create your account' : 'Welcome back'}</h1>
         <p className="auth-subtitle">{isRegister ? 'Start planning your days with clarity.' : 'Sign in to continue to your planner.'}</p>
         <form onSubmit={submit}>

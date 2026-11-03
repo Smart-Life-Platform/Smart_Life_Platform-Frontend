@@ -9,12 +9,13 @@ import NotFoundPage from '../pages/NotFoundPage';
 import BudgetPage from '../pages/BudgetPage';
 import SettingsPage from '../pages/SettingsPage';
 import ProfilePage from '../pages/ProfilePage';
+import AuthCallbackPage from '../pages/AuthCallbackPage';
 import { TaskProvider } from '../context/TaskContext';
 import WorkspaceHeader from '../components/layout/WorkspaceHeader';
 
 function SiteLayout() {
   const location = useLocation();
-  const isAuthPage = ['/login', '/register'].includes(location.pathname);
+  const isAuthPage = ['/login', '/register', '/auth/callback'].includes(location.pathname);
   return <TaskProvider><Header /><main className={`site-content${isAuthPage ? ' auth-content' : ''}`}>{!isAuthPage && <WorkspaceHeader />}<Outlet /></main></TaskProvider>;
 }
 
@@ -22,8 +23,12 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route element={<SiteLayout />}>
+        {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        {/* OAuth callback — must be outside ProtectedRoute so the session can be hydrated first */}
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
+        {/* Protected routes */}
         <Route element={<ProtectedRoute />}>
           <Route>
             <Route path="/" element={<Navigate to="/planner" replace />} />
