@@ -1,7 +1,6 @@
 import { UilBell, UilSearch } from '@iconscout/react-unicons';
 import { useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import Avatar from '../common/Avatar';
+import UserMenu from './UserMenu';
 import '../../styles/avenor.css';
 
 const pageNames = {
@@ -14,7 +13,6 @@ const pageNames = {
 
 export default function WorkspaceHeader() {
   const location = useLocation();
-  const { user } = useAuth();
   const pageName = pageNames[location.pathname] || 'Smart Life';
 
   return (
@@ -23,7 +21,7 @@ export default function WorkspaceHeader() {
       <div className="workspace-actions">
         <div className="global-search"><UilSearch size="16" /><input placeholder="Search anything..." aria-label="Search anything" /></div>
         <button className="icon-button" aria-label="Notifications"><UilBell size="15" /></button>
-        <button className="header-avatar header-avatar-image" aria-label="User account"><Avatar user={user} size={25} /></button>
+        <UserMenu variant="header" size={26} />
       </div>
     </header>
   );

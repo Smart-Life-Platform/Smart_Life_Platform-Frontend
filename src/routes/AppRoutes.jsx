@@ -11,12 +11,16 @@ import SettingsPage from '../pages/SettingsPage';
 import ProfilePage from '../pages/ProfilePage';
 import AuthCallbackPage from '../pages/AuthCallbackPage';
 import { TaskProvider } from '../context/TaskContext';
+import { useAuth } from '../context/AuthContext';
 import WorkspaceHeader from '../components/layout/WorkspaceHeader';
 
 function SiteLayout() {
   const location = useLocation();
+  const { user } = useAuth();
   const isAuthPage = ['/login', '/register', '/auth/callback'].includes(location.pathname);
-  return <TaskProvider><Header /><main className={`site-content${isAuthPage ? ' auth-content' : ''}`}>{!isAuthPage && <WorkspaceHeader />}<Outlet /></main></TaskProvider>;
+  // Re-mount the task store when the account changes, so boards, statuses and tasks
+  // of the previous account cannot survive in memory.
+  return <TaskProvider key={user?.id || 'anonymous'}><Header /><main className={`site-content${isAuthPage ? ' auth-content' : ''}`}>{!isAuthPage && <WorkspaceHeader />}<Outlet /></main></TaskProvider>;
 }
 
 export default function AppRoutes() {

@@ -1,6 +1,5 @@
 import { apiClient } from './apiClient';
-
-const priorityIds = { low: 1, medium: 2, high: 3, critical: 4 };
+import { priorityName } from '../utils/priority';
 
 function normalizeRelationId(value) {
   if (Array.isArray(value)) return normalizeRelationId(value[0]);
@@ -14,8 +13,11 @@ function normalizeRelationId(value) {
 function normalizeTaskPayload(payload) {
   const normalized = { ...payload };
 
-  if (typeof normalized.priority === 'string') {
-    normalized.priority = priorityIds[normalized.priority.toLowerCase()] || normalized.priority;
+  if ('priority' in normalized) {
+    const name = priorityName(normalized.priority);
+    if (name) normalized.priority = name;
+    // Never send a value the API cannot validate — let the backend keep its default.
+    else delete normalized.priority;
   }
 
   if ('category_id' in normalized) {
@@ -41,8 +43,10 @@ function normalizeTaskParams(params) {
     normalized.category = normalized.category_id;
     delete normalized.category_id;
   }
-  if (typeof normalized.priority === 'string' && !/^\d+$/.test(normalized.priority)) {
-    normalized.priority = priorityIds[normalized.priority.toLowerCase()] || normalized.priority;
+  if (normalized.priority !== undefined) {
+    const name = priorityName(normalized.priority);
+    if (name) normalized.priority = name;
+    else delete normalized.priority;
   }
   Object.keys(normalized).forEach((key) => {
     if (normalized[key] === '') delete normalized[key];

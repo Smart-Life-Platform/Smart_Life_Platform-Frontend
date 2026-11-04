@@ -14,7 +14,7 @@ import {
 } from '@iconscout/react-unicons';
 import { useAuth } from '../../context/AuthContext';
 import { useTaskContext } from '../../context/TaskContext';
-// import { getDisplayName } from '../common/Avatar';
+import { getDisplayName } from '../common/Avatar';
 import UserMenu from './UserMenu';
 import logo from '../../assets/Logo.svg';
 
@@ -60,7 +60,7 @@ export default function Header() {
         <>
           <div className="workspace-switcher">
             <span className="workspace-icon">⌂</span>
-            <span><small>Personal space</small><strong>{activeBoard?.name || 'Select board'}</strong></span>
+            <span><small>Personal space of {displayName}</small><strong>{activeBoard?.name || 'Select board'}</strong></span>
             <button className="workspace-chevron" aria-label="Select board">⌄</button>
             <select className="board-selector" value={activeBoard?.id || ''} onChange={(event) => {
               const board = boards.find((item) => String(item.id) === event.target.value);

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { supabase } from '../lib/supabase';
-import { AUTH_STORAGE_KEY } from '../auth/authStorage';
+import { AUTH_STORAGE_KEY, readStoredAuth } from '../auth/authStorage';
 
 const baseURL = (process.env.REACT_APP_API_BASE_URL || 'http://127.0.0.1:8000/api').replace(/\/+$/, '');
 
@@ -11,17 +11,18 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use(async (config) => {
-  const { data: { session }, error } = await supabase.auth.getSession();
-  if (error) return Promise.reject(error);
+  // The Django API authenticates with its own token (email + password login).
+  // The Supabase token is used only for OAuth users, who have no Django token.
+  // Preferring the Supabase session here would send a JWT the API cannot verify
+  // and every request would come back as 401.
+  let accessToken = readStoredAuth()?.access_token || null;
 
-  let accessToken = session?.access_token;
   if (!accessToken) {
-    try {
-      accessToken = JSON.parse(window.localStorage.getItem(AUTH_STORAGE_KEY) || 'null')?.access_token;
-    } catch {
-      accessToken = null;
-    }
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) return Promise.reject(error);
+    accessToken = session?.access_token || null;
   }
+
   if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
   return config;
 });

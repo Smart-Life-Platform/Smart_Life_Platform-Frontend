@@ -1,18 +1,32 @@
-.kanban-page .board-search {
+/* Board toolbar: the search field and the selects share one design (.board-control). */
+.board-search {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+  margin: 0; /* cancels the generic `label` rule from auth.css (margin-bottom: 16px) */
   color: var(--color-secondary);
 }
 
-.kanban-page .board-search input {
-  width: 90px;
-  padding: 3px 0;
-  border: 0;
+.board-search input {
+  flex: 0 0 auto;
+  width: 150px;
+  margin: 0; /* cancels the generic label input rule from auth.css */
   outline: 0;
   color: var(--color-text-primary);
-  background: transparent;
-  font-size: 9px;
+}
+
+.board-search input:focus {
+  border-color: var(--color-accent);
+}
+
+.board-search svg {
+  flex: 0 0 auto;
+}
+
+/* Keep the status columns slightly below the toolbar line. */
+.board-columns {
+  margin-top: 12px;
 }
 
 .kanban-page .priority-label {

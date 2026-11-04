@@ -23,10 +23,32 @@ test('normalizes task filters and returns task data', async () => {
   await getTasks({ status_id: 2, category_id: 3, priority: 1, ordering: '-due_date' });
 
   expect(apiClient.get).toHaveBeenCalledWith('/tasks/tasks/', {
-    params: { status: 2, category: 3, priority: 1, ordering: '-due_date' },
+    params: { status: 2, category: 3, priority: 'low', ordering: '-due_date' },
   });
 });
 
+test('sends priority as the choice name the API validates', async () => {
+  apiClient.post.mockResolvedValue({ data: { id: 1 } });
+
+  await createTask({ title: 'Test project', priority: 'high' });
+  expect(apiClient.post).toHaveBeenLastCalledWith('/tasks/tasks/', {
+    title: 'Test project',
+    priority: 'high',
+  });
+
+  // Older tasks (and /tasks/priorities/) use 1-based numbers.
+  await createTask({ title: 'Numeric priority', priority: 2 });
+  expect(apiClient.post).toHaveBeenLastCalledWith('/tasks/tasks/', {
+    title: 'Numeric priority',
+    priority: 'medium',
+  });
+
+  // A value the API cannot validate is dropped instead of being sent as is.
+  await createTask({ title: 'Unknown priority', priority: 'urgent' });
+  expect(apiClient.post).toHaveBeenLastCalledWith('/tasks/tasks/', {
+    title: 'Unknown priority',
+  });
+});
 test('normalizes relations when creating and updating tasks', async () => {
   apiClient.post.mockResolvedValue({ data: { id: 1 } });
   apiClient.put.mockResolvedValue({ data: { id: 1 } });

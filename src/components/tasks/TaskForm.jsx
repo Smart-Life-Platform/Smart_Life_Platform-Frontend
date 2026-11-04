@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { UilEditAlt, UilTimes } from '@iconscout/react-unicons';
+import { priorityName } from '../../utils/priority';
 
 const relationId = (value) => {
   if (Array.isArray(value)) return relationId(value[0]);
@@ -8,10 +9,6 @@ const relationId = (value) => {
   const id = Number(value);
   return Number.isInteger(id) ? id : '';
 };
-const priorityValue = (value) => {
-  if (typeof value === 'number') return ['low', 'medium', 'high', 'critical'][value - 1] || 'medium';
-  return value || 'medium';
-};
 
 export default function TaskForm({ date, task, statuses, categories, onClose, onSubmit }) {
   const [form, setForm] = useState({
@@ -19,7 +16,7 @@ export default function TaskForm({ date, task, statuses, categories, onClose, on
     description: task?.description || '',
     due_date: task?.due_date || date,
     due_time: task?.due_time?.slice(0, 5) || '09:00',
-    priority: priorityValue(task?.priority),
+    priority: priorityName(task?.priority) || 'medium',
     status_id: relationId(task?.status_id ?? task?.status?.id ?? task?.status ?? statuses[0]?.id),
     category_id: relationId(task?.category_id ?? task?.category?.id ?? task?.category),
   });

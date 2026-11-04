@@ -28,6 +28,7 @@ export default function KanbanToolbar({
         <label className="board-search">
           <UilSearch size="15" />
           <input
+            className="board-control"
             value={filters.search}
             onChange={onFilterChange('search')}
             placeholder="Search tasks"
@@ -35,6 +36,7 @@ export default function KanbanToolbar({
         </label>
 
         <select
+          className="board-control"
           value={filters.status}
           onChange={onFilterChange('status')}
           aria-label="Filter by status"
@@ -48,6 +50,7 @@ export default function KanbanToolbar({
         </select>
 
         <select
+          className="board-control"
           value={filters.category}
           onChange={onFilterChange('category')}
           aria-label="Filter by category"
@@ -61,6 +64,7 @@ export default function KanbanToolbar({
         </select>
 
         <select
+          className="board-control"
           value={filters.priority}
           onChange={onFilterChange('priority')}
           aria-label="Filter by priority"
@@ -74,6 +78,7 @@ export default function KanbanToolbar({
         </select>
 
         <select
+          className="board-control"
           value={filters.ordering}
           onChange={onFilterChange('ordering')}
           aria-label="Sort tasks"
