@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import GoogleLoginButton from './GoogleLoginButton';
-import logo from '../../assets/Logo.svg';
+// import logo from '../../assets/Logo.svg';
 
 export default function AuthForm() {
   const isRegister = useLocation().pathname === '/register';

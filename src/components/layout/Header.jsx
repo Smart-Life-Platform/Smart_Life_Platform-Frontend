@@ -14,7 +14,7 @@ import {
 } from '@iconscout/react-unicons';
 import { useAuth } from '../../context/AuthContext';
 import { useTaskContext } from '../../context/TaskContext';
-import { getDisplayName } from '../common/Avatar';
+// import { getDisplayName } from '../common/Avatar';
 import UserMenu from './UserMenu';
 import logo from '../../assets/Logo.svg';
 
