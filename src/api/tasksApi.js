@@ -1,6 +1,5 @@
 import { apiClient } from './apiClient';
-
-const priorityValues = ['low', 'medium', 'high'];
+import { priorityName } from '../utils/priority';
 
 function normalizeRelationId(value) {
   if (Array.isArray(value)) return normalizeRelationId(value[0]);
@@ -14,11 +13,21 @@ function normalizeRelationId(value) {
 function normalizeTaskPayload(payload) {
   const normalized = { ...payload };
 
+  if ('priority' in normalized) {
+    const name = priorityName(normalized.priority);
+    if (name) normalized.priority = name;
+    // Never send a value the API cannot validate — let the backend keep its default.
+    else delete normalized.priority;
+  }
+
   if ('category_id' in normalized) {
     normalized.category_id = normalizeRelationId(normalized.category_id);
   }
   if ('status_id' in normalized) {
     normalized.status_id = normalizeRelationId(normalized.status_id);
+  }
+  if (normalized.due_time && /^\d{2}:\d{2}$/.test(normalized.due_time)) {
+    normalized.due_time = `${normalized.due_time}:00`;
   }
 
   return normalized;
@@ -34,15 +43,19 @@ function normalizeTaskParams(params) {
     normalized.category = normalized.category_id;
     delete normalized.category_id;
   }
-  if (typeof normalized.priority === 'number' || /^\d+$/.test(String(normalized.priority || ''))) {
-    normalized.priority = priorityValues[Number(normalized.priority) - 1] || normalized.priority;
+  if (normalized.priority !== undefined) {
+    const name = priorityName(normalized.priority);
+    if (name) normalized.priority = name;
+    else delete normalized.priority;
   }
+  Object.keys(normalized).forEach((key) => {
+    if (normalized[key] === '') delete normalized[key];
+  });
   return normalized;
 }
 
 export const getTasks = (params = {}) => {
   const normalizedParams = normalizeTaskParams(params);
-  delete normalizedParams.ordering;
   return apiClient.get('/tasks/tasks/', { params: normalizedParams }).then((response) => response.data);
 };
 export const getOverdueTasks = () => apiClient.get('/tasks/tasks/overdue/').then((response) => response.data);
@@ -52,3 +65,5 @@ export const getTasksByMonth = (params = {}) => apiClient.get('/tasks/tasks/by_m
 export const createTask = (payload) => apiClient.post('/tasks/tasks/', normalizeTaskPayload(payload)).then((response) => response.data);
 export const updateTask = (id, payload) => apiClient.put(`/tasks/tasks/${id}/`, normalizeTaskPayload(payload)).then((response) => response.data);
 export const deleteTask = (id) => apiClient.delete(`/tasks/tasks/${id}/`);
+export const completeTask = (id) => apiClient.post(`/tasks/tasks/${id}/complete/`).then((response) => response.data);
+export const setTaskStatus = (id, status) => apiClient.post(`/tasks/tasks/${id}/set_status/`, { status }).then((response) => response.data);

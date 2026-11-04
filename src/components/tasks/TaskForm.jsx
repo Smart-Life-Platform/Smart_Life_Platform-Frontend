@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { UilEditAlt, UilTimes } from '@iconscout/react-unicons';
+import { priorityName } from '../../utils/priority';
 
 const relationId = (value) => {
   if (Array.isArray(value)) return relationId(value[0]);
@@ -15,7 +16,7 @@ export default function TaskForm({ date, task, statuses, categories, onClose, on
     description: task?.description || '',
     due_date: task?.due_date || date,
     due_time: task?.due_time?.slice(0, 5) || '09:00',
-    priority: task?.priority || 'medium',
+    priority: priorityName(task?.priority) || 'medium',
     status_id: relationId(task?.status_id ?? task?.status?.id ?? task?.status ?? statuses[0]?.id),
     category_id: relationId(task?.category_id ?? task?.category?.id ?? task?.category),
   });
@@ -60,7 +61,7 @@ export default function TaskForm({ date, task, statuses, categories, onClose, on
         <div className="form-grid">
           <label>Date<input type="date" required value={form.due_date} onChange={(event) => setForm({ ...form, due_date: event.target.value })} /></label>
           <label>Time<input type="time" required value={form.due_time} onChange={(event) => setForm({ ...form, due_time: event.target.value })} /></label>
-          <label>Priority<select value={form.priority} onChange={(event) => setForm({ ...form, priority: event.target.value })}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></label>
+          <label>Priority<select value={form.priority} onChange={(event) => setForm({ ...form, priority: event.target.value })}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></select></label>
           <label>Status<select value={form.status_id} onChange={(event) => setForm({ ...form, status_id: Number(event.target.value) })}>{statuses.map((status) => <option key={status.id} value={status.id}>{status.name}</option>)}</select></label>
           <label>Category<select value={form.category_id} onChange={(event) => setForm({ ...form, category_id: event.target.value ? Number(event.target.value) : '' })}><option value="">No category</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
         </div>

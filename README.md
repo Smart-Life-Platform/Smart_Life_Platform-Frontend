@@ -214,3 +214,53 @@ For Vercel:
   must also validate access rights, file type, and file size.
 - Restart the development server after changing Supabase environment
   variables.
+
+## OAuth (Google) Configuration
+
+Google sign-in needs two coordinated settings. Both must name the **frontend**
+callback route, never the Supabase project URL.
+
+### 1. Supabase Dashboard → Authentication → URL Configuration
+
+- **Site URL**: the origin used when no `redirect_to` is passed, e.g.
+  `http://localhost:3000` locally and `https://<your-domain>` in production.
+- **Redirect URLs** (allow list): add the exact callback URL the app requests:
+
+```text
+http://localhost:3000/auth/callback
+https://<your-domain>/auth/callback
+```
+
+Wildcards do not cross `/` or `.`, so `http://localhost:3000/*` does **not**
+match `/auth/callback`. Use the exact URL or `http://localhost:3000/**`.
+For Vercel previews add `https://*-<team-or-account-slug>.vercel.app/**`.
+
+A `redirect_to` that is missing from this list is ignored by Supabase and the
+browser is sent to the Site URL instead, which looks like "Google login stopped
+working" with no error message.
+
+### 2. Google Cloud Console → OAuth client
+
+- **Authorized JavaScript origins**: `http://localhost:3000`,
+  `https://<your-domain>`.
+- **Authorized redirect URIs**: the Supabase callback,
+  `https://<project-ref>.supabase.co/auth/v1/callback` (copy it from
+  Authentication → Providers → Google in the dashboard).
+
+### 3. Frontend behaviour
+
+`signInWithOAuth` passes `window.location.origin + /auth/callback` (override the
+origin with the optional `REACT_APP_SITE_URL` variable). The app uses the PKCE
+flow, so Supabase returns `?code=...`; `/auth/callback` waits for the session and
+on failure shows the `error_code` returned by Supabase instead of silently
+redirecting to `/login`.
+
+### Debugging a failing redirect
+
+Open `http://localhost:3000/auth/callback` directly:
+
+- A 404 means the host has no SPA fallback for that path.
+- Reaching the app and being sent back to `/login` with a visible error means
+  Supabase (or Google) returned an error — the message is shown on the page.
+- Landing on `/` or `/planner` with `#access_token=...` means Supabase ignored
+  `redirect_to` and used the Site URL: the allow list is wrong.

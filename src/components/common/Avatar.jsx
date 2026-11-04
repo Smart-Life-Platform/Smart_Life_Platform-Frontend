@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { getAvatarUrl } from '../../api/avatarApi';
 
-const COLORS = ['#e8710a', '#1a73e8', '#188038', '#d93025', '#9334e6', '#007b83', '#c2185b', '#5f6368'];
+const COLORS = ['var(--color-accent)', 'var(--color-blue)', 'var(--color-green)', 'var(--color-red)', 'var(--color-brand-primary)', 'var(--color-status-success)', 'var(--color-badge-text)', 'var(--color-secondary)'];
 
 function colorFor(text) {
   let hash = 0;
@@ -12,7 +12,7 @@ function colorFor(text) {
 export function getDisplayName(user) {
   const meta = user?.user_metadata || {};
   const email = user?.email || '';
-  return meta.full_name || meta.name || email.split('@')[0] || 'User';
+  return meta.full_name || meta.name || meta.username || user?.username || email.split('@')[0] || 'User';
 }
 
 export default function Avatar({ user, size = 38 }) {
