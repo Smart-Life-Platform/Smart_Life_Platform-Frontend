@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import GoogleLoginButton from './GoogleLoginButton';
+// import logo from '../../assets/Logo.svg';
 
 export default function AuthForm() {
   const isRegister = useLocation().pathname === '/register';
@@ -15,8 +17,8 @@ export default function AuthForm() {
     setError('');
     setLoading(true);
     try {
-      await (isRegister ? signUp(form) : signIn(form));
-      navigate('/planner');
+      const auth = await (isRegister ? signUp(form) : signIn(form));
+      navigate(isRegister && !auth?.access_token ? '/login' : '/planner', { replace: true });
     } catch (submitError) {
       setError(submitError.message);
     } finally {
@@ -27,6 +29,7 @@ export default function AuthForm() {
   return (
     <main className="auth-page">
       <section className="auth-card">
+        {/* <img className="auth-logo" src={logo} alt="Avenor" /> */}
         <h1>{isRegister ? 'Create your account' : 'Welcome back'}</h1>
         <p className="auth-subtitle">{isRegister ? 'Start planning your days with clarity.' : 'Sign in to continue to your planner.'}</p>
         <form onSubmit={submit}>
@@ -35,6 +38,8 @@ export default function AuthForm() {
           {error && <p className="form-error">{error}</p>}
           <button className="primary-button full-width" disabled={loading}>{loading ? 'Please wait…' : isRegister ? 'Create account' : 'Sign in'}</button>
         </form>
+        <div className="auth-divider"><span>or</span></div>
+        <GoogleLoginButton label={isRegister ? 'Sign up with Google' : 'Continue with Google'} />
         <Link className="text-button" to={isRegister ? '/login' : '/register'}>{isRegister ? 'Already have an account? Sign in' : 'New here? Create an account'}</Link>
       </section>
     </main>

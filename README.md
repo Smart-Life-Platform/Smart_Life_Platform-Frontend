@@ -2,7 +2,7 @@
 
 Smart Life Platform is a web application for personal planning, task
 management, and finance tracking. The project concept is described in
-[`ТЗ_Smart_Life_Platform.md`](../ТЗ_Smart_Life_Platform.md).
+[`ТЗ_Smart_Life_Platform.md`](ТЗ_Smart_Life_Platform.md).
 
 The React frontend combines a task planner, calendar, budget, shopping lists,
 user profile, and authentication in one interface.
@@ -54,7 +54,7 @@ user profile, and authentication in one interface.
 
 ## Requirements
 
-- Node.js 18 or newer.
+- Node.js 22 or newer (required by the locked Supabase dependencies).
 - npm 9 or newer.
 - Access to a Supabase project.
 - A running Django backend if tasks, categories, statuses, and priorities are
@@ -65,13 +65,13 @@ user profile, and authentication in one interface.
 Go to the frontend directory and install dependencies:
 
 ```bash
-cd smart_life_platform
-npm install
+cd Smart_Life_Platform-Frontend
+npm ci
 ```
 
 ## Environment Configuration
 
-Create a `.env.local` file in the `smart_life_platform` directory:
+Copy `.env.example` to `.env.local` in the repository root and fill in your Supabase values:
 
 ```dotenv
 REACT_APP_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
@@ -199,8 +199,7 @@ returns `401`, the frontend ends the session and redirects the user to
 
 For Vercel:
 
-1. Connect the repository and set the root directory to
-   `smart_life_platform`.
+1. Connect the repository and use the repository root as the root directory.
 2. Set the build command to `npm run build`.
 3. Set the output directory to `build`.
 4. Add the production environment variables.
@@ -215,3 +214,53 @@ For Vercel:
   must also validate access rights, file type, and file size.
 - Restart the development server after changing Supabase environment
   variables.
+
+## OAuth (Google) Configuration
+
+Google sign-in needs two coordinated settings. Both must name the **frontend**
+callback route, never the Supabase project URL.
+
+### 1. Supabase Dashboard → Authentication → URL Configuration
+
+- **Site URL**: the origin used when no `redirect_to` is passed, e.g.
+  `http://localhost:3000` locally and `https://<your-domain>` in production.
+- **Redirect URLs** (allow list): add the exact callback URL the app requests:
+
+```text
+http://localhost:3000/auth/callback
+https://<your-domain>/auth/callback
+```
+
+Wildcards do not cross `/` or `.`, so `http://localhost:3000/*` does **not**
+match `/auth/callback`. Use the exact URL or `http://localhost:3000/**`.
+For Vercel previews add `https://*-<team-or-account-slug>.vercel.app/**`.
+
+A `redirect_to` that is missing from this list is ignored by Supabase and the
+browser is sent to the Site URL instead, which looks like "Google login stopped
+working" with no error message.
+
+### 2. Google Cloud Console → OAuth client
+
+- **Authorized JavaScript origins**: `http://localhost:3000`,
+  `https://<your-domain>`.
+- **Authorized redirect URIs**: the Supabase callback,
+  `https://<project-ref>.supabase.co/auth/v1/callback` (copy it from
+  Authentication → Providers → Google in the dashboard).
+
+### 3. Frontend behaviour
+
+`signInWithOAuth` passes `window.location.origin + /auth/callback` (override the
+origin with the optional `REACT_APP_SITE_URL` variable). The app uses the PKCE
+flow, so Supabase returns `?code=...`; `/auth/callback` waits for the session and
+on failure shows the `error_code` returned by Supabase instead of silently
+redirecting to `/login`.
+
+### Debugging a failing redirect
+
+Open `http://localhost:3000/auth/callback` directly:
+
+- A 404 means the host has no SPA fallback for that path.
+- Reaching the app and being sent back to `/login` with a visible error means
+  Supabase (or Google) returned an error — the message is shown on the page.
+- Landing on `/` or `/planner` with `#access_token=...` means Supabase ignored
+  `redirect_to` and used the Site URL: the allow list is wrong.

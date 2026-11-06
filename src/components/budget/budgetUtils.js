@@ -1,3 +1,5 @@
+const MONTH_SUFFIX = ' р.';
+
 export const formatMoney = (n) =>
   `${Number(n).toLocaleString('uk-UA', { maximumFractionDigits: 2 })} ₴`;
 
@@ -5,7 +7,12 @@ export const monthKey = (d) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 
 export const monthLabel = (d) =>
-  d.toLocaleDateString('uk-UA', { month: 'long', year: 'numeric' });
+  `${d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}${MONTH_SUFFIX}`;
+
+export const formatDate = (iso) => {
+  const [y, m, d] = iso.split('-');
+  return `${d}.${m}.${y}`;
+};
 
 export const filterByMonthAndAccount = (records, date, accountId) =>
   records.filter(

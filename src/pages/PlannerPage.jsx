@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { UilAngleLeft, UilAngleRight, UilCalendarAlt, UilEditAlt, UilTrashAlt, UilPlus, UilArrowRight } from '@iconscout/react-unicons';
+import { useSearchParams } from 'react-router-dom';
+import { UilAngleLeft, UilAngleRight, UilCalendarAlt, UilEditAlt, UilTrashAlt, UilPlus, UilArrowRight, UilSearch, UilBars, UilFileAlt, UilUser } from '@iconscout/react-unicons';
 import CalendarGrid from '../components/calendar/CalendarGrid';
-import TaskFilters from '../components/tasks/TaskFilters';
 import { useTaskContext } from '../context/TaskContext';
 import { formatMonthYear } from '../utils/dateUtils';
 import useCalendar from '../hooks/useCalendar';
@@ -17,23 +17,26 @@ const categoryColor = (task, categories) => task.category_color || task.category
 const isDone = (task, statuses) => {
   const status = task.status_name || task.status?.name || (typeof task.status === 'string' ? task.status : '') ||
     statuses.find((item) => String(item.id) === String(task.status_id ?? task.status?.id ?? task.status))?.name || '';
-  return status.toLowerCase() === 'done';
+  return ['done', 'completed'].includes(status.trim().toLowerCase());
 };
 export default function PlannerPage() {
   const {
     tasks, overdueTasks, calendarTasks, statuses, categories, priorities, loading, loadTasks, loadCalendarTasks, loadMetadata,
-    createTask, updateTask, deleteTask,
+    createTask, updateTask, setTaskStatus, deleteTask,
   } = useTaskContext();
+  const [searchParams] = useSearchParams();
+  const showCalendar = searchParams.get('view') === 'calendar';
   const [calendarView, setCalendarView] = useState('week');
   const [selectedHour, setSelectedHour] = useState(new Date().getHours());
   const [selectedBlock, setSelectedBlock] = useState(Math.floor(new Date().getHours() / 4));
   const { week, days, shiftWeek, goToDate, todayKey } = useCalendar(calendarView);
   const [modalDate, setModalDate] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
+  const [metadataMenu, setMetadataMenu] = useState(null);
   const [filters, setFilters] = useState({ search: '', status: '', category: '', priority: '', ordering: 'due_date' });
   const [error, setError] = useState('');
   const filteredTasks = useFilteredTasks(tasks, filters);
-  const filteredCalendarTasks = useFilteredTasks(calendarTasks.length ? calendarTasks : tasks, filters);
+  const filteredCalendarTasks = useFilteredTasks(calendarTasks, filters);
   const overdueTaskIds = new Set(overdueTasks.filter((task) => !isDone(task, statuses)).map((task) => String(task.id)));
   const calendarTasksByDate = tasksByDate(filteredCalendarTasks.map((task) => ({
     ...task,
@@ -51,8 +54,8 @@ export default function PlannerPage() {
   }, [filters, loadTasks]);
 
   useEffect(() => {
-    loadCalendarTasks(calendarView, dateKey(days[0])).catch((requestError) => setError(requestError.message));
-  }, [calendarView, days, loadCalendarTasks]);
+    loadCalendarTasks(calendarView, dateKey(week)).catch((requestError) => setError(requestError.message));
+  }, [calendarView, week, loadCalendarTasks]);
 
   const openCreate = (date = todayKey()) => { setEditingTask(null); setModalDate(date); };
   const selectCalendarDate = (date) => {
@@ -92,15 +95,7 @@ export default function PlannerPage() {
 
     setError('');
     try {
-      await updateTask(task.id, {
-        title: task.title,
-        description: task.description || '',
-        due_date: task.due_date,
-        due_time: task.due_time || '09:00',
-        priority: task.priority || 'medium',
-        status_id: nextStatus.id,
-        category_id: task.category_id ?? task.category?.id ?? task.category ?? '',
-      });
+      await setTaskStatus(task.id, nextStatus.name);
     } catch (requestError) {
       setError(requestError.message);
     }
@@ -118,7 +113,13 @@ export default function PlannerPage() {
     try { setError(''); await deleteTask(task.id); } catch (requestError) { setError(requestError.message); }
   }
 
-  return <div className="planner-layout"><section className="calendar-area">
+  const columns = statuses.length ? statuses : [
+    { id: 'inbox', name: 'Inbox' }, { id: 'planned', name: 'Planned' }, { id: 'progress', name: 'In progress' },
+    { id: 'approval', name: 'Needs approval' }, { id: 'done', name: 'Done' },
+  ];
+  const tasksForColumn = (status) => filteredTasks.filter((task) => String(task.status_id ?? task.status?.id ?? task.status) === String(status.id) || statusName(task, statuses).toLowerCase() === status.name.toLowerCase());
+
+  if (showCalendar) return <div className="planner-layout calendar-layout"><section className="calendar-area">
     <div className="calendar-toolbar">
       <div className="toolbar-left">
         <button className="round-button" aria-label="Previous week" onClick={() => shiftWeek(-1)}><UilAngleLeft size="20" /></button>
@@ -149,38 +150,45 @@ export default function PlannerPage() {
       </label>}
       <label className="calendar-date-picker">
         <span className="sr-only">Select date</span>
-        <input type="date" value={dateKey(days[0])} onChange={(event) => { goToDate(event.target.value); setCalendarView(calendarView === 'month' ? 'day' : calendarView); }} />
+        <input type="date" value={dateKey(week)} onChange={(event) => { goToDate(event.target.value); setCalendarView(calendarView === 'month' ? 'day' : calendarView); }} />
       </label>
     </div>
     <CalendarGrid days={days} tasksByDate={calendarTasksByDate} onSelectDate={selectCalendarDate} onSelectTask={openEdit} onMoveTask={moveTask} onAdvanceTaskStatus={advanceTaskStatus} statuses={statuses} view={calendarView} selectedHour={selectedHour} selectedBlock={selectedBlock} />
-  </section>
-  <aside className="tasks-panel">
-    <div className="panel-heading"><h3>Tasks</h3><span className="beta">Beta</span></div>
-    <TaskFilters filters={filters} onChange={setFilters} statuses={statuses} categories={categories} priorities={priorities} />
-    <div className="task-section">
-      <div className="section-title"><span>Upcoming</span><b>{filteredTasks.length}</b></div>
-      {loading && <p className="muted">Loading tasks…</p>}
-      {!loading && filteredTasks.length === 0 && <p className="muted">No tasks match the selected filters.</p>}
-      {filteredTasks.slice(0, 12).map((task) => {
-        const overdue = overdueTaskIds.has(String(task.id));
-        return <div className={`task-row${overdue ? ' overdue' : ''}`} key={task.id}>
-        <span className={`task-dot priority-${task.priority || 'medium'}`} />
-        <div className="task-row-content">
-          <strong>{task.title}</strong>
-          <small>{task.due_date || 'No due date'} {task.due_time ? `· ${task.due_time.slice(0, 5)}` : ''}</small>
-          <small>{statusName(task, statuses)} · {categoryName(task, categories)}</small>
+  </section>{modalDate && <TaskForm date={modalDate} task={editingTask} statuses={statuses} categories={categories} onClose={closeModal} onSubmit={saveTask} />}</div>;
+
+  return <div className="workspace-page">
+    <section className="board-heading">
+      <div><h1>My task board</h1><p>A clearer day starts here. Plan it, delegate it, get it done.</p></div>
+      <div className="board-heading-actions">
+        <span className="collaborators" aria-label="User account"><UilUser size="14" /></span>
+        <div className="metadata-menu">
+          <button className="metadata-button" onClick={() => setMetadataMenu(metadataMenu === 'statuses' ? null : 'statuses')}>Statuses <UilPlus size="14" /></button>
+          {metadataMenu === 'statuses' && <div className="metadata-list"><strong>Statuses</strong>{statuses.length ? statuses.map((status) => <span key={status.id}>{status.name}</span>) : <span>No statuses</span>}</div>}
         </div>
-        <div className="task-actions">
-          {statuses.findIndex((status) => String(status.id) === String(task.status_id ?? task.status?.id ?? task.status)) < statuses.length - 1 && <button aria-label={`Move ${task.title} to next status`} title="Next status" onClick={() => advanceTaskStatus(task)}><UilArrowRight size="16" /></button>}
-          <button aria-label={`Edit ${task.title}`} onClick={() => openEdit(task)}><UilEditAlt size="16" /></button>
-          <button aria-label={`Delete ${task.title}`} onClick={() => removeTask(task)}><UilTrashAlt size="16" /></button>
+        <div className="metadata-menu">
+          <button className="metadata-button" onClick={() => setMetadataMenu(metadataMenu === 'categories' ? null : 'categories')}>Categories <UilPlus size="14" /></button>
+          {metadataMenu === 'categories' && <div className="metadata-list"><strong>Categories</strong>{categories.length ? categories.map((category) => <span key={category.id}>{category.name}</span>) : <span>No categories</span>}</div>}
         </div>
-      </div>;
-      })}
-    </div>
+        <button className="new-task-button" onClick={() => openCreate()}><UilPlus size="16" /> New task</button>
+      </div>
+    </section>
+    <div className="board-tabs"><button className="selected"><UilBars size="16" />Board</button><button><UilFileAlt size="16" />List</button><a href="/planner?view=calendar"><UilCalendarAlt size="16" />Calendar</a><div className="board-tools"><label className="board-search"><UilSearch size="15" /><input className="board-control" value={filters.search} onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} placeholder="Search tasks" /></label><select className="board-control" value={filters.status} onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))} aria-label="Filter by status"><option value="">All statuses</option>{statuses.map((status) => <option value={status.id} key={status.id}>{status.name}</option>)}</select><select className="board-control" value={filters.category} onChange={(event) => setFilters((current) => ({ ...current, category: event.target.value }))} aria-label="Filter by category"><option value="">All categories</option>{categories.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</select><select className="board-control" value={filters.priority} onChange={(event) => setFilters((current) => ({ ...current, priority: event.target.value }))} aria-label="Filter by priority"><option value="">All priorities</option>{priorities.map((priority) => <option value={priority} key={priority}>{priority}</option>)}</select><select className="board-control" value={filters.ordering} onChange={(event) => setFilters((current) => ({ ...current, ordering: event.target.value }))} aria-label="Sort tasks"><option value="due_date">Due date</option><option value="-created_at">Newest</option><option value="priority">Priority</option></select></div></div>
     {error && <p className="form-error">{error}</p>}
-    <button className="add-task-button" onClick={() => openCreate()}><UilPlus size="17" /> Add task</button>
-  </aside>
-  {modalDate && <TaskForm date={modalDate} task={editingTask} statuses={statuses} categories={categories} onClose={closeModal} onSubmit={saveTask} />}
+    <div className="board-columns">
+      {columns.map((status) => <section className="board-column" key={status.id}>
+        <div className="column-heading"><span className="status-dot" /> <strong>{status.name}</strong><b>{tasksForColumn(status).length}</b><button>•••</button><button onClick={() => openCreate()}>+</button></div>
+        <div className="column-cards">
+          {loading && <p className="muted">Loading tasks...</p>}
+          {!loading && tasksForColumn(status).map((task) => <article className={`board-card${overdueTaskIds.has(String(task.id)) ? ' overdue' : ''}`} key={task.id}>
+            <div className="card-topline"><span>{categoryName(task, categories)}</span><button onClick={() => openEdit(task)}>•••</button></div>
+            <h3>{task.title}</h3><p>{task.description || 'No description added yet.'}</p>
+            <div className="card-meta"><span>▣ {task.due_date || 'No due date'}</span><span>☷ {task.priority || 'Medium'}</span><span className="mini-avatar">AL</span></div>
+            <div className="card-actions"><button onClick={() => openEdit(task)}><UilEditAlt size="13" /> Edit</button><button onClick={() => removeTask(task)}><UilTrashAlt size="13" /></button>{statuses.findIndex((item) => String(item.id) === String(task.status_id ?? task.status?.id ?? task.status)) < statuses.length - 1 && <button onClick={() => advanceTaskStatus(task)}><UilArrowRight size="13" /></button>}</div>
+          </article>)}
+          <button className="column-add" onClick={() => openCreate()}>+ Add task</button>
+        </div>
+      </section>)}
+    </div>
+    {modalDate && <TaskForm date={modalDate} task={editingTask} statuses={statuses} categories={categories} onClose={closeModal} onSubmit={saveTask} />}
   </div>;
 }

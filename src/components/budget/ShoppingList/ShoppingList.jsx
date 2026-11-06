@@ -16,7 +16,7 @@ export default function ShoppingList({ lists, onToggle, onAddItem, onDeleteItem 
           setDrafts({ ...drafts, [list.id]: '' });
         };
         return (
-          <section key={list.id} className="shopping__list">
+          <section key={list.id} className="b-card shopping__list">
             <header>
               <h3>{list.title}</h3>
               <small>{bought} / {list.items.length}</small>
@@ -29,8 +29,8 @@ export default function ShoppingList({ lists, onToggle, onAddItem, onDeleteItem 
                     <span>{item.name}</span>
                   </label>
                   <small>×{item.quantity}</small>
-                  <button type="button" className="icon-btn" onClick={() => onDeleteItem(list.id, item.id)} aria-label="Видалити">
-                    <UilTrashAlt size="16" />
+                  <button type="button" className="b-icon-btn" onClick={() => onDeleteItem(list.id, item.id)} aria-label="Delete">
+                    <UilTrashAlt size="15" />
                   </button>
                 </li>
               ))}
@@ -39,9 +39,9 @@ export default function ShoppingList({ lists, onToggle, onAddItem, onDeleteItem 
               <input
                 value={drafts[list.id] || ''}
                 onChange={(e) => setDrafts({ ...drafts, [list.id]: e.target.value })}
-                placeholder="Нова позиція"
+                placeholder="New item"
               />
-              <button type="submit" className="icon-btn" aria-label="Додати"><UilPlus size="20" /></button>
+              <button type="submit" className="b-icon-btn" aria-label="Add"><UilPlus size="18" /></button>
             </form>
           </section>
         );

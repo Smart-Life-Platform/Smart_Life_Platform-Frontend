@@ -17,13 +17,13 @@ export default function BudgetLimits({ items, categories }) {
             <span>{c.name}</span>
             <span>{formatMoney(spent)} / {formatMoney(c.monthly_limit)}</span>
           </div>
-          <div className="progress">
+          <div className="b-progress">
             <div
-              className={`progress__bar ${ratio > 1 ? 'is-over' : ratio > 0.8 ? 'is-warn' : ''}`}
+              className={`b-progress__bar ${ratio > 1 ? 'is-over' : ratio > 0.8 ? 'is-warn' : ''}`}
               style={{ width: `${Math.min(ratio, 1) * 100}%` }}
             />
           </div>
-          {ratio > 1 && <small className="form-error">Ліміт перевищено</small>}
+          {ratio > 1 && <small className="b-error">Limit exceeded</small>}
         </li>
       ))}
     </ul>

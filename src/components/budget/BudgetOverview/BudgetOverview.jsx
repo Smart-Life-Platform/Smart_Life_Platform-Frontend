@@ -3,18 +3,18 @@ import { formatMoney } from '../budgetUtils';
 export default function BudgetOverview({ income, expense }) {
   const balance = income - expense;
   return (
-    <div className="overview">
-      <div className="overview__card">
-        <span className="overview__label">Баланс</span>
-        <strong className={`overview__value ${balance < 0 ? 'is-negative' : ''}`}>{formatMoney(balance)}</strong>
+    <div className="b-stats">
+      <div className="b-card b-stat">
+        <span className="b-stat__label">Balance</span>
+        <strong className={`b-stat__value ${balance < 0 ? 'is-negative' : ''}`}>{formatMoney(balance)}</strong>
       </div>
-      <div className="overview__card">
-        <span className="overview__label">Витрати</span>
-        <strong className="overview__value is-expense">{formatMoney(expense)}</strong>
+      <div className="b-card b-stat">
+        <span className="b-stat__label">Expenses</span>
+        <strong className="b-stat__value">{formatMoney(expense)}</strong>
       </div>
-      <div className="overview__card">
-        <span className="overview__label">Доходи</span>
-        <strong className="overview__value is-income">{formatMoney(income)}</strong>
+      <div className="b-card b-stat">
+        <span className="b-stat__label">Revenue</span>
+        <strong className="b-stat__value">{formatMoney(income)}</strong>
       </div>
     </div>
   );

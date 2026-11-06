@@ -9,6 +9,26 @@ const extensions = {
   'image/webp': 'webp',
 };
 
+const SESSION_MISSING_MESSAGE =
+  'Your session has no Supabase login, so the photo cannot be stored. Sign out and sign in again.';
+
+function toFriendlyError(error) {
+  if (error?.name === 'AuthSessionMissingError') return new Error(SESSION_MISSING_MESSAGE);
+  return error;
+}
+
+/**
+ * Storage and user metadata belong to Supabase, so a Supabase session is required.
+ * Email/password accounts get one during sign-in (see AuthContext); this guard turns
+ * the raw "Auth session missing!" error into an instruction the user can act on.
+ */
+async function requireSupabaseUser() {
+  const { data, error } = await supabase.auth.getUser();
+  if (error) throw toFriendlyError(error);
+  if (!data.user) throw new Error(SESSION_MISSING_MESSAGE);
+  return data.user;
+}
+
 export function getAvatarUrl(user) {
   const path = user?.user_metadata?.avatar_path;
   if (!path) return null;
@@ -24,11 +44,7 @@ export async function uploadAvatar(file) {
     throw new Error('Choose an image up to 5 MB.');
   }
 
-  const { data, error: userError } = await supabase.auth.getUser();
-  if (userError) throw userError;
-  if (!data.user) throw new Error('Sign in to upload a photo.');
-
-  const user = data.user;
+  const user = await requireSupabaseUser();
   const path = `${user.id}/${crypto.randomUUID()}.${extensions[file.type]}`;
   const storage = supabase.storage.from(AVATAR_BUCKET);
   const { error: uploadError } = await storage.upload(path, file, {
@@ -42,7 +58,7 @@ export async function uploadAvatar(file) {
   });
   if (updateError) {
     await storage.remove([path]).catch(() => {});
-    throw updateError;
+    throw toFriendlyError(updateError);
   }
 
   const previous = user.user_metadata?.avatar_path;
@@ -60,16 +76,12 @@ export async function uploadAvatar(file) {
 }
 
 export async function deleteAvatar() {
-  const { data, error: userError } = await supabase.auth.getUser();
-  if (userError) throw userError;
-  if (!data.user) throw new Error('Sign in to remove your photo.');
-
-  const user = data.user;
+  const user = await requireSupabaseUser();
   const previous = user.user_metadata?.avatar_path;
   const { data: updated, error: updateError } = await supabase.auth.updateUser({
     data: { avatar_path: null },
   });
-  if (updateError) throw updateError;
+  if (updateError) throw toFriendlyError(updateError);
 
   let cleanupFailed = false;
   if (previous && previous.startsWith(`${user.id}/`)) {

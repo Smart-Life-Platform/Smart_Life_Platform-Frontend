@@ -12,6 +12,21 @@ button { cursor: pointer; }
 
 /* Semantic palette: update these values to retheme the application. */
 :root {
+  /* Avenor design tokens */
+  --color-canvas: #ffffff;
+  --color-surface: #ffffff;
+  --color-graphite: #25262c;
+  --color-secondary: #666873;
+  --color-border: #e9e9ee;
+  --color-accent: #6558c8;
+  --color-purple: #efedff;
+  --color-green: #4a9b79;
+  --color-green-soft: #e6f0ed;
+  --color-yellow: #b68b2a;
+  --color-blue: #5980b6;
+  --color-red: #b64c59;
+  --color-shadow: rgb(37 38 44 / 8%);
+  --color-overlay: rgb(37 38 44 / 40%);
   --color-text-primary: #252735;
   --color-text-muted: #8a8d9a;
   --color-border-subtle: #e9eaf0;
