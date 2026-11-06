@@ -331,3 +331,42 @@ a.settings-card.is-link:hover {
 .hours-row:hover { background: var(--color-menu-hover); }
 .hours-row-title { display: block; font-size: 17px; font-weight: 600; }
 .hours-row-text { display: block; margin-top: 2px; color: var(--color-menu-muted); font-size: 15px; font-weight: 400; }
+
+/* Preferences settings page */
+.pref-content { max-width: 800px; margin: 0 auto; }
+.pref-section { margin-bottom: 48px; }
+.pref-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+
+.pref-slider {
+  width: 100%;
+  accent-color: var(--color-accent, #4f46e5);
+  cursor: pointer;
+}
+.pref-slider-label {
+  margin-top: 8px;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--color-menu-heading);
+}
+
+.pref-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.pref-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border: 1px solid var(--color-menu-border);
+  border-radius: 999px;
+  background: var(--color-white);
+  color: var(--color-menu-heading);
+  font-size: 16px;
+  cursor: pointer;
+}
+.pref-pill.active {
+  background: var(--color-menu-heading);
+  border-color: var(--color-menu-heading);
+  color: var(--color-white);
+}
+
+.pref-example-title { margin-top: 20px; font-weight: 500; color: var(--color-menu-heading); }
+.pref-example { margin-top: 4px; color: var(--color-settings-muted); font-size: 16px; }

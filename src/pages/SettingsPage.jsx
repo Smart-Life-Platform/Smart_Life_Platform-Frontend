@@ -17,7 +17,7 @@ import '../styles/settings.css';
 const cards = [
   { key: 'calendars', Icon: UilCalendarAlt, title: 'Calendars', text: 'Add & manage connected emails & calendars.', to: '/settings/calendars' },
   { key: 'hours', Icon: UilClock, title: 'Hours', text: 'Set & customize your personal, working, & meeting hours.', to: '/settings/hours' },
-  { key: 'preferences', Icon: UilSlidersV, title: 'Preferences', text: 'Chat, scheduling window & meeting start time intervals.' },
+  { key: 'preferences', Icon: UilSlidersV, title: 'Preferences', text: 'Chat, scheduling window & meeting start time intervals.', to: '/settings/preferences' },
   { key: 'account', Icon: UilUser, title: 'Account', text: 'Update your profile info and manage your account.' },
   { key: 'clockwise', Icon: UilCloudUpload, title: 'Clockwise Import', text: 'Import your settings and data from Clockwise.' },
   { key: 'team', Icon: UilUsersAlt, title: 'Team', text: 'Manage settings for others under your team.' },
