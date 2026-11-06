@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { UilAngleRight, UilTimes } from '@iconscout/react-unicons';
+import { UilCalendarAlt, UilAngleDown, UilTimes } from '@iconscout/react-unicons';
 
 export default function AccountSelect({ accounts, value, onChange }) {
   const [open, setOpen] = useState(false);
@@ -7,22 +7,23 @@ export default function AccountSelect({ accounts, value, onChange }) {
 
   return (
     <>
-      <button type="button" className="account-select" onClick={() => setOpen(true)}>
+      <button type="button" className="b-pill account-select" onClick={() => setOpen(true)}>
+        <UilCalendarAlt size="14" />
         <span>{current?.name}</span>
-        <UilAngleRight size="20" />
+        <UilAngleDown size="16" />
       </button>
 
       {open && (
-        <div className="modal-backdrop" onClick={() => setOpen(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal__header">
-              <h3>Рахунки</h3>
-              <button type="button" className="icon-btn" onClick={() => setOpen(false)} aria-label="Закрити">
-                <UilTimes size="22" />
+        <div className="b-backdrop" onClick={() => setOpen(false)}>
+          <div className="b-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="b-modal__header">
+              <h3>Accounts</h3>
+              <button type="button" className="b-icon-btn" onClick={() => setOpen(false)} aria-label="Close">
+                <UilTimes size="18" />
               </button>
             </div>
             {accounts.map((a) => (
-              <label key={a.id} className="modal__row">
+              <label key={a.id} className="b-modal__row">
                 <span>{a.name}</span>
                 <input
                   type="radio"

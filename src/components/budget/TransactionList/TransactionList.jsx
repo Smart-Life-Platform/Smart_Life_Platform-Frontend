@@ -1,9 +1,9 @@
 import { UilTrashAlt } from '@iconscout/react-unicons';
 import { getIcon } from '../icons';
-import { formatMoney } from '../budgetUtils';
+import { formatMoney, formatDate } from '../budgetUtils';
 
 export default function TransactionList({ records, categories, onDelete }) {
-  if (!records.length) return <p className="empty">Транзакцій не знайдено</p>;
+  if (!records.length) return <p className="b-empty">No transactions found</p>;
   const sorted = [...records].sort((a, b) => b.date.localeCompare(a.date));
   return (
     <ul className="tx-list">
@@ -12,18 +12,18 @@ export default function TransactionList({ records, categories, onDelete }) {
         const Icon = getIcon(cat?.icon);
         return (
           <li key={r.id} className="tx-list__item">
-            <span className="cat-list__icon" style={{ background: cat?.color }}>
-              <Icon size="20" color="#fff" />
+            <span className="b-icon-circle" style={{ color: cat?.color }}>
+              <Icon size="15" />
             </span>
             <div className="tx-list__info">
               <strong>{cat?.name}</strong>
-              <small>{r.description || '—'} · {r.date}</small>
+              <small>{r.description ? `${r.description} · ` : ''}{formatDate(r.date)}</small>
             </div>
-            <span className={r.type === 'income' ? 'is-income' : 'is-expense'}>
+            <span className={`tx-list__amount ${r.type === 'income' ? 'is-income' : 'is-expense'}`}>
               {r.type === 'income' ? '+' : '−'}{formatMoney(r.amount)}
             </span>
-            <button type="button" className="icon-btn" onClick={() => onDelete(r.id)} aria-label="Видалити">
-              <UilTrashAlt size="18" />
+            <button type="button" className="b-icon-btn" onClick={() => onDelete(r.id)} aria-label="Delete">
+              <UilTrashAlt size="15" />
             </button>
           </li>
         );

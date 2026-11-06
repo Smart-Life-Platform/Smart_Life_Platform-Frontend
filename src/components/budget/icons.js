@@ -1,16 +1,16 @@
 import {
-  UilShoppingCart, UilCoffee, UilBus, UilHeartbeat, UilHome, UilFilm,
+  UilShoppingBasket, UilUtensils, UilBus, UilMedkit, UilHome, UilStar,
   UilEllipsisH, UilBriefcase, UilGift,
 } from '@iconscout/react-unicons';
 
 // ключ з mockData -> іконка Unicons
 const map = {
-  cart: UilShoppingCart,
-  coffee: UilCoffee,
+  basket: UilShoppingBasket,
+  food: UilUtensils,
   bus: UilBus,
-  health: UilHeartbeat,
+  health: UilMedkit,
   home: UilHome,
-  fun: UilFilm,
+  star: UilStar,
   other: UilEllipsisH,
   work: UilBriefcase,
   gift: UilGift,
