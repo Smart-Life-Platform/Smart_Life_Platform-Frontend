@@ -19,8 +19,8 @@ export default function TransactionForm({ categories, accountId, onAdd }) {
   const submit = (e) => {
     e.preventDefault();
     const amount = Number(form.amount);
-    if (!(amount > 0)) return setError('Вкажіть суму більше 0');
-    if (!form.category_id) return setError('Оберіть категорію');
+    if (!(amount > 0)) return setError('Enter an amount greater than 0');
+    if (!form.category_id) return setError('Select a category');
     setError('');
     onAdd({
       ...form,
@@ -34,37 +34,37 @@ export default function TransactionForm({ categories, accountId, onAdd }) {
 
   return (
     <form className="tx-form" onSubmit={submit}>
-      <div className="segmented">
-        {['expense', 'income'].map((t) => (
+      <div className="b-segmented">
+        {[['expense', 'Expense'], ['income', 'Income']].map(([t, label]) => (
           <button
             key={t}
             type="button"
             className={form.type === t ? 'is-active' : ''}
             onClick={() => setForm({ ...form, type: t, category_id: '' })}
           >
-            {t === 'expense' ? 'Витрата' : 'Дохід'}
+            {label}
           </button>
         ))}
       </div>
 
-      <label>Сума, ₴
+      <label>Amount, ₴
         <input type="number" min="0" step="0.01" value={form.amount} onChange={set('amount')} placeholder="0.00" />
       </label>
-      <label>Категорія
+      <label>Category
         <select value={form.category_id} onChange={set('category_id')}>
-          <option value="">Оберіть…</option>
+          <option value="">Select…</option>
           {options.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
       </label>
-      <label>Дата
+      <label>Date
         <input type="date" value={form.date} onChange={set('date')} />
       </label>
-      <label>Примітка
-        <input type="text" value={form.description} onChange={set('description')} maxLength={120} />
+      <label>Note
+        <textarea value={form.description} onChange={set('description')} maxLength={120} placeholder="Add a note..." rows={3} />
       </label>
 
-      {error && <p className="form-error">{error}</p>}
-      <button type="submit" className="btn-primary"><UilPlus size="18" /> Додати</button>
+      {error && <p className="b-error">{error}</p>}
+      <button type="submit" className="b-btn-primary"><UilPlus size="14" /> Add</button>
     </form>
   );
 }
