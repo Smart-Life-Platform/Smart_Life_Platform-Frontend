@@ -24,12 +24,17 @@ export const sumByType = (records, type) =>
 
 // [{ category, total, percent }] для витрат, від більшого до меншого
 export const expensesByCategory = (records, categories) => {
-  const expenses = records.filter((r) => r.type === 'expense');
-  const total = expenses.reduce((s, r) => s + r.amount, 0);
+  const totals = new Map();
+  let total = 0;
+  for (const record of records) {
+    if (record.type !== 'expense') continue;
+    total += record.amount;
+    totals.set(record.category_id, (totals.get(record.category_id) || 0) + record.amount);
+  }
   return categories
     .filter((c) => c.type === 'expense')
     .map((category) => {
-      const sum = expenses.filter((r) => r.category_id === category.id).reduce((s, r) => s + r.amount, 0);
+      const sum = totals.get(category.id) || 0;
       return { category, total: sum, percent: total ? Math.round((sum / total) * 100) : 0 };
     })
     .filter((x) => x.total > 0)
