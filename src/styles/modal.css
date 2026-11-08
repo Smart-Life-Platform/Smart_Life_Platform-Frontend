@@ -43,3 +43,33 @@
     grid-template-columns: 1fr 1fr;
     gap: 0 14px;
 }
+
+.confirm-modal-message {
+    margin: -8px 0 24px;
+    color: var(--color-secondary);
+}
+
+.confirm-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.secondary-button,
+.danger-button {
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.secondary-button {
+    border: 1px solid var(--color-control-border);
+    color: var(--color-control-text);
+    background: var(--color-white);
+}
+
+.danger-button {
+    border: 1px solid var(--color-status-danger);
+    color: var(--color-white);
+    background: var(--color-status-danger);
+}
