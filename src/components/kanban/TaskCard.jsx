@@ -5,7 +5,7 @@ import {
   UilCheckSquare,
   UilEditAlt,
   UilInfoCircle,
-  UilStar,
+  UilRobot,
   UilTrashAlt,
 } from '@iconscout/react-unicons';
 
@@ -217,7 +217,7 @@ export default function TaskCard({
             onPointerDown={(event) => event.stopPropagation()}
             onClick={askAssistant}
           >
-            <UilStar size="13" />
+            <UilRobot size="13" />
           </button>
         </div>
       </div>

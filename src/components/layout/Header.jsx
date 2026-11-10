@@ -5,7 +5,7 @@ import {
   UilBookOpen,
   UilRobot,
   UilCalendarAlt,
-  UilColumns,
+  UilWindowSection,
   UilObjectGroup,
   UilSetting,
   UilWallet,
@@ -21,7 +21,7 @@ import logo from '../../assets/Logo.svg';
 const items = [
   { to: '/overview', Icon: UilApps, label: 'Overview' },
   { to: '/ai-assistant', Icon: UilRobot, label: 'AI assistant' },
-  { to: '/kanban', Icon: UilColumns, label: 'Task board', countsTasks: true },
+  { to: '/kanban', Icon: UilWindowSection, label: 'Task board', countsTasks: true },
   { to: '/planner?view=calendar', Icon: UilCalendarAlt, label: 'Calendar', view: 'calendar' },
   { to: '/budget', Icon: UilWallet, label: 'Budget' },
   { to: '/automations', Icon: UilObjectGroup, label: 'Automations' },
@@ -86,7 +86,7 @@ export default function Header({ collapsed = false }) {
             {items.map((item) => (
               <NavLink key={item.label} to={item.to} className={`nav-link${isActive(item) ? ' active' : ''}`}>
                 <item.Icon size="17" />
-                <span>{item.label}</span>
+                <span >{item.label}</span>
                 {item.countsTasks && <b className="nav-count">{tasks.length}</b>}
               </NavLink>
             ))}
