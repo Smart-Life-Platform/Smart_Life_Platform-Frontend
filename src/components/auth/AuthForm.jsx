@@ -18,7 +18,7 @@ export default function AuthForm() {
     setLoading(true);
     try {
       const auth = await (isRegister ? signUp(form) : signIn(form));
-      navigate(isRegister && !auth?.access_token ? '/login' : '/planner', { replace: true });
+      navigate(isRegister && !auth?.access_token ? '/login' : '/kanban', { replace: true });
     } catch (submitError) {
       setError(submitError.message);
     } finally {
