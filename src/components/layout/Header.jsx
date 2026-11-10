@@ -2,13 +2,13 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import {
   UilApps,
-  UilBars,
-  UilCalendarAlt,
-  UilCreateDashboard,
-  UilFileAlt,
-  UilSetting,
-  UilShare,
+  UilBookOpen,
   UilRobot,
+  UilCalendarAlt,
+  UilColumns,
+  UilObjectGroup,
+  UilSetting,
+  UilWallet,
   UilPlus,
   UilTimes,
 } from '@iconscout/react-unicons';
@@ -19,16 +19,16 @@ import UserMenu from './UserMenu';
 import logo from '../../assets/Logo.svg';
 
 const items = [
-  ['/planner', UilApps, 'Overview'],
-  ['/ai-assistant', UilRobot, 'AI assistant'],
-  ['/kanban', UilBars, 'Task board', 'board'],
-  ['/planner?view=calendar', UilCalendarAlt, 'Calendar', 'calendar'],
-  ['/budget', UilCreateDashboard, 'Budget'],
-  ['/automations', UilShare, 'Automations'],
-  ['/knowledge', UilFileAlt, 'Knowledge'],
+  { to: '/overview', Icon: UilApps, label: 'Overview' },
+  { to: '/ai-assistant', Icon: UilRobot, label: 'AI assistant' },
+  { to: '/kanban', Icon: UilColumns, label: 'Task board', countsTasks: true },
+  { to: '/planner?view=calendar', Icon: UilCalendarAlt, label: 'Calendar', view: 'calendar' },
+  { to: '/budget', Icon: UilWallet, label: 'Budget' },
+  { to: '/automations', Icon: UilObjectGroup, label: 'Automations' },
+  { to: '/knowledge', Icon: UilBookOpen, label: 'Knowledge' },
 ];
 
-export default function Header() {
+export default function Header({ collapsed = false }) {
   const { isAuthenticated, user } = useAuth();
   const { boards, activeBoard, setActiveBoard, tasks, createBoardForUser } = useTaskContext();
   const navigate = useNavigate();
@@ -37,6 +37,15 @@ export default function Header() {
   const [boardModal, setBoardModal] = useState(false);
   const [boardForm, setBoardForm] = useState({ name: '', description: '', icon: '', color: '#6d5ce7' });
   const [boardError, setBoardError] = useState('');
+
+  const pathname = location.pathname;
+  const onCalendar = pathname === '/planner' && location.search.includes('view=calendar');
+
+  function isActive(item) {
+    if (item.view === 'calendar') return onCalendar;
+    if (pathname !== item.to.split('?')[0]) return false;
+    return !onCalendar;
+  }
 
   async function submitBoard(event) {
     event.preventDefault();
@@ -52,8 +61,8 @@ export default function Header() {
   }
 
   return (
-    <aside className={`app-sidebar${!isAuthenticated ? ' auth-sidebar' : ''}`}>
-      <button className="brand brand-button" onClick={() => navigate(isAuthenticated ? '/planner' : '/login')}>
+    <aside className={`app-sidebar${!isAuthenticated ? ' auth-sidebar' : ''}${collapsed ? ' sidebar-collapsed' : ''}`}>
+      <button className="brand brand-button" onClick={() => navigate(isAuthenticated ? '/kanban' : '/login')}>
         <img src={logo} alt="Avenor" />
       </button>
       {isAuthenticated && (
@@ -74,13 +83,11 @@ export default function Header() {
             </select>
           </div>
           <nav className="sidebar-nav" aria-label="Main navigation">
-            {items.map(([path, Icon, label, view]) => (
-              <NavLink
-                key={`${label}-${view || ''}`}
-                to={path}
-                className={() => `nav-link${(view === 'calendar' ? location.search.includes('calendar') : view === 'board' ? !location.search.includes('calendar') : location.pathname === path && !view) ? ' active' : ''}`}
-              >
-                <Icon size="17" /><span>{label}</span>{label === 'Task board' && <b className="nav-count">{tasks.length}</b>}
+            {items.map((item) => (
+              <NavLink key={item.label} to={item.to} className={`nav-link${isActive(item) ? ' active' : ''}`}>
+                <item.Icon size="17" />
+                <span>{item.label}</span>
+                {item.countsTasks && <b className="nav-count">{tasks.length}</b>}
               </NavLink>
             ))}
           </nav>

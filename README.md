@@ -30,15 +30,17 @@ user profile, and authentication in one interface.
   - JPEG, PNG, and WebP files up to 5 MB.
   - Automatic removal of the previous avatar after a new one is saved.
   - Initials fallback when no photo is available.
-- API tests for avatars, tasks, categories, and priorities.
+- API tests for avatars, tasks, categories, priorities, and the assistant.
+- AI assistant page (/ai-assistant): natural-language chat that creates and
+  updates boards, tasks and shopping lists through /api/assistant/, with
+  conversation history, delete and one-click suggestions.
 
 ### Planned or Not Yet Integrated
 
 - The statistics page is currently a placeholder.
 - The budget module uses local mock data and is ready for backend API
   integration.
-- The AI assistant and recommendations from the specification are not yet
-  connected to the frontend.
+- Recommendations from the specification are not yet available.
 - External calendar integrations and notifications are not yet connected.
 
 ## Technologies
@@ -125,11 +127,12 @@ Main routes:
 
 - `/login` — login;
 - `/register` — registration;
-- `/planner` — planner and calendar;
+- `/kanban` — task board with columns, drag and drop and filters;
+- `/planner?view=calendar` — calendar (day, week, month, hours);
 - `/budget` — budget and shopping lists;
 - `/profile` — profile and avatar;
 - `/settings` — settings;
-- `/statistics` — statistics section.
+- `/ai-assistant` — AI assistant chat;
 
 ## Testing
 

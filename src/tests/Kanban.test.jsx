@@ -1,4 +1,5 @@
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import KanbanBoard from '../components/kanban/KanbanBoard';
 import KanbanColumn from '../components/kanban/KanbanColumn';
 import TaskCard from '../components/kanban/TaskCard';
@@ -15,6 +16,8 @@ import {
   setStoredStatusBoard,
   setStoredCategoryBoard,
 } from '../utils/boardScope';
+
+const renderWithRouter = (ui) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
 jest.mock('../api/apiClient', () => ({
   apiClient: {
@@ -61,7 +64,7 @@ describe('Kanban Components', () => {
     const handleDelete = jest.fn();
     const handleDetails = jest.fn();
 
-    render(
+    renderWithRouter(
       <TaskCard
         task={mockTask}
         categories={mockCategories}
@@ -75,7 +78,7 @@ describe('Kanban Components', () => {
 
     expect(screen.getByText('Test Task 1')).toBeInTheDocument();
     expect(screen.getByText('Work')).toBeInTheDocument();
-    expect(screen.getByText('high')).toBeInTheDocument();
+    expect(screen.getByText('High')).toBeInTheDocument();
     expect(screen.getByText('JD')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('Edit'));
@@ -86,6 +89,22 @@ describe('Kanban Components', () => {
 
     fireEvent.click(screen.getByLabelText('Task details'));
     expect(handleDetails).toHaveBeenCalledWith(mockTask);
+  });
+
+  test('TaskCard shows the priority flag, subtask progress and the assistant shortcut', () => {
+    const task = { ...mockTask, subtasks_count: 4, completed_subtasks_count: 1 };
+
+    renderWithRouter(<TaskCard task={task} categories={mockCategories} initials="JD" />);
+
+    expect(screen.getByText('High')).toBeInTheDocument();
+    expect(screen.getByText('1/4')).toBeInTheDocument();
+    expect(document.querySelector('.card-progress span').style.width).toBe('25%');
+    expect(screen.getByLabelText(/Ask the AI assistant about/)).toBeInTheDocument();
+
+    // No subtasks — no progress bar.
+    cleanup();
+    renderWithRouter(<TaskCard task={{ ...mockTask, subtasks_count: 0 }} categories={mockCategories} />);
+    expect(document.querySelector('.card-progress')).toBeNull();
   });
 
   test('TaskDetailsPopover displays full details and allows actions', () => {
@@ -125,7 +144,7 @@ describe('Kanban Components', () => {
   test('KanbanColumn renders column heading, count, and task cards', () => {
     const handleCreate = jest.fn();
 
-    render(
+    renderWithRouter(
       <KanbanColumn
         status={mockStatuses[0]}
         tasks={[mockTask]}
@@ -144,7 +163,7 @@ describe('Kanban Components', () => {
   });
 
   test('KanbanBoard renders columns and handles empty state', () => {
-    render(
+    renderWithRouter(
       <KanbanBoard
         columns={mockStatuses}
         tasks={[mockTask]}
@@ -165,7 +184,7 @@ describe('Kanban Components', () => {
       { id: 20, name: 'Plain', position: 2 },
     ];
 
-    render(
+    renderWithRouter(
       <KanbanBoard
         columns={columns}
         tasks={[]}

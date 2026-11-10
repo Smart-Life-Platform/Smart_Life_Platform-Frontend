@@ -77,3 +77,40 @@
   left: auto;
   transform-origin: top right;
 }
+
+/* Sidebar collapse: the toggle in the top bar hides the rail and frees the space. */
+.app-sidebar.sidebar-collapsed { display: none; }
+.site-content.sidebar-collapsed { margin-left: 0; }
+.workspace-header-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.sidebar-toggle { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 7px; }
+.sidebar-toggle:hover { color: var(--color-accent); background: var(--color-purple); }
+
+/* ---------- Task card (board design) ---------- */
+/* Category + priority flag on top, title, description, subtask progress,
+   due date and the AI shortcut in the footer row. */
+.board-card { padding: 13px; border: 1px solid var(--color-border); border-radius: 11px; background: var(--color-surface); box-shadow: 0 1px 2px var(--color-shadow); }
+.card-topline { align-items: center; gap: 6px; font-size: 9px; }
+.card-topline .card-category { flex: 1; min-width: 0; padding: 0; border-radius: 0; overflow: hidden; background: transparent; color: var(--color-secondary); font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.card-topline-right { display: flex; flex: 0 0 auto; align-items: center; gap: 3px; }
+.card-topline .card-priority { display: inline-flex; align-items: center; gap: 4px; padding: 0; border-radius: 0; background: transparent; font-size: 9px; font-weight: 600; white-space: nowrap; }
+.card-topline .card-priority.priority-low { color: var(--color-secondary); }
+.card-topline .card-priority.priority-medium { color: var(--color-yellow); }
+.card-topline .card-priority.priority-high,
+.card-topline .card-priority.priority-critical { color: var(--color-red); }
+.card-priority svg { flex: 0 0 auto; }
+.card-menu { padding: 0 1px; color: var(--color-secondary); font-size: 11px; line-height: 1; letter-spacing: 1px; opacity: 0; transition: opacity .15s ease; }
+.board-card:hover .card-menu,
+.board-card:focus-within .card-menu { opacity: 1; }
+.board-card h3 { margin: 9px 0 4px; font-size: 12px; font-weight: 600; line-height: 1.35; }
+.board-card p { display: -webkit-box; min-height: 0; margin: 0; overflow: hidden; color: var(--color-secondary); font-size: 10px; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.card-progress { height: 3px; margin-top: 9px; border-radius: 999px; background: var(--color-border-subtle); overflow: hidden; }
+.card-progress span { display: block; height: 100%; border-radius: 999px; background: var(--color-accent); transition: width .2s ease; }
+.card-meta { gap: 8px; margin-top: 10px; font-size: 9px; }
+.card-meta-item { display: inline-flex; align-items: center; gap: 4px; }
+.card-meta-right { display: flex; align-items: center; gap: 7px; margin-left: auto; }
+.card-meta .mini-avatar { width: 18px; height: 18px; margin-left: 0; font-size: 7px; }
+.card-ai { display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 6px; color: var(--color-accent); background: transparent; opacity: .8; }
+.card-ai:hover { background: var(--color-purple); opacity: 1; }
+.card-actions { display: none; }
+.board-card:hover .card-actions,
+.board-card:focus-within .card-actions { display: flex; }
