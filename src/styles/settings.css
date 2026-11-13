@@ -420,3 +420,21 @@ a.settings-card.is-link:hover {
 .acc-danger-button:hover { background: #fdecea; }
 
 @media (max-width: 640px) { .acc-layout { flex-direction: column; } }
+
+/* Saved settings */
+.save-status { margin: 12px 0 0; font-size: 14px; color: var(--color-menu-muted); }
+.save-status.saved { color: #188038; }
+
+.cal-type { display: inline-flex; align-items: center; gap: 6px; color: var(--color-accent, #4f46e5); }
+.cal-type-select {
+  border: none;
+  background: none;
+  color: var(--color-accent, #4f46e5);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.cal-link-button:disabled,
+.cal-icon-button:disabled,
+.cal-toggle:disabled { opacity: 0.5; cursor: not-allowed; }

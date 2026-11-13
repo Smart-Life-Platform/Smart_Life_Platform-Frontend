@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   UilAngleDown,
@@ -9,31 +8,23 @@ import {
 } from '@iconscout/react-unicons';
 import { useAuth } from '../context/AuthContext';
 import Avatar, { getDisplayName } from '../components/common/Avatar';
+import Toggle from '../components/settings/Toggle';
+import SaveStatus from '../components/settings/SaveStatus';
+import useProfileSettings from '../hooks/useProfileSettings';
 import '../styles/settings.css';
-
-function Toggle({ checked, onChange, label }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      className={`cal-toggle${checked ? ' on' : ''}`}
-      onClick={() => onChange(!checked)}
-    >
-      <span className="cal-toggle-knob" />
-    </button>
-  );
-}
 
 export default function CalendarsSettingsPage() {
   const { user } = useAuth();
-  const [primaryOn, setPrimaryOn] = useState(true);
-  const [holidaysOn, setHolidaysOn] = useState(false);
+  const { loading, settings, status, error, updateSettings } = useProfileSettings();
+  const calendars = settings.calendars;
 
   const email = user?.email || '';
   const name = getDisplayName(user);
   const isGoogle = user?.app_metadata?.provider === 'google';
+
+  function setCalendar(patch) {
+    updateSettings({ calendars: patch });
+  }
 
   return (
     <main className="cal-settings">
@@ -56,12 +47,12 @@ export default function CalendarsSettingsPage() {
               <div className="cal-account-email">{email}</div>
               <div className="cal-account-note">Main account</div>
             </div>
-            <button type="button" className="cal-icon-button" aria-label="Account options">
+            <button type="button" className="cal-icon-button" disabled title="Not available yet" aria-label="Account options">
               <UilEllipsisV size="18" />
             </button>
           </div>
 
-          <button type="button" className="cal-link-button">
+          <button type="button" className="cal-link-button" disabled title="Not available yet">
             <UilPlus size="18" /> Add account <UilAngleDown size="16" />
           </button>
         </section>
@@ -72,22 +63,44 @@ export default function CalendarsSettingsPage() {
 
           <div className="cal-calendar-card">
             <div className="cal-calendar-row">
-              <Toggle checked={primaryOn} onChange={setPrimaryOn} label="Primary calendar" />
+              <Toggle
+                checked={calendars.primaryEnabled}
+                disabled={loading}
+                onChange={(value) => setCalendar({ primaryEnabled: value })}
+                label="Primary calendar"
+              />
               <div className="cal-calendar-info">
                 <div className="cal-calendar-name">{email}</div>
                 <div className="cal-calendar-note">Primary calendar</div>
               </div>
-              <button type="button" className="cal-type-button">
-                <UilBriefcaseAlt size="16" /> Work <UilAngleDown size="16" />
-              </button>
+              <span className="cal-type">
+                <UilBriefcaseAlt size="16" />
+                <select
+                  className="cal-type-select"
+                  value={calendars.primaryType}
+                  disabled={loading}
+                  onChange={(event) => setCalendar({ primaryType: event.target.value })}
+                  aria-label="Calendar type"
+                >
+                  <option value="work">Work</option>
+                  <option value="personal">Personal</option>
+                </select>
+              </span>
             </div>
           </div>
 
           <h2 className="cal-heading cal-heading-spaced">Calendars not connected</h2>
           <div className="cal-calendar-row cal-muted">
-            <Toggle checked={holidaysOn} onChange={setHolidaysOn} label="Holidays in Ukraine" />
+            <Toggle
+              checked={calendars.holidaysEnabled}
+              disabled={loading}
+              onChange={(value) => setCalendar({ holidaysEnabled: value })}
+              label="Holidays in Ukraine"
+            />
             <div className="cal-calendar-name">Holidays in Ukraine</div>
           </div>
+
+          <SaveStatus status={status} error={error} />
         </section>
       </div>
     </main>

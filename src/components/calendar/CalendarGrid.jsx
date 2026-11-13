@@ -126,7 +126,7 @@ function DraggableTask({ task, onSelectTask, onAdvanceTaskStatus, canAdvance, la
     }}>›</button>}<small>{(task.due_time || '09:00').slice(0, 5)}</small></span>;
 }
 
-function DayColumn({ day, tasks, onSelectDate, onSelectTask, onAdvanceTaskStatus, statuses, dropHour, timeSlots, hourStep, compact, timeline, view, selectedHour, selectedBlock }) {
+function DayColumn({ day, tasks, holidayNames = [], onSelectDate, onSelectTask, onAdvanceTaskStatus, statuses, dropHour, timeSlots, hourStep, compact, timeline, view, selectedHour, selectedBlock }) {
   const key = dateKey(day);
   const { isOver, setNodeRef } = useDroppable({ id: key, data: { date: key, axis: 'vertical', view, selectedHour, selectedBlock } });
 
@@ -147,7 +147,7 @@ function DayColumn({ day, tasks, onSelectDate, onSelectTask, onAdvanceTaskStatus
     </div>
   </div>;
 
-  return <button ref={setNodeRef} className={`day-column${compact ? ' month-day' : ''}${compact && isToday(day) ? ' today' : ''}${isOver ? ' drag-over' : ''}`} onClick={() => onSelectDate(key)}>
+  return <button ref={setNodeRef} className={`day-column${compact ? ' month-day' : ''}${compact && isToday(day) ? ' today' : ''}${holidayNames.length ? ' is-holiday' : ''}${isOver ? ' drag-over' : ''}`} onClick={() => onSelectDate(key)}>{holidayNames.length > 0 && <span className={`holiday-badge${compact ? ' in-month' : ''}`} title={holidayNames.join(', ')}>{holidayNames[0]}</span>}
     {dropHour !== null && <span className="drop-hour-indicator" style={{ '--drop-hour': dropHour / hourStep, '--hour-step': hourStep }} aria-hidden="true" />}
     {compact && <span className="month-day-number">{day.getDate()}</span>}
     {compact && tasks.length > 0 && <span className="month-task-count">{tasks.length === 1 ? '1 task' : `${tasks.length} tasks`}</span>}
@@ -161,7 +161,7 @@ function DayColumn({ day, tasks, onSelectDate, onSelectTask, onAdvanceTaskStatus
   </button>;
 }
 
-export default function CalendarGrid({ days, tasksByDate, onSelectDate, onSelectTask, onMoveTask, onAdvanceTaskStatus, statuses, view = 'week', selectedHour = 9, selectedBlock = 0 }) {
+export default function CalendarGrid({ days, tasksByDate, holidays = {}, onSelectDate, onSelectTask, onMoveTask, onAdvanceTaskStatus, statuses, view = 'week', selectedHour = 9, selectedBlock = 0 }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const timeZone = getUserTimeZone();
   const timeZoneLabel = getTimeZoneLabel(timeZone);
@@ -202,6 +202,7 @@ export default function CalendarGrid({ days, tasksByDate, onSelectDate, onSelect
     }} onDragEnd={handleDragEnd}>
     <div className="calendar">
       <div className="timezone">{timeZoneLabel}</div>
+      {timeline && (holidays[dateKey(days[0])] || []).length > 0 && <div className="holiday-banner">{holidays[dateKey(days[0])].join(', ')}</div>}
       {!timeline && <div className={`day-headings calendar-view-${view}`}>{(view === 'month' ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : days).map((day) => typeof day === 'string'
         ? <div key={day} className="day-heading"><span>{day}</span></div>
         : <div key={dateKey(day)} className="day-heading"><span>{day.toLocaleDateString('en-US', { weekday: 'short' })}</span><b>{day.getDate()}</b></div>)}</div>}
@@ -218,7 +219,7 @@ export default function CalendarGrid({ days, tasksByDate, onSelectDate, onSelect
                   return hour >= selectedBlock * 4 && hour < (selectedBlock + 1) * 4;
                 })
               : tasksByDate[key] || [];
-            return <DayColumn key={key} day={day} tasks={dayTasks} onSelectDate={onSelectDate} onSelectTask={onSelectTask}
+            return <DayColumn key={key} day={day} tasks={dayTasks} holidayNames={holidays[key] || []} onSelectDate={onSelectDate} onSelectTask={onSelectTask}
               onAdvanceTaskStatus={onAdvanceTaskStatus} statuses={statuses}
               dropHour={dragPreview?.date === key ? dragPreview.hour : null} timeSlots={timeSlots} hourStep={hourStep}
               compact={compact} timeline={timeline} view={view} selectedHour={selectedHour} selectedBlock={selectedBlock} />;
