@@ -6,7 +6,7 @@ import { getOAuthRedirectUrl } from '../auth/oauthRedirect';
 
 const SESSION_TIMEOUT_MS = 10000;
 const POLL_INTERVAL_MS = 200;
-const SUCCESS_PATH = '/planner';
+const SUCCESS_PATH = '/kanban';
 
 const wait = (ms) => new Promise((resolve) => { setTimeout(resolve, ms); });
 

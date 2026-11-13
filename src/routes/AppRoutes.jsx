@@ -1,4 +1,5 @@
-import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Navigate, Outlet, Route, Routes, useLocation, useSearchParams } from 'react-router-dom';
 import Header from '../components/layout/Header';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import LoginPage from '../pages/LoginPage';
@@ -14,17 +15,39 @@ import CalendarsSettingsPage from '../pages/CalendarsSettingsPage';
 import HoursSettingsPage from '../pages/HoursSettingsPage';
 import PreferencesSettingsPage from '../pages/PreferencesSettingsPage';
 import AccountSettingsPage from '../pages/AccountSettingsPage';
+import AssistantPage from '../pages/AssistantPage';
 import { TaskProvider } from '../context/TaskContext';
 import { useAuth } from '../context/AuthContext';
 import WorkspaceHeader from '../components/layout/WorkspaceHeader';
 
+/** The planner page now only hosts the calendar view; the board lives in /kanban. */
+function PlannerRoute() {
+  const [searchParams] = useSearchParams();
+  return searchParams.get('view') === 'calendar' ? <PlannerPage /> : <Navigate to="/kanban" replace />;
+}
+
 function SiteLayout() {
   const location = useLocation();
   const { user } = useAuth();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isAuthPage = ['/login', '/register', '/auth/callback'].includes(location.pathname);
+
   // Re-mount the task store when the account changes, so boards, statuses and tasks
   // of the previous account cannot survive in memory.
-  return <TaskProvider key={user?.id || 'anonymous'}><Header /><main className={`site-content${isAuthPage ? ' auth-content' : ''}`}>{!isAuthPage && <WorkspaceHeader />}<Outlet /></main></TaskProvider>;
+  return (
+    <TaskProvider key={user?.id || 'anonymous'}>
+      <Header collapsed={sidebarCollapsed} />
+      <main className={`site-content${isAuthPage ? ' auth-content' : ''}${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
+        {!isAuthPage && (
+          <WorkspaceHeader
+            sidebarCollapsed={sidebarCollapsed}
+            onToggleSidebar={() => setSidebarCollapsed((current) => !current)}
+          />
+        )}
+        <Outlet />
+      </main>
+    </TaskProvider>
+  );
 }
 
 export default function AppRoutes() {
@@ -39,8 +62,9 @@ export default function AppRoutes() {
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>
           <Route>
-            <Route path="/" element={<Navigate to="/planner" replace />} />
-            <Route path="/planner" element={<PlannerPage />} />
+            <Route path="/" element={<Navigate to="/kanban" replace />} />
+            <Route path="/overview" element={<NotFoundPage />} />
+            <Route path="/planner" element={<PlannerRoute />} />
             <Route path="/kanban" element={<KanbanPage />} />
             <Route path="/budget" element={<BudgetPage />} />
             <Route path="/profile" element={<ProfilePage />} />
@@ -50,7 +74,7 @@ export default function AppRoutes() {
             <Route path="/settings/hours" element={<HoursSettingsPage />} />
             <Route path="/settings/preferences" element={<PreferencesSettingsPage />} />
             <Route path="/settings/account" element={<AccountSettingsPage />} />
-            <Route path="/ai-assistant" element={<NotFoundPage />} />
+            <Route path="/ai-assistant" element={<AssistantPage />} />
             <Route path="/automations" element={<NotFoundPage />} />
             <Route path="/knowledge" element={<NotFoundPage />} />
           </Route>

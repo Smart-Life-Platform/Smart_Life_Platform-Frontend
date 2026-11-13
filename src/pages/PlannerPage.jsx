@@ -7,6 +7,7 @@ import { formatMonthYear } from '../utils/dateUtils';
 import useCalendar from '../hooks/useCalendar';
 import { tasksByDate, useFilteredTasks } from '../hooks/useTasks';
 import TaskForm from '../components/tasks/TaskForm';
+import ConfirmModal from '../components/common/ConfirmModal';
 import { dateKey } from '../utils/dateUtils';
 
 const statusName = (task, statuses) => task.status_name || statuses.find((item) => String(item.id) === String(task.status_id ?? task.status?.id ?? task.status))?.name || task.status?.name || 'Unknown status';
@@ -32,6 +33,7 @@ export default function PlannerPage() {
   const { week, days, shiftWeek, goToDate, todayKey } = useCalendar(calendarView);
   const [modalDate, setModalDate] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
+  const [taskToDelete, setTaskToDelete] = useState(null);
   const [metadataMenu, setMetadataMenu] = useState(null);
   const [filters, setFilters] = useState({ search: '', status: '', category: '', priority: '', ordering: 'due_date' });
   const [error, setError] = useState('');
@@ -109,8 +111,17 @@ export default function PlannerPage() {
   }
 
   async function removeTask(task) {
-    if (!window.confirm(`Delete "${task.title}"?`)) return;
-    try { setError(''); await deleteTask(task.id); } catch (requestError) { setError(requestError.message); }
+    setTaskToDelete(task);
+  }
+
+  async function confirmRemoveTask() {
+    try {
+      setError('');
+      await deleteTask(taskToDelete.id);
+      setTaskToDelete(null);
+    } catch (requestError) {
+      setError(requestError.message);
+    }
   }
 
   const columns = statuses.length ? statuses : [
@@ -154,7 +165,10 @@ export default function PlannerPage() {
       </label>
     </div>
     <CalendarGrid days={days} tasksByDate={calendarTasksByDate} onSelectDate={selectCalendarDate} onSelectTask={openEdit} onMoveTask={moveTask} onAdvanceTaskStatus={advanceTaskStatus} statuses={statuses} view={calendarView} selectedHour={selectedHour} selectedBlock={selectedBlock} />
-  </section>{modalDate && <TaskForm date={modalDate} task={editingTask} statuses={statuses} categories={categories} onClose={closeModal} onSubmit={saveTask} />}</div>;
+  </section>
+  {modalDate && <TaskForm date={modalDate} task={editingTask} statuses={statuses} categories={categories} onClose={closeModal} onSubmit={saveTask} />}
+  {taskToDelete && <ConfirmModal title="Delete task?" message={`Delete "${taskToDelete.title}"?`} onClose={() => setTaskToDelete(null)} onConfirm={confirmRemoveTask} />}
+  </div>;
 
   return <div className="workspace-page">
     <section className="board-heading">
@@ -190,5 +204,6 @@ export default function PlannerPage() {
       </section>)}
     </div>
     {modalDate && <TaskForm date={modalDate} task={editingTask} statuses={statuses} categories={categories} onClose={closeModal} onSubmit={saveTask} />}
+    {taskToDelete && <ConfirmModal title="Delete task?" message={`Delete "${taskToDelete.title}"?`} onClose={() => setTaskToDelete(null)} onConfirm={confirmRemoveTask} />}
   </div>;
 }

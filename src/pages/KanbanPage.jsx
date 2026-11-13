@@ -5,6 +5,7 @@ import KanbanHeader from '../components/kanban/KanbanHeader';
 import KanbanToolbar from '../components/kanban/KanbanToolbar';
 import MetadataModal from '../components/kanban/MetadataModal';
 import TaskDetailsPopover from '../components/kanban/TaskDetailsPopover';
+import ConfirmModal from '../components/common/ConfirmModal';
 import { useKanbanData } from '../components/kanban/useKanbanData';
 import { useTaskContext } from '../context/TaskContext';
 import { useAuth } from '../context/AuthContext';
@@ -54,6 +55,7 @@ export default function KanbanPage() {
   const [detailsTask, setDetailsTask] = useState(null);
   const [createInitialStatus, setCreateInitialStatus] = useState(null);
   const [metadataModal, setMetadataModal] = useState(null);
+  const [taskToDelete, setTaskToDelete] = useState(null);
 
   const displayName = getDisplayName(user);
   const initials = displayName
@@ -98,10 +100,14 @@ export default function KanbanPage() {
   };
 
   const removeTask = async (task) => {
-    if (!window.confirm(`Delete "${task.title}"?`)) return;
+    setTaskToDelete(task);
+  };
+
+  const confirmRemoveTask = async () => {
     try {
-      await deleteTask(task.id);
-      if (detailsTask?.id === task.id) setDetailsTask(null);
+      await deleteTask(taskToDelete.id);
+      if (detailsTask?.id === taskToDelete.id) setDetailsTask(null);
+      setTaskToDelete(null);
     } catch (requestError) {
       setError(requestError.message);
     }
@@ -218,6 +224,15 @@ export default function KanbanPage() {
         onClose={() => setMetadataModal(null)}
         onSubmit={handleCreateMetadata}
       />
+
+      {taskToDelete && (
+        <ConfirmModal
+          title="Delete task?"
+          message={`Delete "${taskToDelete.title}"?`}
+          onClose={() => setTaskToDelete(null)}
+          onConfirm={confirmRemoveTask}
+        />
+      )}
     </div>
   );
 }
