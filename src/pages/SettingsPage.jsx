@@ -18,15 +18,13 @@ const cards = [
   { key: 'calendars', Icon: UilCalendarAlt, title: 'Calendars', text: 'Add & manage connected emails & calendars.', to: '/settings/calendars' },
   { key: 'hours', Icon: UilClock, title: 'Hours', text: 'Set & customize your personal, working, & meeting hours.', to: '/settings/hours' },
   { key: 'preferences', Icon: UilSlidersV, title: 'Preferences', text: 'Chat, scheduling window & meeting start time intervals.', to: '/settings/preferences' },
-  { key: 'account', Icon: UilUser, title: 'Account', text: 'Update your profile info and manage your account.' },
+  { key: 'account', Icon: UilUser, title: 'Account', text: 'Update your profile info and manage your account.', to: '/settings/account' },
   { key: 'clockwise', Icon: UilCloudUpload, title: 'Clockwise Import', text: 'Import your settings and data from Clockwise.' },
   { key: 'team', Icon: UilUsersAlt, title: 'Team', text: 'Manage settings for others under your team.' },
 ];
 
 export default function SettingsPage() {
-  const { user, updateProfile } = useAuth();
-  const [profileName, setProfileName] = useState(getDisplayName(user));
-  const [editing, setEditing] = useState(false);
+  const { user } = useAuth();
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -78,22 +76,6 @@ export default function SettingsPage() {
     }
   }
 
-  async function saveProfile(event) {
-    event.preventDefault();
-    setSaving(true);
-    setMessage('');
-    setError('');
-    try {
-      await updateProfile({ name: profileName });
-      setEditing(false);
-      setMessage('Profile updated.');
-    } catch (saveError) {
-      setError(saveError.message || 'Could not update your profile.');
-    } finally {
-      setSaving(false);
-    }
-  }
-
   return (
     <main className="settings-page">
       <div className="settings-profile">
@@ -115,32 +97,11 @@ export default function SettingsPage() {
               <p className="settings-card-text">{text}</p>
             </>
           );
-
-          if (to) {
-            return <Link className="settings-card is-link" to={to} key={key}>{content}</Link>;
-          }
-
-          const isAccount = key === 'account';
-          return (
-            <div
-              className={`settings-card${isAccount ? ' account-card' : ''}`}
-              key={key}
-              onClick={isAccount ? () => { setProfileName(displayName); setEditing(true); } : undefined}
-            >
-              {content}
-            </div>
-          );
+          return to
+            ? <Link className="settings-card is-link" to={to} key={key}>{content}</Link>
+            : <div className="settings-card" key={key}>{content}</div>;
         })}
       </div>
-      {editing && <div className="modal-backdrop" onMouseDown={() => setEditing(false)}><div className="settings-form-card account-modal" onMouseDown={(event) => event.stopPropagation()}>
-        <button type="button" className="close-button account-modal-close" onClick={() => setEditing(false)}><UilTimes size="20" /></button>
-        <h2>Account</h2>
-        <form onSubmit={saveProfile}>
-          <label>Display name<input value={profileName} onChange={(event) => setProfileName(event.target.value)} required /></label>
-          <label>Email<input value={email} readOnly /></label>
-          <div className="settings-form-actions"><button type="submit" className="primary-button" disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</button><button type="button" className="settings-cancel-button" onClick={() => setEditing(false)}>Cancel</button></div>
-        </form>
-      </div></div>}
       {avatarEditing && <div className="modal-backdrop" onMouseDown={() => setAvatarEditing(false)}><div className="settings-form-card account-modal" onMouseDown={(event) => event.stopPropagation()}>
         <button type="button" className="close-button account-modal-close" onClick={() => setAvatarEditing(false)}><UilTimes size="20" /></button>
         <h2>Profile icon</h2>
