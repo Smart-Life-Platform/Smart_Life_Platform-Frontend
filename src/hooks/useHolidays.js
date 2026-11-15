@@ -1,34 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { fetchProfileSettings } from '../api/settingsApi';
 import { fetchHolidays } from '../api/holidaysApi';
 
 // Returns { 'YYYY-MM-DD': ['Holiday name', ...] } for the days shown in the calendar.
-export default function useHolidays(days) {
-  const { user } = useAuth();
-  const userId = user?.id;
-  const [enabled, setEnabled] = useState(false);
+export default function useHolidays(days, enabled) {
   const [byYear, setByYear] = useState({});
 
   const yearsKey = useMemo(
     () => [...new Set(days.map((day) => day.getFullYear()))].join(','),
     [days],
   );
-
-  useEffect(() => {
-    if (!userId) return undefined;
-    let active = true;
-    fetchProfileSettings(userId)
-      .then((profile) => {
-        if (active) setEnabled(profile.settings?.calendars?.holidaysEnabled === true);
-      })
-      .catch(() => {
-        if (active) setEnabled(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [userId]);
 
   useEffect(() => {
     if (!enabled) return undefined;

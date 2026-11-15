@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { fetchProfileSettings, saveProfileSettings } from '../api/settingsApi';
 import { DEFAULT_SETTINGS, mergeDeep } from '../utils/settingsDefaults';
+import { setTimezoneCookie } from '../utils/timezone';
 
 const SAVE_DELAY = 600;
 
@@ -29,6 +30,7 @@ export default function useProfileSettings() {
           timezone: savedTimezone || browserTimezone || 'UTC',
           settings: mergeDeep(DEFAULT_SETTINGS, profile.settings || {}),
         };
+        if (savedTimezone) setTimezoneCookie(savedTimezone);
         setTimezone(store.current.timezone);
         setSettings(store.current.settings);
       })
@@ -84,6 +86,7 @@ export default function useProfileSettings() {
 
   const updateTimezone = useCallback((value) => {
     store.current.timezone = value;
+    setTimezoneCookie(value);
     dirty.current.timezone = true;
     setTimezone(value);
     schedule();
