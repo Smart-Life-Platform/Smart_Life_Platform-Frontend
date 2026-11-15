@@ -30,7 +30,7 @@ function buildWeek({ weekday, weekend }) {
 
 export const DEFAULT_SETTINGS = {
   calendars: { primaryEnabled: true, holidaysEnabled: false, primaryType: 'work' },
-  preferences: { aiEnabled: true, schedulingWeeks: 1, intervals: [0, 15, 30, 45] },
+  preferences: { aiEnabled: true, schedulingWeeks: 8, intervals: [0, 15, 30, 45] },
   hours: {
     working: buildWeek({ weekday: ['09:00', '17:00'], weekend: null }),
     personal: buildWeek({ weekday: ['18:00', '22:00'], weekend: ['09:00', '22:00'] }),

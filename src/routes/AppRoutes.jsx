@@ -15,7 +15,7 @@ import CalendarsSettingsPage from '../pages/CalendarsSettingsPage';
 import HoursSettingsPage from '../pages/HoursSettingsPage';
 import PreferencesSettingsPage from '../pages/PreferencesSettingsPage';
 import AccountSettingsPage from '../pages/AccountSettingsPage';
-import AssistantPage from '../pages/AssistantPage';
+import AssistantGate from '../components/assistant/AssistantGate';
 import { TaskProvider } from '../context/TaskContext';
 import { useAuth } from '../context/AuthContext';
 import WorkspaceHeader from '../components/layout/WorkspaceHeader';
@@ -74,7 +74,7 @@ export default function AppRoutes() {
             <Route path="/settings/hours" element={<HoursSettingsPage />} />
             <Route path="/settings/preferences" element={<PreferencesSettingsPage />} />
             <Route path="/settings/account" element={<AccountSettingsPage />} />
-            <Route path="/ai-assistant" element={<AssistantPage />} />
+            <Route path="/ai-assistant" element={<AssistantGate />} />
             <Route path="/automations" element={<NotFoundPage />} />
             <Route path="/knowledge" element={<NotFoundPage />} />
           </Route>

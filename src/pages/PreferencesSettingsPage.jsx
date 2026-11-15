@@ -1,24 +1,12 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { UilArrowLeft, UilCheck } from '@iconscout/react-unicons';
+import Toggle from '../components/settings/Toggle';
+import SaveStatus from '../components/settings/SaveStatus';
+import useProfileSettings from '../hooks/useProfileSettings';
+import { windowLabel } from '../utils/schedulingRules';
 import '../styles/settings.css';
 
 const MINUTES = [0, 15, 30, 45];
-
-function Toggle({ checked, onChange, label }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      className={`cal-toggle${checked ? ' on' : ''}`}
-      onClick={() => onChange(!checked)}
-    >
-      <span className="cal-toggle-knob" />
-    </button>
-  );
-}
 
 function formatMinutes(minutes) {
   return `:${String(minutes).padStart(2, '0')}`;
@@ -36,21 +24,23 @@ function buildExampleTimes(selected) {
 }
 
 export default function PreferencesSettingsPage() {
-  const [aiEnabled, setAiEnabled] = useState(true);
-  const [weeks, setWeeks] = useState(1);
-  const [intervals, setIntervals] = useState([0, 15, 30, 45]);
+  const { loading, settings, status, error, updateSettings } = useProfileSettings();
+  const prefs = settings.preferences;
 
-  function toggleInterval(minutes) {
-    setIntervals((current) => {
-      if (current.includes(minutes)) {
-        // at least one interval must stay selected
-        return current.length === 1 ? current : current.filter((item) => item !== minutes);
-      }
-      return [...current, minutes].sort((a, b) => a - b);
-    });
+  function setPreference(patch) {
+    updateSettings({ preferences: patch });
   }
 
-  const weeksLabel = `${weeks} week${weeks > 1 ? 's' : ''}`;
+  function toggleInterval(minutes) {
+    const current = prefs.intervals;
+    if (current.includes(minutes)) {
+      // at least one interval must stay selected
+      if (current.length === 1) return;
+      setPreference({ intervals: current.filter((item) => item !== minutes) });
+    } else {
+      setPreference({ intervals: [...current, minutes].sort((a, b) => a - b) });
+    }
+  }
 
   return (
     <main className="hours-settings">
@@ -65,8 +55,14 @@ export default function PreferencesSettingsPage() {
             <p className="hours-text">
               Enable AI-powered chat assistance to manage your schedule, tasks, and budget.
             </p>
+            <p className="pref-hint">When turned off, the AI assistant page is unavailable.</p>
           </div>
-          <Toggle checked={aiEnabled} onChange={setAiEnabled} label="Enable AI assistant" />
+          <Toggle
+            checked={prefs.aiEnabled}
+            disabled={loading}
+            onChange={(value) => setPreference({ aiEnabled: value })}
+            label="Enable AI assistant"
+          />
         </section>
 
         <section className="pref-section">
@@ -80,11 +76,13 @@ export default function PreferencesSettingsPage() {
             min="1"
             max="8"
             step="1"
-            value={weeks}
-            onChange={(event) => setWeeks(Number(event.target.value))}
+            value={prefs.schedulingWeeks}
+            disabled={loading}
+            onChange={(event) => setPreference({ schedulingWeeks: Number(event.target.value) })}
             aria-label="Scheduling window in weeks"
           />
-          <div className="pref-slider-label">{weeksLabel}</div>
+          <div className="pref-slider-label">{windowLabel(prefs.schedulingWeeks)}</div>
+          <p className="pref-hint">Tasks can&apos;t be scheduled further ahead than this in the calendar.</p>
         </section>
 
         <section className="pref-section">
@@ -95,13 +93,14 @@ export default function PreferencesSettingsPage() {
 
           <div className="pref-pills">
             {MINUTES.map((minutes) => {
-              const active = intervals.includes(minutes);
+              const active = prefs.intervals.includes(minutes);
               return (
                 <button
                   type="button"
                   key={minutes}
                   className={`pref-pill${active ? ' active' : ''}`}
                   aria-pressed={active}
+                  disabled={loading}
                   onClick={() => toggleInterval(minutes)}
                 >
                   {active && <UilCheck size="16" />} {formatMinutes(minutes)}
@@ -111,8 +110,11 @@ export default function PreferencesSettingsPage() {
           </div>
 
           <div className="pref-example-title">Example times with selection</div>
-          <div className="pref-example">{buildExampleTimes(intervals).join(',  ')}</div>
+          <div className="pref-example">{buildExampleTimes(prefs.intervals).join(',  ')}</div>
+          <p className="pref-hint">Task times set in the calendar are rounded to the nearest selected interval.</p>
         </section>
+
+        <SaveStatus status={status} error={error} />
       </div>
     </main>
   );
