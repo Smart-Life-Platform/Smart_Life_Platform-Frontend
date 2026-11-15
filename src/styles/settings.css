@@ -478,3 +478,6 @@ a.settings-card.is-link:hover {
 .assistant-off h2 { margin: 0 0 8px; color: var(--color-menu-heading); }
 .assistant-off p { margin: 0 0 16px; color: var(--color-menu-muted); }
 .assistant-off a { color: var(--color-accent, #4f46e5); font-weight: 500; }
+
+.acc-section { margin-top: 40px; }
+.acc-section .acc-form { margin-top: 12px; }
