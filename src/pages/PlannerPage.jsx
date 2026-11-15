@@ -6,6 +6,7 @@ import { useTaskContext } from '../context/TaskContext';
 import { formatMonthYear } from '../utils/dateUtils';
 import useCalendar from '../hooks/useCalendar';
 import useHolidays from '../hooks/useHolidays';
+import useCalendarSettings from '../hooks/useCalendarSettings';
 import { tasksByDate, useFilteredTasks } from '../hooks/useTasks';
 import TaskForm from '../components/tasks/TaskForm';
 import ConfirmModal from '../components/common/ConfirmModal';
@@ -32,7 +33,8 @@ export default function PlannerPage() {
   const [selectedHour, setSelectedHour] = useState(new Date().getHours());
   const [selectedBlock, setSelectedBlock] = useState(Math.floor(new Date().getHours() / 4));
   const { week, days, shiftWeek, goToDate, todayKey } = useCalendar(calendarView);
-  const holidays = useHolidays(days);
+  const calendarSettings = useCalendarSettings();
+  const holidays = useHolidays(days, calendarSettings.settings.calendars.holidaysEnabled);
   const [modalDate, setModalDate] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
   const [taskToDelete, setTaskToDelete] = useState(null);
@@ -166,7 +168,7 @@ export default function PlannerPage() {
         <input type="date" value={dateKey(week)} onChange={(event) => { goToDate(event.target.value); setCalendarView(calendarView === 'month' ? 'day' : calendarView); }} />
       </label>
     </div>
-    <CalendarGrid days={days} holidays={holidays} tasksByDate={calendarTasksByDate} onSelectDate={selectCalendarDate} onSelectTask={openEdit} onMoveTask={moveTask} onAdvanceTaskStatus={advanceTaskStatus} statuses={statuses} view={calendarView} selectedHour={selectedHour} selectedBlock={selectedBlock} />
+    <CalendarGrid days={days} holidays={holidays} workingHours={calendarSettings.settings.hours} tasksByDate={calendarTasksByDate} onSelectDate={selectCalendarDate} onSelectTask={openEdit} onMoveTask={moveTask} onAdvanceTaskStatus={advanceTaskStatus} statuses={statuses} view={calendarView} selectedHour={selectedHour} selectedBlock={selectedBlock} />
   </section>
   {modalDate && <TaskForm date={modalDate} task={editingTask} statuses={statuses} categories={categories} onClose={closeModal} onSubmit={saveTask} />}
   {taskToDelete && <ConfirmModal title="Delete task?" message={`Delete "${taskToDelete.title}"?`} onClose={() => setTaskToDelete(null)} onConfirm={confirmRemoveTask} />}
