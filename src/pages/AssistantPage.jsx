@@ -46,6 +46,8 @@ export default function AssistantPage() {
 
   const threadRef = useRef(null);
   const inputRef = useRef(null);
+  const threadRequestId = useRef(0);
+  const sendingRef = useRef(false);
 
   const firstName = getDisplayName(user).split(/\s+/)[0];
 
@@ -61,44 +63,47 @@ export default function AssistantPage() {
   }, [loadMetadata, loadTasks]);
 
   const openConversation = useCallback(async (id) => {
+    if (sendingRef.current) return;
+    const requestId = ++threadRequestId.current;
     setActiveId(id);
     setMessages([]);
     setError('');
     setLoadingThread(true);
     try {
       const data = await getConversation(id);
-      setMessages((data?.messages || []).map(toMessage));
+      if (requestId === threadRequestId.current) setMessages((data?.messages || []).map(toMessage));
     } catch (loadError) {
-      setError(loadError.message);
+      if (requestId === threadRequestId.current) setError(loadError.message);
     } finally {
-      setLoadingThread(false);
+      if (requestId === threadRequestId.current) setLoadingThread(false);
     }
   }, []);
 
   useEffect(() => {
     let cancelled = false;
+    const requestId = threadRequestId.current;
 
     (async () => {
       try {
         const list = await getConversations();
         if (cancelled) return;
         setConversations(list);
-        if (list.length && !pendingPrompt.current) {
+        if (list.length && !pendingPrompt.current && requestId === threadRequestId.current) {
           setActiveId(list[0].id);
           setLoadingThread(true);
           const data = await getConversation(list[0].id);
-          if (!cancelled) setMessages((data?.messages || []).map(toMessage));
+          if (!cancelled && requestId === threadRequestId.current) setMessages((data?.messages || []).map(toMessage));
         }
       } catch (loadError) {
-        if (!cancelled) setError(loadError.message);
+        if (!cancelled && requestId === threadRequestId.current) setError(loadError.message);
       } finally {
         if (!cancelled) {
           setLoadingList(false);
-          setLoadingThread(false);
+          if (requestId === threadRequestId.current) setLoadingThread(false);
         }
       }
 
-      if (pendingPrompt.current && !cancelled) {
+      if (pendingPrompt.current && !cancelled && requestId === threadRequestId.current) {
         const prompt = pendingPrompt.current;
         pendingPrompt.current = '';
         // Drop the router state so a refresh does not ask the same question again.
@@ -117,6 +122,10 @@ export default function AssistantPage() {
   }, [messages, sending]);
 
   function startNewChat() {
+    if (sendingRef.current) return;
+    threadRequestId.current += 1;
+    pendingPrompt.current = '';
+    setLoadingThread(false);
     setActiveId(null);
     setMessages([]);
     setError('');
@@ -125,22 +134,27 @@ export default function AssistantPage() {
   }
 
   async function removeConversation(id) {
+    if (sendingRef.current) return;
     if (!window.confirm('Delete this conversation with the assistant?')) return;
+    const requestId = threadRequestId.current;
     try {
       await deleteConversation(id);
       setConversations((current) => current.filter((conversation) => conversation.id !== id));
-      if (activeId === id) {
+      if (activeId === id && requestId === threadRequestId.current) {
+        threadRequestId.current += 1;
+        setLoadingThread(false);
         setActiveId(null);
         setMessages([]);
       }
     } catch (deleteError) {
-      setError(deleteError.message);
+      if (requestId === threadRequestId.current) setError(deleteError.message);
     }
   }
 
   async function handleSend(text = input) {
     const content = text.trim();
-    if (!content || sending) return;
+    if (!content || sendingRef.current || loadingThread) return;
+    sendingRef.current = true;
 
     setError('');
     setInput('');
@@ -173,6 +187,7 @@ export default function AssistantPage() {
       setInput(content);
       setError(sendError.message);
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
   }
@@ -194,7 +209,7 @@ export default function AssistantPage() {
   return (
     <div className="workspace-page assistant-page">
       <aside className="assistant-sidebar">
-        <button type="button" className="assistant-new" onClick={startNewChat}>
+        <button type="button" className="assistant-new" onClick={startNewChat} disabled={sending}>
           <UilPlus size="15" /> New chat
         </button>
 
@@ -212,6 +227,7 @@ export default function AssistantPage() {
               <button
                 type="button"
                 className="assistant-conversation-open"
+                disabled={sending}
                 onClick={() => openConversation(conversation.id)}
                 title={conversation.title || 'Conversation'}
               >
@@ -220,6 +236,7 @@ export default function AssistantPage() {
               <button
                 type="button"
                 className="assistant-conversation-delete"
+                disabled={sending}
                 onClick={() => removeConversation(conversation.id)}
                 aria-label={`Delete ${conversation.title || 'conversation'}`}
               >
@@ -253,7 +270,7 @@ export default function AssistantPage() {
                     type="button"
                     key={suggestion}
                     onClick={() => handleSend(suggestion)}
-                    disabled={sending}
+                    disabled={sending || loadingList || loadingThread}
                   >
                     {suggestion}
                   </button>
@@ -298,13 +315,15 @@ export default function AssistantPage() {
             value={input}
             placeholder="Ask the assistant…"
             aria-label="Message the assistant"
+            maxLength={2000}
+            disabled={loadingList || loadingThread}
             onChange={(event) => { setInput(event.target.value); resizeComposer(); }}
             onKeyDown={handleKeyDown}
           />
           <button
             type="submit"
             className="assistant-send"
-            disabled={!input.trim() || sending}
+            disabled={!input.trim() || sending || loadingList || loadingThread}
             aria-label="Send message"
           >
             <UilArrowRight size="17" />
