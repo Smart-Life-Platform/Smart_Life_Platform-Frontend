@@ -1,0 +1,70 @@
+.budget-body.is-loading { 
+    opacity: .6; 
+    transition: opacity .15s; 
+}
+
+.budget-page .b-loading { 
+    color: var(--b-muted); 
+    text-align: center; 
+    padding: 40px 0; 
+}
+
+.budget-page .b-alert {
+  display: 
+  
+  flex; align-items: center; 
+  gap: 10px; 
+  margin-bottom: 14px; 
+  padding: 10px 14px;
+  border: 1px solid var(--b-red); 
+  border-radius: 8px; 
+  background: #fdf1f4; 
+  color: var(--b-red); 
+  font-size: 10px;
+}
+
+.budget-page .b-alert span { 
+    flex: 1; 
+}
+
+.budget-page .b-alert button { 
+    padding: 0 4px; 
+    border: 0; 
+    background: transparent; 
+    color: inherit; 
+    font-size: 10px; 
+    cursor: pointer; 
+}
+
+.budget-page .b-alert button[aria-label='Dismiss'] { 
+    font-size: 14px; 
+    line-height: 1; 
+}
+
+.budget-page .shopping__new { 
+    display: flex; 
+    gap: 8px; 
+    margin-bottom: 14px; 
+    max-width: 420px; 
+}
+
+.budget-page .shopping__new input {
+  flex: 1; 
+  height: 32px; 
+  padding: 0 10px; 
+  border: 1px solid var(--b-border); 
+  border-radius: 7px; 
+  background: var(--b-surface); 
+  font-size: 10px;
+}
+
+.budget-page .shopping__new .b-btn-primary { 
+    padding: 0 14px; 
+    white-space: nowrap; 
+}
+
+.budget-page .shopping__meta { 
+    display: inline-flex; 
+    align-items: center; 
+    gap: 6px; 
+}
