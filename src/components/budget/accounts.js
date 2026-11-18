@@ -1,0 +1,1 @@
+export const accounts = [{ id: 'all', name: 'All Accounts' }];
