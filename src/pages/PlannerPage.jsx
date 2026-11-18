@@ -5,6 +5,9 @@ import CalendarGrid from '../components/calendar/CalendarGrid';
 import { useTaskContext } from '../context/TaskContext';
 import { formatMonthYear } from '../utils/dateUtils';
 import useCalendar from '../hooks/useCalendar';
+import { isWithinWindow, snapTime, windowLabel } from '../utils/schedulingRules';
+import useHolidays from '../hooks/useHolidays';
+import useCalendarSettings from '../hooks/useCalendarSettings';
 import { tasksByDate, useFilteredTasks } from '../hooks/useTasks';
 import TaskForm from '../components/tasks/TaskForm';
 import ConfirmModal from '../components/common/ConfirmModal';
@@ -31,6 +34,10 @@ export default function PlannerPage() {
   const [selectedHour, setSelectedHour] = useState(new Date().getHours());
   const [selectedBlock, setSelectedBlock] = useState(Math.floor(new Date().getHours() / 4));
   const { week, days, shiftWeek, goToDate, todayKey } = useCalendar(calendarView);
+  const calendarSettings = useCalendarSettings();
+  const preferences = calendarSettings.settings.preferences;
+  const windowError = `You can schedule tasks up to ${windowLabel(preferences.schedulingWeeks)} ahead. Change this in Settings → Preferences.`;
+  const holidays = useHolidays(days, calendarSettings.settings.calendars.holidaysEnabled);
   const [modalDate, setModalDate] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
   const [taskToDelete, setTaskToDelete] = useState(null);
@@ -59,7 +66,15 @@ export default function PlannerPage() {
     loadCalendarTasks(calendarView, dateKey(week)).catch((requestError) => setError(requestError.message));
   }, [calendarView, week, loadCalendarTasks]);
 
-  const openCreate = (date = todayKey()) => { setEditingTask(null); setModalDate(date); };
+  const openCreate = (date = todayKey()) => {
+    if (!isWithinWindow(date, preferences.schedulingWeeks)) {
+      setError(windowError);
+      return;
+    }
+    setError('');
+    setEditingTask(null);
+    setModalDate(date);
+  };
   const selectCalendarDate = (date) => {
     if (calendarView === 'month') {
       goToDate(date);
@@ -71,7 +86,12 @@ export default function PlannerPage() {
   const openEdit = (task) => { setEditingTask(task); setModalDate(task.due_date || todayKey()); };
   const closeModal = () => { setModalDate(null); setEditingTask(null); };
 
-  async function moveTask(task, dueDate, dueTime) {
+  async function moveTask(task, dueDate, requestedTime) {
+    const dueTime = snapTime(requestedTime, preferences.intervals);
+    if (!isWithinWindow(dueDate, preferences.schedulingWeeks)) {
+      setError(windowError);
+      return;
+    }
     if (task.due_date === dueDate && (task.due_time || '09:00').slice(0, 5) === dueTime) return;
     setError('');
     try {
@@ -103,7 +123,13 @@ export default function PlannerPage() {
     }
   }
 
-  async function saveTask(payload) {
+  async function saveTask(rawPayload) {
+    if (!isWithinWindow(rawPayload.due_date, preferences.schedulingWeeks)) {
+      throw new Error(windowError);
+    }
+    const payload = rawPayload.due_time
+      ? { ...rawPayload, due_time: snapTime(rawPayload.due_time, preferences.intervals) }
+      : rawPayload;
     setError('');
     if (editingTask) await updateTask(editingTask.id, payload);
     else await createTask(payload);
@@ -164,7 +190,8 @@ export default function PlannerPage() {
         <input type="date" value={dateKey(week)} onChange={(event) => { goToDate(event.target.value); setCalendarView(calendarView === 'month' ? 'day' : calendarView); }} />
       </label>
     </div>
-    <CalendarGrid days={days} tasksByDate={calendarTasksByDate} onSelectDate={selectCalendarDate} onSelectTask={openEdit} onMoveTask={moveTask} onAdvanceTaskStatus={advanceTaskStatus} statuses={statuses} view={calendarView} selectedHour={selectedHour} selectedBlock={selectedBlock} />
+    {error && <p className="form-error">{error}</p>}
+    <CalendarGrid days={days} holidays={holidays} workingHours={calendarSettings.settings.hours} tasksByDate={calendarTasksByDate} onSelectDate={selectCalendarDate} onSelectTask={openEdit} onMoveTask={moveTask} onAdvanceTaskStatus={advanceTaskStatus} statuses={statuses} view={calendarView} selectedHour={selectedHour} selectedBlock={selectedBlock} />
   </section>
   {modalDate && <TaskForm date={modalDate} task={editingTask} statuses={statuses} categories={categories} onClose={closeModal} onSubmit={saveTask} />}
   {taskToDelete && <ConfirmModal title="Delete task?" message={`Delete "${taskToDelete.title}"?`} onClose={() => setTaskToDelete(null)} onConfirm={confirmRemoveTask} />}

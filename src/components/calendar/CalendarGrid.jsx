@@ -54,9 +54,52 @@ function isToday(day) {
   return dateKey(day) === dateKey(new Date());
 }
 
+const WEEKDAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+
+function toMinutes(value) {
+  const [hours, minutes] = (value || '0:0').split(':').map(Number);
+  return hours * 60 + (minutes || 0);
+}
+
+// Colored bands for the user's working / personal hours inside the visible time range.
+function hoursBands(day, hours, rangeStart, range) {
+  if (!hours) return [];
+  const key = WEEKDAY_KEYS[day.getDay()];
+  return ['working', 'personal'].flatMap((kind) => {
+    const slot = hours[kind]?.[key];
+    if (!slot || !slot.on) return [];
+    const from = Math.max(toMinutes(slot.start), rangeStart);
+    const to = Math.min(toMinutes(slot.end), rangeStart + range);
+    if (to <= from) return [];
+    return [{ kind, top: ((from - rangeStart) / range) * 100, height: ((to - from) / range) * 100 }];
+  });
+}
+
+function HoursBands({ bands }) {
+  return bands.map((band) => (
+    <span key={band.kind} className={`hours-band hours-band-${band.kind}`} style={{ top: `${band.top}%`, height: `${band.height}%` }} aria-hidden="true" />
+  ));
+}
+
+function minutesNowInTimeZone(timeZone) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(new Date());
+    const hours = Number(parts.find((part) => part.type === 'hour').value);
+    const minutes = Number(parts.find((part) => part.type === 'minute').value);
+    return hours * 60 + minutes;
+  } catch {
+    const now = new Date();
+    return now.getHours() * 60 + now.getMinutes();
+  }
+}
+
 function currentTimePosition(view, selectedHour, selectedBlock) {
-  const now = new Date();
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const currentMinutes = minutesNowInTimeZone(getUserTimeZone());
   const start = view === 'hour' ? selectedHour * 60 : view === '4hours' ? selectedBlock * 240 : 0;
   const range = view === 'hour' ? 60 : view === '4hours' ? 240 : HOURS_IN_DAY * 60;
   if (currentMinutes < start || currentMinutes >= start + range) return null;
@@ -126,7 +169,7 @@ function DraggableTask({ task, onSelectTask, onAdvanceTaskStatus, canAdvance, la
     }}>›</button>}<small>{(task.due_time || '09:00').slice(0, 5)}</small></span>;
 }
 
-function DayColumn({ day, tasks, onSelectDate, onSelectTask, onAdvanceTaskStatus, statuses, dropHour, timeSlots, hourStep, compact, timeline, view, selectedHour, selectedBlock }) {
+function DayColumn({ day, tasks, workingHours, holidayNames = [], onSelectDate, onSelectTask, onAdvanceTaskStatus, statuses, dropHour, timeSlots, hourStep, compact, timeline, view, selectedHour, selectedBlock }) {
   const key = dateKey(day);
   const { isOver, setNodeRef } = useDroppable({ id: key, data: { date: key, axis: 'vertical', view, selectedHour, selectedBlock } });
 
@@ -137,6 +180,7 @@ function DayColumn({ day, tasks, onSelectDate, onSelectTask, onAdvanceTaskStatus
       return <span className={minute % 10 === 0 ? 'timeline-major' : ''} key={value}>{formatTime(hour * 60 + minute)}</span>;
     })}</div>
     <div className="timeline-tasks" onClick={() => onSelectDate(key)}>
+      <HoursBands bands={hoursBands(day, workingHours, view === 'hour' ? selectedHour * 60 : view === '4hours' ? selectedBlock * 240 : 0, view === 'hour' ? 60 : view === '4hours' ? 240 : HOURS_IN_DAY * 60)} />
       {isToday(day) && currentTimePosition(view, selectedHour, selectedBlock) && <span className="current-time-line" style={{ top: currentTimePosition(view, selectedHour, selectedBlock) }} aria-label="Current time" />}
       {tasks.map((task) => {
         const taskHour = Number((task.due_time || '09:00').slice(0, 2));
@@ -147,7 +191,8 @@ function DayColumn({ day, tasks, onSelectDate, onSelectTask, onAdvanceTaskStatus
     </div>
   </div>;
 
-  return <button ref={setNodeRef} className={`day-column${compact ? ' month-day' : ''}${compact && isToday(day) ? ' today' : ''}${isOver ? ' drag-over' : ''}`} onClick={() => onSelectDate(key)}>
+  return <button ref={setNodeRef} className={`day-column${compact ? ' month-day' : ''}${compact && isToday(day) ? ' today' : ''}${holidayNames.length ? ' is-holiday' : ''}${isOver ? ' drag-over' : ''}`} onClick={() => onSelectDate(key)}>{holidayNames.length > 0 && <span className={`holiday-badge${compact ? ' in-month' : ''}`} title={holidayNames.join(', ')}>{holidayNames[0]}</span>}
+    {!compact && <HoursBands bands={hoursBands(day, workingHours, 0, HOURS_IN_DAY * 60)} />}
     {dropHour !== null && <span className="drop-hour-indicator" style={{ '--drop-hour': dropHour / hourStep, '--hour-step': hourStep }} aria-hidden="true" />}
     {compact && <span className="month-day-number">{day.getDate()}</span>}
     {compact && tasks.length > 0 && <span className="month-task-count">{tasks.length === 1 ? '1 task' : `${tasks.length} tasks`}</span>}
@@ -161,7 +206,7 @@ function DayColumn({ day, tasks, onSelectDate, onSelectTask, onAdvanceTaskStatus
   </button>;
 }
 
-export default function CalendarGrid({ days, tasksByDate, onSelectDate, onSelectTask, onMoveTask, onAdvanceTaskStatus, statuses, view = 'week', selectedHour = 9, selectedBlock = 0 }) {
+export default function CalendarGrid({ days, tasksByDate, workingHours, holidays = {}, onSelectDate, onSelectTask, onMoveTask, onAdvanceTaskStatus, statuses, view = 'week', selectedHour = 9, selectedBlock = 0 }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const timeZone = getUserTimeZone();
   const timeZoneLabel = getTimeZoneLabel(timeZone);
@@ -202,6 +247,7 @@ export default function CalendarGrid({ days, tasksByDate, onSelectDate, onSelect
     }} onDragEnd={handleDragEnd}>
     <div className="calendar">
       <div className="timezone">{timeZoneLabel}</div>
+      {timeline && (holidays[dateKey(days[0])] || []).length > 0 && <div className="holiday-banner">{holidays[dateKey(days[0])].join(', ')}</div>}
       {!timeline && <div className={`day-headings calendar-view-${view}`}>{(view === 'month' ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : days).map((day) => typeof day === 'string'
         ? <div key={day} className="day-heading"><span>{day}</span></div>
         : <div key={dateKey(day)} className="day-heading"><span>{day.toLocaleDateString('en-US', { weekday: 'short' })}</span><b>{day.getDate()}</b></div>)}</div>}
@@ -218,7 +264,7 @@ export default function CalendarGrid({ days, tasksByDate, onSelectDate, onSelect
                   return hour >= selectedBlock * 4 && hour < (selectedBlock + 1) * 4;
                 })
               : tasksByDate[key] || [];
-            return <DayColumn key={key} day={day} tasks={dayTasks} onSelectDate={onSelectDate} onSelectTask={onSelectTask}
+            return <DayColumn key={key} day={day} tasks={dayTasks} workingHours={workingHours} holidayNames={holidays[key] || []} onSelectDate={onSelectDate} onSelectTask={onSelectTask}
               onAdvanceTaskStatus={onAdvanceTaskStatus} statuses={statuses}
               dropHour={dragPreview?.date === key ? dragPreview.hour : null} timeSlots={timeSlots} hourStep={hourStep}
               compact={compact} timeline={timeline} view={view} selectedHour={selectedHour} selectedBlock={selectedBlock} />;

@@ -123,6 +123,11 @@
     background: repeating-linear-gradient(to bottom, transparent 0, transparent calc(4.166% - 1px), var(--color-calendar-grid) calc(4.166% - 1px), var(--color-calendar-grid) 4.166%);
 }
 
+/* Working / personal hours */
+.hours-band { position: absolute; left: 0; right: 0; z-index: 0; pointer-events: none; }
+.hours-band-working { background: rgba(79, 70, 229, 0.07); }
+.hours-band-personal { background: rgba(24, 128, 56, 0.07); }
+
 .calendar-view-hour .timeline-tasks,
 .calendar-view-4hours .timeline-tasks,
 .calendar-view-day .timeline-tasks {
@@ -460,4 +465,37 @@
 .calendar-drag-preview span {
     color: var(--color-control-placeholder);
     font-size: 10px;
+}
+
+/* Holidays */
+.day-column.is-holiday { background: rgba(255, 193, 7, 0.08); }
+
+.holiday-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  z-index: 1;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #fff3cd;
+  color: #7a5b00;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.holiday-badge.in-month { top: auto; bottom: 4px; }
+
+.holiday-banner {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fff3cd;
+  color: #7a5b00;
+  font-size: 14px;
+  font-weight: 500;
 }
