@@ -53,6 +53,8 @@ export default function Header({ collapsed = false }) {
 
   return (
     <aside className={`app-sidebar${!isAuthenticated ? ' auth-sidebar' : ''}${collapsed ? ' sidebar-collapsed' : ''}`}>
+      <img src={logo} style={{ width: '140px', height: 'auto' }} alt="Avenor" />
+
 
       {isAuthenticated && (
         <>
