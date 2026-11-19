@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTaskContext } from '../../context/TaskContext';
 import { getDisplayName } from '../common/Avatar';
 import UserMenu from './UserMenu';
+import logo from '../../assets/Logo.svg';
 
 const items = [
   { to: '/overview', icon: 'overview', label: 'Overview' },
@@ -52,14 +53,7 @@ export default function Header({ collapsed = false }) {
 
   return (
     <aside className={`app-sidebar${!isAuthenticated ? ' auth-sidebar' : ''}${collapsed ? ' sidebar-collapsed' : ''}`}>
-      <button
-        className="brand brand-button"
-        onClick={() => navigate(isAuthenticated ? '/kanban' : '/login')}
-        aria-label="Home"
-        title="Home"
-      >
-        <span className="nav-icon icon-home" aria-hidden="true" />
-      </button>
+
       {isAuthenticated && (
         <>
           <div className="workspace-switcher">
