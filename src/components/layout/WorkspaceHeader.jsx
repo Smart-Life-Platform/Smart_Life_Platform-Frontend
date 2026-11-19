@@ -1,4 +1,4 @@
-import { UilBell, UilSearch, UilColumns } from '@iconscout/react-unicons';
+import { UilBell, UilSearch } from '@iconscout/react-unicons';
 import { useLocation } from 'react-router-dom';
 import UserMenu from './UserMenu';
 import '../../styles/avenor.css';
@@ -28,7 +28,7 @@ export default function WorkspaceHeader({ onToggleSidebar, sidebarCollapsed = fa
           aria-expanded={!sidebarCollapsed}
           title={sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'}
         >
-          <UilColumns size="16" />
+          <span className="nav-icon icon-panel-left" aria-hidden="true" />
         </button>
         <div className="breadcrumbs"><span>Personal space</span><b>›</b><strong>{pageName}</strong></div>
       </div>

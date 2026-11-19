@@ -1,31 +1,19 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import {
-  UilApps,
-  UilBookOpen,
-  UilRobot,
-  UilCalendarAlt,
-  UilWindowSection,
-  UilObjectGroup,
-  UilSetting,
-  UilWallet,
-  UilPlus,
-  UilTimes,
-} from '@iconscout/react-unicons';
+import { UilCalendarAlt, UilPlus, UilTimes, UilWallet, UilWindowSection } from '@iconscout/react-unicons';
 import { useAuth } from '../../context/AuthContext';
 import { useTaskContext } from '../../context/TaskContext';
 import { getDisplayName } from '../common/Avatar';
 import UserMenu from './UserMenu';
-import logo from '../../assets/Logo.svg';
 
 const items = [
-  { to: '/overview', Icon: UilApps, label: 'Overview' },
-  { to: '/ai-assistant', Icon: UilRobot, label: 'AI assistant' },
+  { to: '/overview', icon: 'overview', label: 'Overview' },
+  { to: '/ai-assistant', icon: 'assistant', label: 'AI assistant' },
   { to: '/kanban', Icon: UilWindowSection, label: 'Task board', countsTasks: true },
   { to: '/planner?view=calendar', Icon: UilCalendarAlt, label: 'Calendar', view: 'calendar' },
   { to: '/budget', Icon: UilWallet, label: 'Budget' },
-  { to: '/automations', Icon: UilObjectGroup, label: 'Automations' },
-  { to: '/knowledge', Icon: UilBookOpen, label: 'Knowledge' },
+  { to: '/automations', icon: 'automations', label: 'Automations' },
+  { to: '/knowledge', icon: 'knowledge', label: 'Knowledge' },
 ];
 
 export default function Header({ collapsed = false }) {
@@ -41,6 +29,8 @@ export default function Header({ collapsed = false }) {
   const pathname = location.pathname;
   const onCalendar = pathname === '/planner' && location.search.includes('view=calendar');
 
+  // Exactly one entry may be active: the previous version highlighted "Task board"
+  // on every page that was not the calendar.
   function isActive(item) {
     if (item.view === 'calendar') return onCalendar;
     if (pathname !== item.to.split('?')[0]) return false;
@@ -62,8 +52,13 @@ export default function Header({ collapsed = false }) {
 
   return (
     <aside className={`app-sidebar${!isAuthenticated ? ' auth-sidebar' : ''}${collapsed ? ' sidebar-collapsed' : ''}`}>
-      <button className="brand brand-button" onClick={() => navigate(isAuthenticated ? '/kanban' : '/login')}>
-        <img src={logo} alt="Avenor" />
+      <button
+        className="brand brand-button"
+        onClick={() => navigate(isAuthenticated ? '/kanban' : '/login')}
+        aria-label="Home"
+        title="Home"
+      >
+        <span className="nav-icon icon-home" aria-hidden="true" />
       </button>
       {isAuthenticated && (
         <>
@@ -85,8 +80,10 @@ export default function Header({ collapsed = false }) {
           <nav className="sidebar-nav" aria-label="Main navigation">
             {items.map((item) => (
               <NavLink key={item.label} to={item.to} className={`nav-link${isActive(item) ? ' active' : ''}`}>
-                <item.Icon size="17" />
-                <span >{item.label}</span>
+                {item.icon
+                  ? <span className={`nav-icon icon-${item.icon}`} aria-hidden="true" />
+                  : <item.Icon />}
+                <span>{item.label}</span>
                 {item.countsTasks && <b className="nav-count">{tasks.length}</b>}
               </NavLink>
             ))}
@@ -96,7 +93,9 @@ export default function Header({ collapsed = false }) {
             {boards.map((board, index) => <button className={`sidebar-board${String(board.id) === String(activeBoard?.id) ? ' active' : ''}`} onClick={() => { setActiveBoard(board); navigate('/kanban'); }} key={board.id}><i className={`board-dot ${['purple', 'blue', 'green'][index % 3]}`} />{board.name}</button>)}
           </nav>
           <div className="sidebar-spacer" />
-          <NavLink className="sidebar-settings" to="/settings"><UilSetting size="16" />Settings &amp; help</NavLink>
+          <NavLink className="sidebar-settings" to="/settings">
+            <span className="nav-icon icon-settings" aria-hidden="true" />Settings &amp; help
+          </NavLink>
           <div className="sidebar-user"><UserMenu showDetails /></div>
         </>
       )}

@@ -250,7 +250,7 @@ export default function CalendarGrid({ days, tasksByDate, workingHours, holidays
       {timeline && (holidays[dateKey(days[0])] || []).length > 0 && <div className="holiday-banner">{holidays[dateKey(days[0])].join(', ')}</div>}
       {!timeline && <div className={`day-headings calendar-view-${view}`}>{(view === 'month' ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : days).map((day) => typeof day === 'string'
         ? <div key={day} className="day-heading"><span>{day}</span></div>
-        : <div key={dateKey(day)} className="day-heading"><span>{day.toLocaleDateString('en-US', { weekday: 'short' })}</span><b>{day.getDate()}</b></div>)}</div>}
+        : <div key={dateKey(day)} className={`day-heading${isToday(day) ? ' is-today' : ''}`}><span>{day.toLocaleDateString('en-US', { weekday: 'short' })}</span><b>{day.getDate()}</b></div>)}</div>}
       <div className="calendar-body">
         {!timeline && <div className={`time-column calendar-view-${view}`}>{timeSlots.map((hour) => <span key={hour}>{String(hour).padStart(2, '0')}:00</span>)}</div>}
         <div className={`day-columns calendar-view-${view}${timeline ? ' timeline-wrapper' : ''}`}>

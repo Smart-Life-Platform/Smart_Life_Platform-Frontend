@@ -16,6 +16,8 @@ import HoursSettingsPage from '../pages/HoursSettingsPage';
 import PreferencesSettingsPage from '../pages/PreferencesSettingsPage';
 import AccountSettingsPage from '../pages/AccountSettingsPage';
 import AssistantGate from '../components/assistant/AssistantGate';
+import GoogleCalendarCallbackPage from '../pages/GoogleCalendarCallbackPage';
+import ConnectCalendarPrompt from '../components/integrations/ConnectCalendarPrompt';
 import { TaskProvider } from '../context/TaskContext';
 import { useAuth } from '../context/AuthContext';
 import WorkspaceHeader from '../components/layout/WorkspaceHeader';
@@ -45,6 +47,7 @@ function SiteLayout() {
           />
         )}
         <Outlet />
+        {!isAuthPage && <ConnectCalendarPrompt />}
       </main>
     </TaskProvider>
   );
@@ -77,6 +80,7 @@ export default function AppRoutes() {
             <Route path="/ai-assistant" element={<AssistantGate />} />
             <Route path="/automations" element={<NotFoundPage />} />
             <Route path="/knowledge" element={<NotFoundPage />} />
+            <Route path="/google-calendar/callback" element={<GoogleCalendarCallbackPage />} />
           </Route>
         </Route>
         <Route path="*" element={<NotFoundPage />} />
