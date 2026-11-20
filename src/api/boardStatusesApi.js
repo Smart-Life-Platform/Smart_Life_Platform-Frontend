@@ -36,16 +36,20 @@ const byPosition = (first, second) => first.position - second.position;
 let statusesByBoard = null;
 let statusesRequest = null;
 let legacyStatuses = null;
+let cacheVersion = 0;
 
-async function fetchLegacyStatuses() {
+async function fetchLegacyStatuses(version) {
   // Older backends only expose /tasks/statuses/. Those statuses carry no board,
   // so they are treated as belonging to the default (first) board.
   if (legacyStatuses) return legacyStatuses;
   try {
     const response = await apiClient.get('/tasks/statuses/');
+    if (version !== cacheVersion) return [];
     legacyStatuses = listOf(response.data).map(normalize).sort(byPosition);
   } catch {
-    legacyStatuses = [];
+    if (version !== cacheVersion) return [];
+    // A temporary failure must not become a session-long empty cache.
+    return null;
   }
   return legacyStatuses;
 }
@@ -53,17 +57,21 @@ async function fetchLegacyStatuses() {
 async function fetchAllStatuses() {
   if (statusesByBoard) return statusesByBoard;
   if (!statusesRequest) {
-    statusesRequest = apiClient
+    const version = cacheVersion;
+    const request = apiClient
       .get('/tasks/board-statuses/')
       .then((response) => listOf(response.data).map(normalize).sort(byPosition))
-      .catch(() => fetchLegacyStatuses())
+      .catch(() => version === cacheVersion ? fetchLegacyStatuses(version) : [])
       .then((list) => {
+        if (version !== cacheVersion) return [];
+        if (list === null) return [];
         statusesByBoard = list;
         return list;
       })
       .finally(() => {
-        statusesRequest = null;
+        if (statusesRequest === request) statusesRequest = null;
       });
+    statusesRequest = request;
   }
   return statusesRequest;
 }
@@ -73,6 +81,8 @@ function updateCache(mutate) {
 }
 
 export function invalidateBoardStatuses() {
+  cacheVersion += 1;
+  statusesRequest = null;
   statusesByBoard = null;
   legacyStatuses = null;
 }

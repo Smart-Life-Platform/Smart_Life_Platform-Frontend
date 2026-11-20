@@ -3,7 +3,6 @@ import { useSearchParams } from 'react-router-dom';
 import { UilAngleLeft, UilAngleRight, UilCalendarAlt, UilEditAlt, UilTrashAlt, UilPlus, UilArrowRight, UilSearch, UilBars, UilFileAlt, UilUser } from '@iconscout/react-unicons';
 import CalendarGrid from '../components/calendar/CalendarGrid';
 import { useTaskContext } from '../context/TaskContext';
-import { formatMonthYear } from '../utils/dateUtils';
 import useCalendar from '../hooks/useCalendar';
 import { isWithinWindow, snapTime, windowLabel } from '../utils/schedulingRules';
 import useHolidays from '../hooks/useHolidays';
@@ -11,7 +10,11 @@ import useCalendarSettings from '../hooks/useCalendarSettings';
 import { tasksByDate, useFilteredTasks } from '../hooks/useTasks';
 import TaskForm from '../components/tasks/TaskForm';
 import ConfirmModal from '../components/common/ConfirmModal';
+import CalendarEventDetails from '../components/calendar/CalendarEventDetails';
 import { dateKey } from '../utils/dateUtils';
+
+const CALENDAR_VIEWS = [{ key: 'day', label: 'Day' }, { key: 'week', label: 'Week' }, { key: 'month', label: 'Month' }];
+const HOUR_VIEWS = ['hour', '4hours'];
 
 const statusName = (task, statuses) => task.status_name || statuses.find((item) => String(item.id) === String(task.status_id ?? task.status?.id ?? task.status))?.name || task.status?.name || 'Unknown status';
 const categoryName = (task, categories) => task.category_name || categories.find((item) => String(item.id) === String(task.category_id ?? task.category?.id ?? task.category))?.name || task.category?.name || 'No category';
@@ -31,6 +34,7 @@ export default function PlannerPage() {
   const [searchParams] = useSearchParams();
   const showCalendar = searchParams.get('view') === 'calendar';
   const [calendarView, setCalendarView] = useState('week');
+  const [selectedTask, setSelectedTask] = useState(null);
   const [selectedHour, setSelectedHour] = useState(new Date().getHours());
   const [selectedBlock, setSelectedBlock] = useState(Math.floor(new Date().getHours() / 4));
   const { week, days, shiftWeek, goToDate, todayKey } = useCalendar(calendarView);
@@ -156,43 +160,81 @@ export default function PlannerPage() {
   ];
   const tasksForColumn = (status) => filteredTasks.filter((task) => String(task.status_id ?? task.status?.id ?? task.status) === String(status.id) || statusName(task, statuses).toLowerCase() === status.name.toLowerCase());
 
-  if (showCalendar) return <div className="planner-layout calendar-layout"><section className="calendar-area">
-    <div className="calendar-toolbar">
-      <div className="toolbar-left">
-        <button className="round-button" aria-label="Previous week" onClick={() => shiftWeek(-1)}><UilAngleLeft size="20" /></button>
-        <button className="round-button" aria-label="Next week" onClick={() => shiftWeek(1)}><UilAngleRight size="20" /></button>
-        <h2><UilCalendarAlt size="19" />{formatMonthYear(week)}</h2>
+  if (showCalendar) return <div className="planner-layout calendar-layout">
+    <section className="calendar-area">
+      <header className="calendar-head">
+        <h1>Calendar</h1>
+        <div className="calendar-head-actions">
+          <label className="calendar-granularity">
+            <span className="sr-only">Hour detail</span>
+            <select className="calendar-view-select" value={HOUR_VIEWS.includes(calendarView) ? calendarView : ''} onChange={(event) => { if (event.target.value) setCalendarView(event.target.value); }}>
+              <option value="">Hours</option>
+              <option value="hour">1 hour</option>
+              <option value="4hours">4 hours</option>
+            </select>
+          </label>
+          {calendarView === 'hour' && (
+            <label className="calendar-granularity">
+              <span className="sr-only">Select hour</span>
+              <select className="calendar-view-select" value={selectedHour} onChange={(event) => setSelectedHour(Number(event.target.value))}>
+                {Array.from({ length: 24 }, (_, hour) => <option key={hour} value={hour}>{String(hour).padStart(2, '0')}:00</option>)}
+              </select>
+            </label>
+          )}
+          {calendarView === '4hours' && (
+            <label className="calendar-granularity">
+              <span className="sr-only">Select four-hour interval</span>
+              <select className="calendar-view-select" value={selectedBlock} onChange={(event) => setSelectedBlock(Number(event.target.value))}>
+                {Array.from({ length: 6 }, (_, block) => <option key={block} value={block}>{String(block * 4).padStart(2, '0')}:00 - {String((block + 1) * 4).padStart(2, '0')}:00</option>)}
+              </select>
+            </label>
+          )}
+          <button className="new-task-button" onClick={() => openCreate()}><UilPlus size="16" /> New event</button>
+        </div>
+      </header>
+
+      <div className="calendar-toolbar">
+        <div className="toolbar-left">
+          <button className="ghost-button" onClick={() => goToDate(todayKey)}>Today</button>
+          <button className="round-button" aria-label="Previous period" onClick={() => shiftWeek(-1)}><UilAngleLeft size="18" /></button>
+          <button className="round-button" aria-label="Next period" onClick={() => shiftWeek(1)}><UilAngleRight size="18" /></button>
+          <h2><UilCalendarAlt size="18" />{week.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</h2>
+        </div>
+        <div className="calendar-view-tabs">
+          {CALENDAR_VIEWS.map(({ key, label }) => (
+            <button key={key} type="button" className={calendarView === key ? 'selected' : ''} onClick={() => setCalendarView(key)}>{label}</button>
+          ))}
+        </div>
       </div>
-      <label>
-        <span className="sr-only">Calendar view</span>
-        <select className="calendar-view-select" value={calendarView} onChange={(event) => setCalendarView(event.target.value)}>
-          <option value="hour">1 hour</option>
-          <option value="4hours">4 hours</option>
-          <option value="day">Day</option>
-          <option value="week">Week</option>
-          <option value="month">Month</option>
-        </select>
-      </label>
-      {calendarView === 'hour' && <label>
-        <span className="sr-only">Select hour</span>
-        <select className="calendar-view-select" value={selectedHour} onChange={(event) => setSelectedHour(Number(event.target.value))}>
-          {Array.from({ length: 24 }, (_, hour) => <option key={hour} value={hour}>{String(hour).padStart(2, '0')}:00</option>)}
-        </select>
-      </label>}
-      {calendarView === '4hours' && <label>
-        <span className="sr-only">Select four-hour interval</span>
-        <select className="calendar-view-select" value={selectedBlock} onChange={(event) => setSelectedBlock(Number(event.target.value))}>
-          {Array.from({ length: 6 }, (_, block) => <option key={block} value={block}>{String(block * 4).padStart(2, '0')}:00 - {String((block + 1) * 4).padStart(2, '0')}:00</option>)}
-        </select>
-      </label>}
-      <label className="calendar-date-picker">
-        <span className="sr-only">Select date</span>
-        <input type="date" value={dateKey(week)} onChange={(event) => { goToDate(event.target.value); setCalendarView(calendarView === 'month' ? 'day' : calendarView); }} />
-      </label>
-    </div>
-    {error && <p className="form-error">{error}</p>}
-    <CalendarGrid days={days} holidays={holidays} workingHours={calendarSettings.settings.hours} tasksByDate={calendarTasksByDate} onSelectDate={selectCalendarDate} onSelectTask={openEdit} onMoveTask={moveTask} onAdvanceTaskStatus={advanceTaskStatus} statuses={statuses} view={calendarView} selectedHour={selectedHour} selectedBlock={selectedBlock} />
-  </section>
+
+      {error && <p className="form-error">{error}</p>}
+
+      <div className={`calendar-stage${selectedTask ? ' with-details' : ''}`}>
+        <CalendarGrid days={days} holidays={holidays} workingHours={calendarSettings.settings.hours} tasksByDate={calendarTasksByDate} onSelectDate={selectCalendarDate} onSelectTask={setSelectedTask} onMoveTask={moveTask} onAdvanceTaskStatus={advanceTaskStatus} statuses={statuses} view={calendarView} selectedHour={selectedHour} selectedBlock={selectedBlock} />
+        {selectedTask && (
+          <CalendarEventDetails
+            task={selectedTask}
+            statuses={statuses}
+            categories={categories}
+            onClose={() => setSelectedTask(null)}
+            onEdit={(task) => { setSelectedTask(null); openEdit(task); }}
+            onDelete={(task) => { setSelectedTask(null); removeTask(task); }}
+          />
+        )}
+      </div>
+
+      <div className="calendar-legend">
+        <span className="calendar-legend-item"><i className="calendar-legend-dot task" />Tasks</span>
+        <span className="calendar-legend-item"><i className="calendar-legend-dot event" />Events</span>
+        {statuses.map((status) => (
+          <span className="calendar-legend-item" key={status.id}>
+            <i className="calendar-legend-dot" style={{ background: status.color || 'var(--color-secondary)' }} />
+            {status.name}
+          </span>
+        ))}
+        <strong>Drag tasks to another date or time</strong>
+      </div>
+    </section>
   {modalDate && <TaskForm date={modalDate} task={editingTask} statuses={statuses} categories={categories} onClose={closeModal} onSubmit={saveTask} />}
   {taskToDelete && <ConfirmModal title="Delete task?" message={`Delete "${taskToDelete.title}"?`} onClose={() => setTaskToDelete(null)} onConfirm={confirmRemoveTask} />}
   </div>;

@@ -1,104 +1,99 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { describeCallbackError, readCallbackParams } from '../auth/oauthParams';
-import { getOAuthRedirectUrl } from '../auth/oauthRedirect';
-
-const SESSION_TIMEOUT_MS = 10000;
-const POLL_INTERVAL_MS = 200;
-const SUCCESS_PATH = '/kanban';
-
-const wait = (ms) => new Promise((resolve) => { setTimeout(resolve, ms); });
 
 /**
- * Landing page for the OAuth redirect.
+ * OAuth callback handler (implicit flow).
  *
- * Supabase sends the browser here (see getOAuthRedirectUrl) with either
- * `?code=...` (PKCE) or `#access_token=...` (implicit), or with an `error`
- * parameter when the sign-in failed. The Supabase client exchanges the code
- * during its own initialisation, so this page only has to wait for the session
- * to appear — and to show the reason when it does not.
+ * With flowType:'implicit' Supabase appends tokens directly in the URL hash:
+ *   /auth/callback#access_token=...&refresh_token=...&type=bearer
+ *
+ * Supabase JS SDK's detectSessionInUrl:true automatically parses the hash and
+ * fires onAuthStateChange(SIGNED_IN, session) during client initialisation.
+ * We just wait for that event and then navigate to /planner.
+ *
+ * Error cases: Supabase may append ?error=...&error_description=... to the URL
+ * (e.g. bad_oauth_callback) — we detect and display that before redirecting.
  */
 export default function AuthCallbackPage() {
   const navigate = useNavigate();
-  const [failure, setFailure] = useState(null);
+  const handled = useRef(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    let cancelled = false;
-    const params = readCallbackParams();
+    if (handled.current) return;
+    handled.current = true;
 
-    // Supabase appends failures to the redirect URL — never swallow them.
-    if (params.error || params.errorCode) {
-      setFailure(describeCallbackError(params));
-      return () => { cancelled = true; };
+    // Check for Supabase OAuth error in query params first
+    const params = new URLSearchParams(window.location.search);
+    const oauthError = params.get('error');
+    const oauthErrorDesc = params.get('error_description');
+
+    if (oauthError) {
+      const msg = oauthErrorDesc
+        ? decodeURIComponent(oauthErrorDesc.replace(/\+/g, ' '))
+        : oauthError;
+      setErrorMessage(msg);
+      // Give user 3 seconds to read the error, then send to login
+      setTimeout(() => navigate('/login', { replace: true }), 3000);
+      return;
     }
 
-    async function waitForSession() {
-      const deadline = Date.now() + SESSION_TIMEOUT_MS;
-      let exchangeAttempted = false;
-
-      while (!cancelled && Date.now() < deadline) {
-        const { data, error } = await supabase.auth.getSession();
-        if (cancelled) return;
-
-        if (data?.session) {
-          navigate(SUCCESS_PATH, { replace: true });
-          return;
-        }
-        if (error) {
-          setFailure({ code: error.code || '', message: error.message });
-          return;
-        }
-
-        // The SDK normally performs this exchange itself. If the code is still in
-        // the URL afterwards, finish the exchange here so the user gets a real
-        // error instead of a silent bounce back to /login.
-        if (params.code && !exchangeAttempted) {
-          exchangeAttempted = true;
-          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(params.code);
-          if (cancelled) return;
-          if (exchangeError) {
-            setFailure({ code: exchangeError.code || '', message: exchangeError.message });
-            return;
-          }
-          continue;
-        }
-
-        await wait(POLL_INTERVAL_MS);
+    // No error — wait for Supabase to parse the hash and fire SIGNED_IN.
+    // onAuthStateChange is the most reliable hook here because detectSessionInUrl
+    // processes the hash asynchronously during SDK init.
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        listener.subscription.unsubscribe();
+        navigate('/planner', { replace: true });
       }
+    });
 
-      if (cancelled) return;
-      setFailure({
-        code: 'session_not_created',
-        message: `Supabase did not return a session to this page. It must redirect to ${getOAuthRedirectUrl()} — add that exact URL under Authentication → URL Configuration → Redirect URLs.`,
-      });
-    }
+    // Fallback: if hash was already processed before our listener registered,
+    // getSession() will have the session ready.
+    supabase.auth.getSession().then(({ data }) => {
+      if (data?.session) {
+        listener.subscription.unsubscribe();
+        navigate('/planner', { replace: true });
+      } else if (!window.location.hash.includes('access_token')) {
+        // No hash tokens and no session → something went wrong
+        listener.subscription.unsubscribe();
+        navigate('/login', { replace: true });
+      }
+      // Otherwise keep waiting for onAuthStateChange to fire
+    });
 
-    waitForSession();
-
-    return () => { cancelled = true; };
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, [navigate]);
 
+  if (errorMessage) {
+    return (
+      <main className="auth-page">
+        <section className="auth-card" style={{ textAlign: 'center', gap: '1rem' }}>
+          <h1 style={{ color: 'var(--color-danger, #e53e3e)', fontSize: '1.25rem' }}>
+            Sign-in failed
+          </h1>
+          <p style={{ color: 'var(--text-secondary, #666)', fontSize: '0.95rem' }}>
+            {errorMessage}
+          </p>
+          <p style={{ color: 'var(--text-secondary, #888)', fontSize: '0.85rem' }}>
+            Redirecting to login…
+          </p>
+        </section>
+      </main>
+    );
+  }
+
   return (
-    <main className="auth-page">
-      <section className="auth-card auth-card-message">
-        <h1>{failure ? 'Sign-in could not be completed' : 'Signing you in…'}</h1>
-        {failure ? (
-          <>
-            <p className="auth-subtitle">{failure.message}</p>
-            {failure.code && (
-              <p className="auth-debug">
-                Error code: <code>{failure.code}</code>
-              </p>
-            )}
-            <Link className="primary-button full-width auth-link-button" to="/login" replace>
-              Back to sign in
-            </Link>
-          </>
-        ) : (
-          <p className="auth-subtitle">Finishing the Google sign-in.</p>
-        )}
-      </section>
-    </main>
+    <div
+      className="route-loading"
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: '1rem' }}
+    >
+      <span style={{ fontSize: '1.1rem', color: 'var(--text-secondary, #888)' }}>
+        Завершення входу…
+      </span>
+    </div>
   );
 }
