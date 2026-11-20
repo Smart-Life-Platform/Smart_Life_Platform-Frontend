@@ -7,6 +7,8 @@ import MetadataModal from '../components/kanban/MetadataModal';
 import TaskDetailsPopover from '../components/kanban/TaskDetailsPopover';
 import ConfirmModal from '../components/common/ConfirmModal';
 import ShareBoardModal from '../components/board/ShareBoardModal';
+import CreateBoardModal from '../components/board/CreateBoardModal';
+import KanbanEmptyBoard from '../components/kanban/KanbanEmptyBoard';
 import { useKanbanData } from '../components/kanban/useKanbanData';
 import { useTaskContext } from '../context/TaskContext';
 import { useAuth } from '../context/AuthContext';
@@ -38,6 +40,7 @@ export default function KanbanPage() {
     createTask,
     updateTask,
     deleteTask,
+    createBoardForUser,
   } = useTaskContext();
 
   const {
@@ -66,6 +69,7 @@ export default function KanbanPage() {
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [view, setView] = useState('board');
   const [shareOpen, setShareOpen] = useState(false);
+  const [createBoardOpen, setCreateBoardOpen] = useState(false);
   const [quickAddStatus, setQuickAddStatus] = useState(null);
   const [members, setMembers] = useState([]);
   const [profiles, setProfiles] = useState({});
@@ -243,93 +247,117 @@ export default function KanbanPage() {
   const activeCount = Math.max(filteredTasks.length - doneCount - approvalCount, 0);
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
 
+  const handleCreateBoard = async (formData) => {
+    try {
+      await createBoardForUser({ user_id: user?.id, ...formData });
+      setCreateBoardOpen(false);
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  };
+
+  const hasBoards = Boolean(activeBoard || boards.length > 0);
+
   return (
     <div className="workspace-page kanban-page">
-      <KanbanHeader
-        boardName={activeBoard?.name || 'My task board'}
-        boardDescription={activeBoard?.description || 'A clearer day starts here. Plan it, delegate it, get it done.'}
-        systemBoard={systemBoard}
-        members={members}
-        profiles={profiles}
-        onOpenShare={() => setShareOpen(true)}
-        onOpenCategoryModal={() => setMetadataModal('category')}
-        onOpenStatusModal={() => setMetadataModal('status')}
-        onOpenCreateTask={() => openCreate(boardStatuses[0])}
-      />
+      {hasBoards ? (
+        <>
+          <KanbanHeader
+            boardName={activeBoard?.name || 'My task board'}
+            boardDescription={activeBoard?.description || 'A clearer day starts here. Plan it, delegate it, get it done.'}
+            systemBoard={systemBoard}
+            members={members}
+            profiles={profiles}
+            onOpenShare={() => setShareOpen(true)}
+            onOpenCategoryModal={() => setMetadataModal('category')}
+            onOpenStatusModal={() => setMetadataModal('status')}
+            onOpenCreateTask={() => openCreate(boardStatuses[0])}
+          />
 
-      <KanbanToolbar
-        view={view}
-        onViewChange={setView}
-        filters={filters}
-        onFilterChange={updateFilter}
-        statuses={boardStatuses}
-        categories={boardCategories}
-        priorities={priorities}
-      />
+          <KanbanToolbar
+            view={view}
+            onViewChange={setView}
+            filters={filters}
+            onFilterChange={updateFilter}
+            statuses={boardStatuses}
+            categories={boardCategories}
+            priorities={priorities}
+          />
 
-      {!momentumDismissed && filteredTasks.length > 0 && (
-        <div className="board-momentum">
-          <span className="board-momentum-icon" aria-hidden="true">✦</span>
-          <div>
-            <strong>A little momentum for your {today}</strong>
-            <p>
-              I'm working on {activeCount} {activeCount === 1 ? 'task' : 'tasks'}
-              {approvalCount > 0 ? `, and ${approvalCount} ${approvalCount === 1 ? 'is' : 'are'} ready for your approval` : ''}.
-              You've already checked off {doneCount} today.
-            </p>
-          </div>
-          <a className="board-momentum-link" href="/ai-assistant">Let's review →</a>
-          <button type="button" className="board-momentum-close" aria-label="Dismiss" onClick={() => setMomentumDismissed(true)}>×</button>
-        </div>
+          {!momentumDismissed && filteredTasks.length > 0 && (
+            <div className="board-momentum">
+              <span className="board-momentum-icon" aria-hidden="true">✦</span>
+              <div>
+                <strong>A little momentum for your {today}</strong>
+                <p>
+                  I'm working on {activeCount} {activeCount === 1 ? 'task' : 'tasks'}
+                  {approvalCount > 0 ? `, and ${approvalCount} ${approvalCount === 1 ? 'is' : 'are'} ready for your approval` : ''}.
+                  You've already checked off {doneCount} today.
+                </p>
+              </div>
+              <a className="board-momentum-link" href="/ai-assistant">Let's review →</a>
+              <button type="button" className="board-momentum-close" aria-label="Dismiss" onClick={() => setMomentumDismissed(true)}>×</button>
+            </div>
+          )}
+
+          {error && <p className="form-error">{error}</p>}
+
+          {view === 'list' ? (
+            <div className="task-list">
+              <div className="task-list-head"><span>Task</span><span>Status</span><span>Priority</span><span>Due</span></div>
+              {filteredTasks.map((task) => {
+                const status = statusOf(task);
+                return (
+                  <button type="button" className="task-list-row" key={task.id} onClick={() => setDetailsTask(task)}>
+                    <span className="task-list-title">{task.title}</span>
+                    <span className="task-list-status">
+                      <i className="status-dot" style={status?.color ? { background: status.color } : undefined} />
+                      {status?.name || '—'}
+                    </span>
+                    <span className={`task-list-priority card-priority priority-${task.priority || 'medium'}`}>{task.priority || 'medium'}</span>
+                    <span>{task.due_date || 'No due date'}</span>
+                  </button>
+                );
+              })}
+              {filteredTasks.length === 0 && <p className="muted" style={{ padding: '18px' }}>No tasks match the current filters.</p>}
+            </div>
+          ) : (
+            <KanbanBoard
+              columns={boardStatuses}
+              tasks={filteredTasks}
+              categories={boardCategories}
+              initials={initials}
+              loading={loading}
+              onTaskStatusChange={handleTaskStatusChange}
+              onColumnsOrderChange={handleColumnsOrderChange}
+              onOpenCreate={openCreate}
+              onOpenEdit={openEdit}
+              onRemoveTask={removeTask}
+              onOpenDetails={setDetailsTask}
+              quickAddStatus={quickAddStatus}
+              onOpenQuickAdd={setQuickAddStatus}
+              onCloseQuickAdd={() => setQuickAddStatus(null)}
+              onQuickCreate={quickCreate}
+              onOpenFullTask={(status) => openCreate(status)}
+            />
+          )}
+
+          <footer className="board-footer">
+            ✓ All changes saved{' '}
+            <span>· {filteredTasks.length} tasks across {boardStatuses.length} stages</span>
+            <strong>✦ Handled by Avenor · Drag tasks to move them</strong>
+          </footer>
+        </>
+      ) : (
+        <KanbanEmptyBoard onOpenCreateBoard={() => setCreateBoardOpen(true)} />
       )}
 
-      {error && <p className="form-error">{error}</p>}
-
-      {view === 'list' ? (
-        <div className="task-list">
-          <div className="task-list-head"><span>Task</span><span>Status</span><span>Priority</span><span>Due</span></div>
-          {filteredTasks.map((task) => {
-            const status = statusOf(task);
-            return (
-              <button type="button" className="task-list-row" key={task.id} onClick={() => setDetailsTask(task)}>
-                <span className="task-list-title">{task.title}</span>
-                <span className="task-list-status">
-                  <i className="status-dot" style={status?.color ? { background: status.color } : undefined} />
-                  {status?.name || '—'}
-                </span>
-                <span className={`task-list-priority card-priority priority-${task.priority || 'medium'}`}>{task.priority || 'medium'}</span>
-                <span>{task.due_date || 'No due date'}</span>
-              </button>
-            );
-          })}
-          {filteredTasks.length === 0 && <p className="muted" style={{ padding: '18px' }}>No tasks match the current filters.</p>}
-        </div>
-      ) : (
-        <KanbanBoard
-          columns={boardStatuses}
-          tasks={filteredTasks}
-          categories={boardCategories}
-          initials={initials}
-          loading={loading}
-          onTaskStatusChange={handleTaskStatusChange}
-          onColumnsOrderChange={handleColumnsOrderChange}
-          onOpenCreate={openCreate}
-          onOpenEdit={openEdit}
-          onRemoveTask={removeTask}
-          onOpenDetails={setDetailsTask}
-          quickAddStatus={quickAddStatus}
-          onOpenQuickAdd={setQuickAddStatus}
-          onCloseQuickAdd={() => setQuickAddStatus(null)}
-          onQuickCreate={quickCreate}
-          onOpenFullTask={(status) => openCreate(status)}
+      {createBoardOpen && (
+        <CreateBoardModal
+          onClose={() => setCreateBoardOpen(false)}
+          onSubmit={handleCreateBoard}
         />
       )}
-
-      <footer className="board-footer">
-        ✓ All changes saved{' '}
-        <span>· {filteredTasks.length} tasks across {boardStatuses.length} stages</span>
-        <strong>✦ Handled by Avenor · Drag tasks to move them</strong>
-      </footer>
 
       {modalDate && (
         <TaskForm
