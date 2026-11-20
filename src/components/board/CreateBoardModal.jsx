@@ -14,7 +14,7 @@ export default function CreateBoardModal({ onClose, onSubmit }) {
       await onSubmit(boardForm);
       onClose();
     } catch (err) {
-      setBoardError(err.message || 'Помилка при створенні дошки');
+      setBoardError(err.message || 'Failed to create board');
     } finally {
       setLoading(false);
     }
@@ -24,40 +24,40 @@ export default function CreateBoardModal({ onClose, onSubmit }) {
     <div className="modal-backdrop" onMouseDown={onClose}>
       <form className="task-modal board-modal" onSubmit={submit} onMouseDown={(event) => event.stopPropagation()}>
         <div className="modal-heading">
-          <h2>Нова дошка</h2>
-          <button type="button" className="close-button" onClick={onClose} aria-label="Закрити">
+          <h2>New board</h2>
+          <button type="button" className="close-button" onClick={onClose} aria-label="Close">
             <UilTimes size="20" />
           </button>
         </div>
         <label>
-          Назва
+          Name
           <input
             value={boardForm.name}
             onChange={(event) => setBoardForm({ ...boardForm, name: event.target.value })}
-            placeholder="Наприклад: Проєкт розробки"
+            placeholder="e.g. Development Project"
             required
             autoFocus
           />
         </label>
         <label>
-          Опис
+          Description
           <textarea
             value={boardForm.description}
             onChange={(event) => setBoardForm({ ...boardForm, description: event.target.value })}
-            placeholder="Опис мети цієї дошки"
+            placeholder="Describe the purpose of this board"
           />
         </label>
         <div className="form-grid">
           <label>
-            Іконка
+            Icon
             <input
               value={boardForm.icon}
               onChange={(event) => setBoardForm({ ...boardForm, icon: event.target.value })}
-              placeholder="📋 або назва"
+              placeholder="📋 or name"
             />
           </label>
           <label>
-            Колір
+            Color
             <input
               type="color"
               value={boardForm.color}
@@ -67,10 +67,9 @@ export default function CreateBoardModal({ onClose, onSubmit }) {
         </div>
         {boardError && <p className="form-error">{boardError}</p>}
         <button className="primary-button full-width" type="submit" disabled={loading}>
-          {loading ? 'Створення…' : 'Створити дошку'}
+          {loading ? 'Creating…' : 'Create board'}
         </button>
       </form>
     </div>
   );
 }
-

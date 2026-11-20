@@ -6,12 +6,11 @@ export default function KanbanEmptyBoard({ onOpenCreateBoard }) {
       <div className="kanban-empty-icon-wrap">
         <UilWindowSection size="48" />
       </div>
-      <h2>У вас ще немає дошок</h2>
-      <p>Створіть свою першу дошку задач, щоб організувати роботу та відстежувати прогрес.</p>
+      <h2>You don't have any boards yet</h2>
+      <p>Create your first task board to organize your work and track progress.</p>
       <button type="button" className="primary-button kanban-create-board-btn" onClick={onOpenCreateBoard}>
-        <UilPlus size="16" /> Створити дошку
+        <UilPlus size="16" /> Create board
       </button>
     </div>
   );
 }
-
