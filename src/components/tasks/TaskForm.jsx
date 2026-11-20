@@ -1,8 +1,9 @@
-import { useRef, useState } from 'react';
-import { UilPlus, UilTimes } from '@iconscout/react-unicons';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { UilPlus, UilTimes, UilCheckSquare, UilSquareFull } from '@iconscout/react-unicons';
 import Dropdown from '../common/Dropdown';
 import DateField from '../common/DateField';
 import { priorityName } from '../../utils/priority';
+import { getSubtasks, updateSubtask, deleteSubtask } from '../../api/subtasksApi';
 
 const relationId = (value) => {
   if (Array.isArray(value)) return relationId(value[0]);
@@ -39,13 +40,46 @@ export default function TaskForm({ date, task, statuses = [], categories = [], a
     assignee_id: relationId(task?.assignee_id ?? task?.assignee?.id ?? task?.assignee),
     reminder: task?.reminder || 'none',
   });
-  const [subtasks, setSubtasks] = useState(() => (Array.isArray(task?.subtasks) ? task.subtasks.map((item) => item.title) : []));
+
+  // Existing saved subtasks (edit mode) — stored with {id, title, is_done}
+  const [existingSubtasks, setExistingSubtasks] = useState([]);
+  // New subtasks to be created on save — plain strings
+  const [newSubtasks, setNewSubtasks] = useState([]);
   const [checklistDraft, setChecklistDraft] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [toggling, setToggling] = useState(new Set());
   const submissionPending = useRef(false);
   // A placeholder { status_id } (column pre-select) is not an existing task.
   const isEditing = Boolean(task?.id);
+
+  // Load existing subtasks when editing
+  const loadExisting = useCallback(async () => {
+    if (!task?.id) return;
+    try {
+      const data = await getSubtasks(task.id);
+      setExistingSubtasks(data);
+    } catch {
+      // Fall back to embedded subtasks if API fails
+      if (Array.isArray(task?.subtasks)) {
+        setExistingSubtasks(task.subtasks.map((s) =>
+          typeof s === 'string' ? { title: s, is_done: false } : s
+        ));
+      }
+    }
+  }, [task?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (isEditing) {
+      // Show embedded data immediately while API loads
+      if (Array.isArray(task?.subtasks) && task.subtasks.length > 0) {
+        setExistingSubtasks(task.subtasks.map((s) =>
+          typeof s === 'string' ? { title: s, is_done: false } : s
+        ));
+      }
+      loadExisting();
+    }
+  }, [isEditing, loadExisting]);
 
   function setField(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -54,8 +88,42 @@ export default function TaskForm({ date, task, statuses = [], categories = [], a
   function addChecklistItem() {
     const title = checklistDraft.trim();
     if (!title) return;
-    setSubtasks((current) => [...current, title]);
+    setNewSubtasks((current) => [...current, title]);
     setChecklistDraft('');
+  }
+
+  /** Toggle an already-saved subtask's is_done state directly via API. */
+  async function toggleExisting(subtask) {
+    if (!subtask.id || toggling.has(subtask.id)) return;
+    const next = !subtask.is_done;
+    setExistingSubtasks((current) =>
+      current.map((s) => (s.id === subtask.id ? { ...s, is_done: next } : s))
+    );
+    setToggling((current) => new Set([...current, subtask.id]));
+    try {
+      await updateSubtask(subtask.id, { is_done: next });
+    } catch {
+      // Revert
+      setExistingSubtasks((current) =>
+        current.map((s) => (s.id === subtask.id ? { ...s, is_done: !next } : s))
+      );
+    } finally {
+      setToggling((current) => {
+        const updated = new Set(current);
+        updated.delete(subtask.id);
+        return updated;
+      });
+    }
+  }
+
+  /** Delete an already-saved subtask. */
+  async function removeExisting(subtask) {
+    setExistingSubtasks((current) => current.filter((s) => s.id !== subtask.id));
+    try {
+      if (subtask.id) await deleteSubtask(subtask.id);
+    } catch {
+      setExistingSubtasks((current) => [...current, subtask]);
+    }
   }
 
   async function submit(event) {
@@ -70,13 +138,14 @@ export default function TaskForm({ date, task, statuses = [], categories = [], a
     submissionPending.current = true;
     setSubmitting(true);
     try {
+      // Only pass NEW (unsaved) subtask titles — existing ones are already saved/updated
       await onSubmit({
         ...form,
         title: form.title.trim(),
         assignee_id: form.assignee_id === '' ? null : form.assignee_id,
         category_id: form.category_id === '' ? null : form.category_id,
         due_date: form.due_date || null,
-        subtasks,
+        subtasks: newSubtasks,
       });
     } catch (submitError) {
       setError(submitError.message);
@@ -159,8 +228,57 @@ export default function TaskForm({ date, task, statuses = [], categories = [], a
             <Dropdown value={form.reminder} options={REMINDERS} onChange={(value) => setField('reminder', value)} ariaLabel="Reminder" />
           </div>
 
-          <div className="field">
+          <div className="field" style={{ gridColumn: '1 / -1' }}>
             <span className="field-label">Subtasks<span className="field-hint">Checklist</span></span>
+
+            {/* Existing subtasks (edit mode) — toggle done inline */}
+            {isEditing && existingSubtasks.length > 0 && (
+              <ul className="checklist checklist-existing">
+                {existingSubtasks.map((subtask, index) => (
+                  <li key={subtask.id ?? index} className={subtask.is_done ? 'checklist-done' : ''}>
+                    <button
+                      type="button"
+                      className="checklist-toggle"
+                      onClick={() => toggleExisting(subtask)}
+                      disabled={toggling.has(subtask.id)}
+                      aria-label={subtask.is_done ? 'Mark as not done' : 'Mark as done'}
+                    >
+                      {subtask.is_done
+                        ? <UilCheckSquare size="15" />
+                        : <UilSquareFull size="15" />}
+                    </button>
+                    <span className="checklist-title">{subtask.title}</span>
+                    <button
+                      type="button"
+                      aria-label={`Remove ${subtask.title}`}
+                      onClick={() => removeExisting(subtask)}
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* New unsaved subtasks */}
+            {newSubtasks.length > 0 && (
+              <ul className="checklist">
+                {newSubtasks.map((item, index) => (
+                  <li key={`new-${item}-${index}`}>
+                    <span className="checklist-new-dot" aria-hidden="true" />
+                    <span>{item}</span>
+                    <button
+                      type="button"
+                      aria-label={`Remove ${item}`}
+                      onClick={() => setNewSubtasks((current) => current.filter((_, position) => position !== index))}
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
             <input
               value={checklistDraft}
               onChange={(event) => setChecklistDraft(event.target.value)}
@@ -173,22 +291,6 @@ export default function TaskForm({ date, task, statuses = [], categories = [], a
               placeholder="Add checklist item"
               aria-label="Add checklist item"
             />
-            {subtasks.length > 0 && (
-              <ul className="checklist">
-                {subtasks.map((item, index) => (
-                  <li key={`${item}-${index}`}>
-                    <span>{item}</span>
-                    <button
-                      type="button"
-                      aria-label={`Remove ${item}`}
-                      onClick={() => setSubtasks((current) => current.filter((_, position) => position !== index))}
-                    >
-                      ×
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
             <button type="button" className="ghost-link" onClick={addChecklistItem}>
               <UilPlus size="13" /> Add checklist item
             </button>

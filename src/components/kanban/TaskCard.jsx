@@ -46,7 +46,8 @@ const subtaskStats = (task) => {
   if (Array.isArray(task.subtasks)) {
     return {
       total: task.subtasks.length,
-      done: task.subtasks.filter((subtask) => subtask.completed ?? subtask.is_completed ?? subtask.done).length,
+      // API uses is_done; fallback to other common field names for compatibility
+      done: task.subtasks.filter((subtask) => subtask.is_done ?? subtask.completed ?? subtask.is_completed ?? subtask.done).length,
     };
   }
   const total = Number(task.subtasks_count ?? task.subtask_count ?? 0) || 0;
