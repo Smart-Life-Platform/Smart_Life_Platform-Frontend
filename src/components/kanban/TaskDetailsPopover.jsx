@@ -103,7 +103,7 @@ function SubtaskChecklist({ taskId, initialSubtasks }) {
       setLoading(false);
     }
     load();
-  }, [load]);
+  }, [load, initialSubtasks]);
 
   const toggle = async (subtask) => {
     const id = subtask.id;

@@ -69,17 +69,19 @@ export default function TaskForm({ date, task, statuses = [], categories = [], a
     }
   }, [task?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const taskSubtasks = task?.subtasks;
+
   useEffect(() => {
     if (isEditing) {
       // Show embedded data immediately while API loads
-      if (Array.isArray(task?.subtasks) && task.subtasks.length > 0) {
-        setExistingSubtasks(task.subtasks.map((s) =>
+      if (Array.isArray(taskSubtasks) && taskSubtasks.length > 0) {
+        setExistingSubtasks(taskSubtasks.map((s) =>
           typeof s === 'string' ? { title: s, is_done: false } : s
         ));
       }
       loadExisting();
     }
-  }, [isEditing, loadExisting]);
+  }, [isEditing, loadExisting, taskSubtasks]);
 
   function setField(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
