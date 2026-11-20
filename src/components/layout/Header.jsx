@@ -1,10 +1,11 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { UilCalendarAlt, UilPlus, UilTimes, UilWallet, UilWindowSection } from '@iconscout/react-unicons';
+import { UilCalendarAlt, UilPlus, UilWallet, UilWindowSection } from '@iconscout/react-unicons';
 import { useAuth } from '../../context/AuthContext';
 import { useTaskContext } from '../../context/TaskContext';
 import { getDisplayName } from '../common/Avatar';
 import UserMenu from './UserMenu';
+import CreateBoardModal from '../board/CreateBoardModal';
 import logo from '../../assets/Logo.svg';
 
 const items = [
@@ -24,8 +25,6 @@ export default function Header({ collapsed = false }) {
   const location = useLocation();
   const displayName = getDisplayName(user);
   const [boardModal, setBoardModal] = useState(false);
-  const [boardForm, setBoardForm] = useState({ name: '', description: '', icon: '', color: '#6d5ce7' });
-  const [boardError, setBoardError] = useState('');
 
   const pathname = location.pathname;
   const onCalendar = pathname === '/planner' && location.search.includes('view=calendar');
@@ -38,17 +37,9 @@ export default function Header({ collapsed = false }) {
     return !onCalendar;
   }
 
-  async function submitBoard(event) {
-    event.preventDefault();
-    setBoardError('');
-    try {
-      await createBoardForUser({ user_id: user?.id, ...boardForm });
-      setBoardForm({ name: '', description: '', icon: '', color: '#6d5ce7' });
-      setBoardModal(false);
-      navigate('/kanban');
-    } catch (error) {
-      setBoardError(error.message);
-    }
+  async function handleCreateBoard(formData) {
+    await createBoardForUser({ user_id: user?.id, ...formData });
+    navigate('/kanban');
   }
 
   return (
@@ -59,9 +50,9 @@ export default function Header({ collapsed = false }) {
       {isAuthenticated && (
         <>
           <div className="workspace-switcher">
-            <span className="workspace-icon">⌂</span>
+            <span className="workspace-icon">вЊ‚</span>
             <span><small>Personal space of {displayName}</small><strong>{activeBoard?.name || 'Select board'}</strong></span>
-            <button className="workspace-chevron" aria-label="Select board">⌄</button>
+            <button className="workspace-chevron" aria-label="Select board">вЊ„</button>
             <select className="board-selector" value={activeBoard?.id || ''} onChange={(event) => {
               const board = boards.find((item) => String(item.id) === event.target.value);
               if (board) {
@@ -95,16 +86,12 @@ export default function Header({ collapsed = false }) {
           <div className="sidebar-user"><UserMenu showDetails /></div>
         </>
       )}
-      {boardModal && <div className="modal-backdrop" onMouseDown={() => setBoardModal(false)}>
-        <form className="task-modal board-modal" onSubmit={submitBoard} onMouseDown={(event) => event.stopPropagation()}>
-          <div className="modal-heading"><h2>New board</h2><button type="button" className="close-button" onClick={() => setBoardModal(false)}><UilTimes size="20" /></button></div>
-          <label>Name<input value={boardForm.name} onChange={(event) => setBoardForm({ ...boardForm, name: event.target.value })} required /></label>
-          <label>Description<textarea value={boardForm.description} onChange={(event) => setBoardForm({ ...boardForm, description: event.target.value })} /></label>
-          <div className="form-grid"><label>Icon<input value={boardForm.icon} onChange={(event) => setBoardForm({ ...boardForm, icon: event.target.value })} /></label><label>Color<input type="color" value={boardForm.color} onChange={(event) => setBoardForm({ ...boardForm, color: event.target.value })} /></label></div>
-          {boardError && <p className="form-error">{boardError}</p>}
-          <button className="primary-button full-width" type="submit">Create board</button>
-        </form>
-      </div>}
+      {boardModal && (
+        <CreateBoardModal
+          onClose={() => setBoardModal(false)}
+          onSubmit={handleCreateBoard}
+        />
+      )}
     </aside>
   );
 }
