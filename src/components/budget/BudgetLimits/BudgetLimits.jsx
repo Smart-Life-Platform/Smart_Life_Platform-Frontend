@@ -9,13 +9,15 @@ export default function BudgetLimits({ items, categories }) {
       return { c, spent, ratio: spent / c.monthly_limit };
     });
 
+  if (!rows.length) return <p className="b-empty">No limits set yet</p>;
+
   return (
     <ul className="limits">
       {rows.map(({ c, spent, ratio }) => (
         <li key={c.id}>
           <div className="cat-list__row">
             <span>{c.name}</span>
-            <span>{formatMoney(spent)} / {formatMoney(c.monthly_limit)}</span>
+            <strong>{formatMoney(spent)} / {formatMoney(c.monthly_limit)}</strong>
           </div>
           <div className="b-progress">
             <div
