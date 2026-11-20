@@ -143,6 +143,7 @@ describe('Kanban Components', () => {
 
   test('KanbanColumn renders column heading, count, and task cards', () => {
     const handleCreate = jest.fn();
+    const handleQuickAdd = jest.fn();
 
     renderWithRouter(
       <KanbanColumn
@@ -151,6 +152,7 @@ describe('Kanban Components', () => {
         categories={mockCategories}
         statuses={mockStatuses}
         onOpenCreate={handleCreate}
+        onOpenQuickAdd={handleQuickAdd}
       />
     );
 
@@ -158,7 +160,11 @@ describe('Kanban Components', () => {
     expect(screen.getByText('1')).toBeInTheDocument();
     expect(screen.getByText('Test Task 1')).toBeInTheDocument();
 
+    // The footer button opens the quick add panel, the header "+" the full dialog.
     fireEvent.click(screen.getByText('+ Add task'));
+    expect(handleQuickAdd).toHaveBeenCalledWith(mockStatuses[0]);
+
+    fireEvent.click(screen.getByLabelText('Add task to column'));
     expect(handleCreate).toHaveBeenCalledWith(mockStatuses[0]);
   });
 

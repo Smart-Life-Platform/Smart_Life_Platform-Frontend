@@ -9,12 +9,11 @@ if (!supabaseUrl || !supabasePublicKey) {
 
 export const supabase = createClient(supabaseUrl, supabasePublicKey, {
   auth: {
-    // PKCE keeps the tokens out of the address bar: Supabase redirects to
-    // /auth/callback?code=... and the SDK swaps that code for a session using the
-    // verifier it stored in localStorage when sign-in started. The implicit flow
-    // (default) instead puts access_token/refresh_token in the URL hash, which
-    // leaks them into history and breaks whenever the hash is dropped in transit.
-    flowType: 'pkce',
+    // Using implicit flow: tokens arrive in the URL hash (#access_token=...&type=bearer).
+    // PKCE flow caused "OAuth state parameter missing" errors in this setup because
+    // the PKCE code-verifier stored in localStorage was lost between the OAuth
+    // initiation and the callback (common in SPAs with client-side routing).
+    flowType: 'implicit',
     detectSessionInUrl: true,
     persistSession: true,
     autoRefreshToken: true,

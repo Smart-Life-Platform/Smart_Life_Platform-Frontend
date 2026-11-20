@@ -28,3 +28,24 @@ export const updateBoard = async (id, payload) => {
 export const deleteBoard = async (id) => {
   await apiClient.delete(`/tasks/boards/${id}/`);
 };
+
+/* ---------- Board members (RBAC) ---------- */
+
+/** `GET /api/tasks/board-members/` — members of every board the user can see. */
+export const getBoardMembers = async (boardId) => {
+  const response = await apiClient.get('/tasks/board-members/', paramsFor(boardId));
+  return listOf(response.data);
+};
+
+/** `POST /api/tasks/board-members/` — { board, user, role: 'editor' | 'viewer' } */
+export const addBoardMember = async (payload) => (await apiClient.post('/tasks/board-members/', payload)).data;
+
+/** `PATCH /api/tasks/board-members/{id}/` — { role } */
+export const updateBoardMember = async (id, payload) =>
+  (await apiClient.patch(`/tasks/board-members/${id}/`, payload)).data;
+
+export const removeBoardMember = async (id) => {
+  await apiClient.delete(`/tasks/board-members/${id}/`);
+};
+
+const paramsFor = (boardId) => (boardId ? { params: { board_id: boardId } } : undefined);

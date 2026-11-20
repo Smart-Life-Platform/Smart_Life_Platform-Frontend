@@ -26,6 +26,10 @@ function normalizeTaskPayload(payload) {
   if ('status_id' in normalized) {
     normalized.status_id = normalizeRelationId(normalized.status_id);
   }
+  // Assignee must be a member of the board; null unassigns the task.
+  if ('assignee_id' in normalized) {
+    normalized.assignee_id = normalizeRelationId(normalized.assignee_id);
+  }
   if (normalized.due_time && /^\d{2}:\d{2}$/.test(normalized.due_time)) {
     normalized.due_time = `${normalized.due_time}:00`;
   }
@@ -35,6 +39,12 @@ function normalizeTaskPayload(payload) {
 
 function normalizeTaskParams(params) {
   const normalized = { ...params };
+
+  // Listing filters by `board_id`; the write payload keeps using `board`.
+  if (normalized.board !== undefined) {
+    normalized.board_id = normalized.board;
+    delete normalized.board;
+  }
   if (normalized.status_id !== undefined) {
     normalized.status = normalized.status_id;
     delete normalized.status_id;
@@ -54,6 +64,8 @@ function normalizeTaskParams(params) {
   return normalized;
 }
 
+export const getTask = (id) => apiClient.get(`/tasks/tasks/${id}/`).then((response) => response.data);
+
 export const getTasks = (params = {}) => {
   const normalizedParams = normalizeTaskParams(params);
   return apiClient.get('/tasks/tasks/', { params: normalizedParams }).then((response) => response.data);
@@ -64,6 +76,7 @@ export const getTasksByWeek = (params = {}) => apiClient.get('/tasks/tasks/by_we
 export const getTasksByMonth = (params = {}) => apiClient.get('/tasks/tasks/by_month/', { params }).then((response) => response.data);
 export const createTask = (payload) => apiClient.post('/tasks/tasks/', normalizeTaskPayload(payload)).then((response) => response.data);
 export const updateTask = (id, payload) => apiClient.put(`/tasks/tasks/${id}/`, normalizeTaskPayload(payload)).then((response) => response.data);
+export const patchTask = (id, payload) => apiClient.patch(`/tasks/tasks/${id}/`, normalizeTaskPayload(payload)).then((response) => response.data);
 export const deleteTask = (id) => apiClient.delete(`/tasks/tasks/${id}/`);
 export const completeTask = (id) => apiClient.post(`/tasks/tasks/${id}/complete/`).then((response) => response.data);
 export const setTaskStatus = (id, status) => apiClient.post(`/tasks/tasks/${id}/set_status/`, { status }).then((response) => response.data);

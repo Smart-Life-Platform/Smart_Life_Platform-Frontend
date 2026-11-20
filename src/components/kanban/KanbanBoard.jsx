@@ -23,6 +23,11 @@ export default function KanbanBoard({
   onOpenEdit,
   onRemoveTask,
   onOpenDetails,
+  quickAddStatus = null,
+  onOpenQuickAdd,
+  onCloseQuickAdd,
+  onQuickCreate,
+  onOpenFullTask,
 }) {
   const [dragged, setDragged] = useState(null);
   const [liveColumns, setLiveColumns] = useState(columns);
@@ -225,6 +230,11 @@ export default function KanbanBoard({
             onRemoveTask={onRemoveTask}
             onOpenDetails={onOpenDetails}
             isDraggingAny={Boolean(dragged)}
+            quickAddOpen={String(quickAddStatus?.id) === String(status.id)}
+            onOpenQuickAdd={onOpenQuickAdd}
+            onCloseQuickAdd={onCloseQuickAdd}
+            onQuickCreate={onQuickCreate}
+            onOpenFullTask={onOpenFullTask}
           />
         ))}
       </div>

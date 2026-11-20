@@ -2,6 +2,7 @@ import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { UilPlus } from '@iconscout/react-unicons';
 import TaskCard from './TaskCard';
 import DropZone from './DropZone';
+import QuickAddTask from '../tasks/QuickAddTask';
 
 export default function KanbanColumn({
   status,
@@ -14,6 +15,11 @@ export default function KanbanColumn({
   onOpenEdit,
   onRemoveTask,
   onOpenDetails,
+  quickAddOpen = false,
+  onOpenQuickAdd,
+  onCloseQuickAdd,
+  onQuickCreate,
+  onOpenFullTask,
   isDraggingAny = false,
 }) {
   const { isOver, setNodeRef: setColumnDropRef } = useDroppable({
@@ -57,7 +63,7 @@ export default function KanbanColumn({
           {...colListeners}
           {...colAttributes}
           className="column-drag-handle column-header-title"
-          title="Drag to reorder status (e.g. swap start with plain)"
+          title="Drag to reorder status"
         >
           <span className="column-grip-icon" aria-hidden="true">⋮⋮</span>
           <span className="status-dot" style={status.color ? { background: status.color } : undefined} />
@@ -104,11 +110,26 @@ export default function KanbanColumn({
         <button
           type="button"
           className="column-add"
-          onClick={() => onOpenCreate?.(status)}
+          onClick={() => onOpenQuickAdd?.(status)}
         >
           + Add task
         </button>
       </div>
+
+      {quickAddOpen && (
+        <QuickAddTask
+          status={status}
+          onClose={onCloseQuickAdd}
+          onCreate={async (payload) => {
+            await onQuickCreate?.(payload, status);
+            onCloseQuickAdd?.();
+          }}
+          onOpenFullDetails={() => {
+            onCloseQuickAdd?.();
+            onOpenFullTask?.(status);
+          }}
+        />
+      )}
     </section>
   );
 }
