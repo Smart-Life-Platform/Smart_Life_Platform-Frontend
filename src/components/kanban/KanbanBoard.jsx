@@ -18,11 +18,13 @@ export default function KanbanBoard({
   initials = 'U',
   loading = false,
   onTaskStatusChange,
+  onTaskPriorityChange,
   onColumnsOrderChange,
   onOpenCreate,
   onOpenEdit,
   onRemoveTask,
   onOpenDetails,
+  onDuplicateTask,
   quickAddStatus = null,
   onOpenQuickAdd,
   onCloseQuickAdd,
@@ -229,6 +231,9 @@ export default function KanbanBoard({
             onOpenEdit={onOpenEdit}
             onRemoveTask={onRemoveTask}
             onOpenDetails={onOpenDetails}
+            onDuplicateTask={onDuplicateTask}
+            onTaskStatusChange={onTaskStatusChange}
+            onTaskPriorityChange={onTaskPriorityChange}
             isDraggingAny={Boolean(dragged)}
             quickAddOpen={String(quickAddStatus?.id) === String(status.id)}
             onOpenQuickAdd={onOpenQuickAdd}

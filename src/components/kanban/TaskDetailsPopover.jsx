@@ -46,7 +46,7 @@ export default function TaskDetailsPopover({
 
           <div>
             <h4 style={{ margin: '0 0 6px', fontSize: '11px', color: 'var(--color-secondary)' }}>Description</h4>
-            <p className="task-popover-desc">{task.description || 'Немає опису для цієї задачі.'}</p>
+            <p className="task-popover-desc">{task.description || 'No description for this task.'}</p>
           </div>
 
           <TaskDetailsMeta
@@ -195,30 +195,38 @@ function SubtaskChecklist({ taskId, initialSubtasks }) {
       )}
 
       <ul className="subtask-list">
-        {subtasks.map((subtask) => (
-          <li key={subtask.id} className={`subtask-item${subtask.is_done ? ' subtask-done' : ''}`}>
-            <button
-              type="button"
-              className="subtask-toggle"
-              onClick={() => toggle(subtask)}
-              aria-label={subtask.is_done ? 'Mark as not done' : 'Mark as done'}
-              disabled={toggling.has(subtask.id)}
-            >
-              {subtask.is_done
-                ? <UilCheckSquare size="16" />
-                : <UilSquareFull size="16" />}
-            </button>
-            <span className="subtask-title">{subtask.title}</span>
-            <button
-              type="button"
-              className="subtask-delete"
-              onClick={() => removeItem(subtask)}
-              aria-label={`Delete ${subtask.title}`}
-            >
-              ×
-            </button>
-          </li>
-        ))}
+        {subtasks.map((subtask) => {
+          const isToggling = toggling.has(subtask.id);
+          return (
+            <li key={subtask.id} className={`subtask-item${subtask.is_done ? ' subtask-done' : ''}`}>
+              <button
+                type="button"
+                className="subtask-toggle"
+                onClick={() => toggle(subtask)}
+                aria-label={subtask.is_done ? 'Mark as not done' : 'Mark as done'}
+                title={isToggling ? 'Saving changes…' : subtask.is_done ? 'Mark as not done' : 'Mark as done'}
+                disabled={isToggling}
+              >
+                {isToggling ? (
+                  <span className="subtask-spinner" aria-hidden="true" />
+                ) : subtask.is_done ? (
+                  <UilCheckSquare size="16" />
+                ) : (
+                  <UilSquareFull size="16" />
+                )}
+              </button>
+              <span className="subtask-title">{subtask.title}</span>
+              <button
+                type="button"
+                className="subtask-delete"
+                onClick={() => removeItem(subtask)}
+                aria-label={`Delete ${subtask.title}`}
+              >
+                ×
+              </button>
+            </li>
+          );
+        })}
       </ul>
 
       <div className="subtask-add-row">

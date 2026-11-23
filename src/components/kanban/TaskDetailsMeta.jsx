@@ -13,13 +13,13 @@ export default function TaskDetailsMeta({
         <div>
           <span>Due Date</span>
           <p style={{ margin: 0 }}>
-            <UilCalendarAlt size="12" /> {dueDate || 'Не вказано'}
+            <UilCalendarAlt size="12" /> {dueDate || 'Not set'}
           </p>
         </div>
         <div>
           <span>Due Time</span>
           <p style={{ margin: 0 }}>
-            <UilClock size="12" /> {dueTime || 'Не вказано'}
+            <UilClock size="12" /> {dueTime || 'Not set'}
           </p>
         </div>
       </div>

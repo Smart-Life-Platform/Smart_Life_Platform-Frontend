@@ -335,3 +335,393 @@
   font-size: 0.9rem;
   font-weight: 500;
 }
+
+
+/* ---------- Task Action Menu Popup ---------- */
+.card-menu-container {
+  position: relative;
+  display: inline-flex;
+}
+
+.task-action-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 1000;
+  min-width: 190px;
+  padding: 6px;
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border-subtle, #e2e8f0);
+  border-radius: 10px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  animation: taskMenuFadeIn 0.12s ease-out;
+  user-select: none;
+}
+
+.task-action-menu span,
+.task-action-menu button,
+.task-action-menu div,
+.task-action-submenu span,
+.task-action-submenu button {
+  background: transparent !important;
+  border-radius: 0;
+  padding: 0;
+}
+
+@keyframes taskMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.task-action-menu-header {
+  padding: 6px 8px 8px !important;
+  border-bottom: 1px solid var(--color-border-subtle, #e2e8f0);
+  margin-bottom: 4px;
+}
+
+.task-action-menu-title {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-secondary, #64748b);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-action-menu-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.task-action-item {
+  display: flex !important;
+  align-items: center;
+  width: 100%;
+  padding: 7px 9px !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  color: var(--color-text-primary, #1e293b);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  user-select: none;
+}
+
+.task-action-item:hover {
+  background: var(--color-surface-muted, #f1f5f9) !important;
+}
+
+.task-action-item.is-selected {
+  font-weight: 600;
+  color: var(--color-accent, #6d5ce7);
+  background: rgba(109, 92, 231, 0.08) !important;
+}
+
+.task-action-item.is-danger {
+  color: var(--color-red, #ef4444);
+}
+
+.task-action-item.is-danger:hover {
+  background: rgba(239, 68, 68, 0.08) !important;
+}
+
+.task-action-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  color: var(--color-secondary, #64748b);
+}
+
+.task-action-item.is-danger .task-action-icon {
+  color: var(--color-red, #ef4444);
+}
+
+.task-action-arrow {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  color: var(--color-secondary, #94a3b8);
+}
+
+.task-action-item-parent {
+  position: relative;
+}
+
+.task-action-submenu {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 4px);
+  z-index: 1010;
+  min-width: 160px;
+  padding: 6px !important;
+  background: var(--color-surface, #ffffff) !important;
+  border: 1px solid var(--color-border-subtle, #e2e8f0);
+  border-radius: 10px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.task-action-submenu .task-action-item {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+}
+
+.task-action-submenu .status-dot {
+  flex-shrink: 0;
+}
+
+.task-action-divider {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--color-border-subtle, #e2e8f0);
+}
+
+
+/* ---------- Subtasks Popover Menu (Click on subtasks in card) ---------- */
+.card-subtasks-container {
+  position: relative;
+  display: inline-flex;
+}
+
+.card-meta-item-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 0;
+  padding: 2px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--color-secondary, #64748b);
+  font-size: 9px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.card-meta-item-btn:hover {
+  background: var(--color-surface-muted, #f1f5f9);
+  color: var(--color-accent, #6d5ce7);
+}
+
+.subtasks-popup-menu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 0;
+  z-index: 1020;
+  width: 250px;
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border-subtle, #e2e8f0);
+  border-radius: 10px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+  animation: taskMenuFadeIn 0.15s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+.subtasks-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border-subtle, #e2e8f0);
+}
+
+.subtasks-popup-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.subtasks-popup-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-primary, #1e293b);
+}
+
+.subtasks-popup-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-accent, #6d5ce7);
+  background: rgba(109, 92, 231, 0.1);
+  padding: 1px 5px;
+  border-radius: 999px;
+}
+
+.subtasks-popup-close {
+  background: transparent;
+  border: 0;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  color: var(--color-secondary, #94a3b8);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.subtasks-popup-close:hover {
+  color: var(--color-text-primary, #1e293b);
+  background: var(--color-surface-muted, #f1f5f9);
+}
+
+.subtasks-popup-progress {
+  height: 3px;
+  background: var(--color-border-subtle, #e2e8f0);
+  overflow: hidden;
+}
+
+.subtasks-popup-progress span {
+  display: block;
+  height: 100%;
+  background: var(--color-accent, #6d5ce7);
+  transition: width 0.2s ease;
+}
+
+.subtasks-popup-body {
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 6px 8px;
+}
+
+.subtasks-popup-empty {
+  font-size: 10px;
+  color: var(--color-secondary, #94a3b8);
+  text-align: center;
+  padding: 10px 0;
+  margin: 0;
+}
+
+.subtasks-popup-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.subtasks-popup-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  transition: background 0.12s ease;
+}
+
+.subtasks-popup-item:hover {
+  background: var(--color-surface-muted, #f1f5f9);
+}
+
+.subtasks-popup-checkbox {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  color: var(--color-secondary, #94a3b8);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.subtasks-popup-checkbox:hover {
+  color: var(--color-accent, #6d5ce7);
+}
+
+.subtasks-popup-item.is-completed .subtasks-popup-checkbox {
+  color: var(--color-accent, #6d5ce7);
+}
+
+.subtasks-popup-item-title {
+  flex: 1;
+  color: var(--color-text-primary, #1e293b);
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.subtasks-popup-item.is-completed .subtasks-popup-item-title {
+  text-decoration: line-through;
+  color: var(--color-secondary, #94a3b8);
+}
+
+.subtasks-popup-footer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border-top: 1px solid var(--color-border-subtle, #e2e8f0);
+}
+
+.subtasks-popup-input {
+  flex: 1;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--color-border-input, #cbd5e1);
+  border-radius: 6px;
+  font-size: 11px;
+  background: var(--color-surface, #ffffff);
+  color: var(--color-text-primary, #1e293b);
+}
+
+.subtasks-popup-input:focus {
+  outline: 0;
+  border-color: var(--color-accent, #6d5ce7);
+}
+
+.subtasks-popup-add-btn {
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--color-accent, #6d5ce7);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.15s ease;
+}
+
+.subtasks-popup-add-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+
+/* ---------- Subtask spinner for async toggling/waiting ---------- */
+.subtask-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(109, 92, 231, 0.2);
+  border-top-color: var(--color-accent, #6d5ce7);
+  border-radius: 50%;
+  animation: subtaskSpin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes subtaskSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.subtasks-popup-checkbox:disabled,
+.subtask-toggle:disabled,
+.checklist-toggle:disabled {
+  cursor: wait;
+}

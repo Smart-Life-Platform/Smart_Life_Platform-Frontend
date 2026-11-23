@@ -1,13 +1,13 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import {
   UilCalendarAlt,
   UilCheckSquare,
-  UilEditAlt,
-  UilInfoCircle,
   UilRobot,
-  UilTrashAlt,
 } from '@iconscout/react-unicons';
+import TaskActionMenu from './TaskActionMenu';
+import SubtasksMenu from './SubtasksMenu';
 
 const PRIORITY_LABELS = { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' };
 const PRIORITY_NAMES = ['low', 'medium', 'high', 'critical'];
@@ -77,13 +77,21 @@ function PriorityFlag() {
 export default function TaskCard({
   task,
   categories = [],
+  statuses = [],
   initials = 'U',
   onOpenEdit,
   onRemoveTask,
   onOpenDetails,
+  onDuplicateTask,
+  onTaskStatusChange,
+  onTaskPriorityChange,
+  onSubtasksChange,
   isOverlay = false,
 }) {
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [subtasksMenuOpen, setSubtasksMenuOpen] = useState(false);
+  const [localSubtasks, setLocalSubtasks] = useState(task.subtasks);
   const currentStatusId = task.status_id ?? task.status?.id ?? task.status;
 
   const {
@@ -124,16 +132,12 @@ export default function TaskCard({
       }
     : undefined;
 
-  const categoryName = getCategoryName(task, categories);
-  const categoryColor = getCategoryColor(task, categories);
-  const priority = normalizePriority(task.priority);
-  const { total, done } = subtaskStats(task);
+  const effectiveTask = localSubtasks ? { ...task, subtasks: localSubtasks } : task;
+  const categoryName = getCategoryName(effectiveTask, categories);
+  const categoryColor = getCategoryColor(effectiveTask, categories);
+  const priority = normalizePriority(effectiveTask.priority);
+  const { total, done } = subtaskStats(effectiveTask);
   const progress = total > 0 ? Math.round((done / total) * 100) : 0;
-
-  const handleActionClick = (event, callback) => {
-    event.stopPropagation();
-    callback?.(task);
-  };
 
   const askAssistant = (event) => {
     event.stopPropagation();
@@ -155,6 +159,11 @@ export default function TaskCard({
       {...(isOverlay ? {} : attributes)}
       className={`board-card ${isOverlay ? 'board-drag-overlay-card' : ''} ${isDragging ? 'is-dragging' : ''} ${isOver ? 'drag-over' : ''}`}
       style={style}
+      onClick={() => {
+        if (!isDragging && !isOverlay) {
+          setMenuOpen((prev) => !prev);
+        }
+      }}
     >
       <div className="card-topline">
         <span
@@ -171,15 +180,35 @@ export default function TaskCard({
               {PRIORITY_LABELS[priority]}
             </span>
           )}
-          <button
-            type="button"
-            className="card-menu"
-            aria-label="Task details"
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={(event) => handleActionClick(event, onOpenDetails || onOpenEdit)}
-          >
-            •••
-          </button>
+          <div className="card-menu-container">
+            <button
+              type="button"
+              className="card-menu"
+              aria-label="Task details"
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                setMenuOpen((prev) => !prev);
+              }}
+            >
+              •••
+            </button>
+            {menuOpen && !isOverlay && (
+              <TaskActionMenu
+                task={task}
+                statuses={statuses}
+                onClose={() => setMenuOpen(false)}
+                onEdit={onOpenEdit}
+                onDetails={onOpenDetails}
+                onDelete={onRemoveTask}
+                onDuplicate={onDuplicateTask}
+                onStatusChange={onTaskStatusChange}
+                onPriorityChange={onTaskPriorityChange}
+              />
+            )}
+          </div>
         </div>
       </div>
 
@@ -204,11 +233,31 @@ export default function TaskCard({
           <UilCalendarAlt size="12" /> {formatDate(task.due_date)}
         </span>
         <div className="card-meta-right">
-          {total > 0 && (
-            <span className="card-meta-item" title={`${done} of ${total} subtasks done`}>
-              <UilCheckSquare size="12" /> {done}/{total}
-            </span>
-          )}
+          <div className="card-subtasks-container">
+            <button
+              type="button"
+              className="card-meta-item-btn"
+              title={total > 0 ? `${done} of ${total} subtasks done. Click to view.` : 'Subtasks. Click to add/view.'}
+              aria-label="Subtasks menu"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                setSubtasksMenuOpen((prev) => !prev);
+              }}
+            >
+              <UilCheckSquare size="12" /> {total > 0 ? `${done}/${total}` : '0/0'}
+            </button>
+            {subtasksMenuOpen && !isOverlay && (
+              <SubtasksMenu
+                task={effectiveTask}
+                onClose={() => setSubtasksMenuOpen(false)}
+                onSubtaskToggled={(taskId, nextSubtasks) => {
+                  setLocalSubtasks(nextSubtasks);
+                  onSubtasksChange?.(taskId, nextSubtasks);
+                }}
+              />
+            )}
+          </div>
           <span className="mini-avatar">{initials}</span>
           <button
             type="button"
@@ -221,34 +270,6 @@ export default function TaskCard({
             <UilRobot size="13" />
           </button>
         </div>
-      </div>
-
-      <div className="card-actions">
-        <button
-          type="button"
-          onPointerDown={(event) => event.stopPropagation()}
-          onClick={(event) => handleActionClick(event, onOpenEdit)}
-        >
-          <UilEditAlt size="13" /> Edit
-        </button>
-        {onOpenDetails && (
-          <button
-            type="button"
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={(event) => handleActionClick(event, onOpenDetails)}
-            title="View details"
-          >
-            <UilInfoCircle size="13" />
-          </button>
-        )}
-        <button
-          type="button"
-          aria-label="Delete task"
-          onPointerDown={(event) => event.stopPropagation()}
-          onClick={(event) => handleActionClick(event, onRemoveTask)}
-        >
-          <UilTrashAlt size="13" />
-        </button>
       </div>
     </article>
   );

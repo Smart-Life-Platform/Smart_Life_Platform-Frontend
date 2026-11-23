@@ -59,7 +59,7 @@ describe('Kanban Components', () => {
     expect(document.querySelector('.kanban-dropzone.indicator')).toBeInTheDocument();
   });
 
-  test('TaskCard renders title, category, priority, and actions', () => {
+  test('TaskCard renders title, category, priority, and actions menu', () => {
     const handleEdit = jest.fn();
     const handleDelete = jest.fn();
     const handleDetails = jest.fn();
@@ -81,14 +81,20 @@ describe('Kanban Components', () => {
     expect(screen.getByText('High')).toBeInTheDocument();
     expect(screen.getByText('JD')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('Edit'));
+    // Click on the task card to open the action menu
+    fireEvent.click(screen.getByText('Test Task 1'));
+
+    fireEvent.click(screen.getByText('Edit task'));
     expect(handleEdit).toHaveBeenCalledWith(mockTask);
 
-    fireEvent.click(screen.getByLabelText('Delete task'));
-    expect(handleDelete).toHaveBeenCalledWith(mockTask);
-
-    fireEvent.click(screen.getByLabelText('Task details'));
+    // Reopen menu for details and delete
+    fireEvent.click(screen.getByText('Test Task 1'));
+    fireEvent.click(screen.getByText('Task details'));
     expect(handleDetails).toHaveBeenCalledWith(mockTask);
+
+    fireEvent.click(screen.getByText('Test Task 1'));
+    fireEvent.click(screen.getByText('Delete task'));
+    expect(handleDelete).toHaveBeenCalledWith(mockTask);
   });
 
   test('TaskCard shows the priority flag, subtask progress and the assistant shortcut', () => {

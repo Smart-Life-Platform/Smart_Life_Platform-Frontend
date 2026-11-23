@@ -236,29 +236,37 @@ export default function TaskForm({ date, task, statuses = [], categories = [], a
             {/* Existing subtasks (edit mode) — toggle done inline */}
             {isEditing && existingSubtasks.length > 0 && (
               <ul className="checklist checklist-existing">
-                {existingSubtasks.map((subtask, index) => (
-                  <li key={subtask.id ?? index} className={subtask.is_done ? 'checklist-done' : ''}>
-                    <button
-                      type="button"
-                      className="checklist-toggle"
-                      onClick={() => toggleExisting(subtask)}
-                      disabled={toggling.has(subtask.id)}
-                      aria-label={subtask.is_done ? 'Mark as not done' : 'Mark as done'}
-                    >
-                      {subtask.is_done
-                        ? <UilCheckSquare size="15" />
-                        : <UilSquareFull size="15" />}
-                    </button>
-                    <span className="checklist-title">{subtask.title}</span>
-                    <button
-                      type="button"
-                      aria-label={`Remove ${subtask.title}`}
-                      onClick={() => removeExisting(subtask)}
-                    >
-                      ×
-                    </button>
-                  </li>
-                ))}
+                {existingSubtasks.map((subtask, index) => {
+                  const isToggling = toggling.has(subtask.id);
+                  return (
+                    <li key={subtask.id ?? index} className={subtask.is_done ? 'checklist-done' : ''}>
+                      <button
+                        type="button"
+                        className="checklist-toggle"
+                        onClick={() => toggleExisting(subtask)}
+                        disabled={isToggling}
+                        title={isToggling ? 'Saving changes…' : subtask.is_done ? 'Mark as not done' : 'Mark as done'}
+                        aria-label={subtask.is_done ? 'Mark as not done' : 'Mark as done'}
+                      >
+                        {isToggling ? (
+                          <span className="subtask-spinner" aria-hidden="true" />
+                        ) : subtask.is_done ? (
+                          <UilCheckSquare size="15" />
+                        ) : (
+                          <UilSquareFull size="15" />
+                        )}
+                      </button>
+                      <span className="checklist-title">{subtask.title}</span>
+                      <button
+                        type="button"
+                        aria-label={`Remove ${subtask.title}`}
+                        onClick={() => removeExisting(subtask)}
+                      >
+                        ×
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             )}
 

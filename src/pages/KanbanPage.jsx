@@ -205,6 +205,33 @@ export default function KanbanPage() {
     }
   };
 
+  const handleTaskPriorityChange = async (taskId, nextPriority) => {
+    try {
+      await updateTask(taskId, { priority: nextPriority });
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  };
+
+  const handleDuplicateTask = async (taskToDuplicate) => {
+    try {
+      const currentStatusId = taskToDuplicate.status_id ?? taskToDuplicate.status?.id ?? taskToDuplicate.status;
+      const currentCategoryId = taskToDuplicate.category_id ?? taskToDuplicate.category?.id ?? taskToDuplicate.category;
+      await createTask({
+        title: `${taskToDuplicate.title} (Copy)`,
+        description: taskToDuplicate.description || '',
+        due_date: taskToDuplicate.due_date || null,
+        due_time: taskToDuplicate.due_time || '09:00',
+        priority: taskToDuplicate.priority || 'medium',
+        status_id: currentStatusId || undefined,
+        category_id: currentCategoryId || undefined,
+        assignee_id: taskToDuplicate.assignee_id || taskToDuplicate.assignee?.id || null,
+      });
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  };
+
   const handleColumnsOrderChange = async (ordered) => {
     try {
       await saveStatusOrder(ordered);
@@ -329,11 +356,13 @@ export default function KanbanPage() {
               initials={initials}
               loading={loading}
               onTaskStatusChange={handleTaskStatusChange}
+              onTaskPriorityChange={handleTaskPriorityChange}
               onColumnsOrderChange={handleColumnsOrderChange}
               onOpenCreate={openCreate}
               onOpenEdit={openEdit}
               onRemoveTask={removeTask}
               onOpenDetails={setDetailsTask}
+              onDuplicateTask={handleDuplicateTask}
               quickAddStatus={quickAddStatus}
               onOpenQuickAdd={setQuickAddStatus}
               onCloseQuickAdd={() => setQuickAddStatus(null)}

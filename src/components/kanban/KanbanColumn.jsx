@@ -15,6 +15,9 @@ export default function KanbanColumn({
   onOpenEdit,
   onRemoveTask,
   onOpenDetails,
+  onDuplicateTask,
+  onTaskStatusChange,
+  onTaskPriorityChange,
   quickAddOpen = false,
   onOpenQuickAdd,
   onCloseQuickAdd,
@@ -99,6 +102,9 @@ export default function KanbanColumn({
               onOpenEdit={onOpenEdit}
               onRemoveTask={onRemoveTask}
               onOpenDetails={onOpenDetails}
+              onDuplicateTask={onDuplicateTask}
+              onTaskStatusChange={onTaskStatusChange}
+              onTaskPriorityChange={onTaskPriorityChange}
             />
           ))
         )}
