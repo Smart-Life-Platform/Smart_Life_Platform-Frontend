@@ -30,7 +30,7 @@ export function useKanbanData({
 
   // Load tasks when activeBoard or filters change
   useEffect(() => {
-    if (activeBoard) {
+    if (activeBoard?.id) {
       loadTasks(filters).catch((requestError) => setError(requestError.message));
     }
   }, [activeBoard, filters, loadTasks]);
@@ -40,16 +40,19 @@ export function useKanbanData({
 
   // 1. Board-scoped tasks: strictly filtered for currentBoardId
   const boardTasks = useMemo(() => {
+    if (!currentBoardId) return [];
     return tasks.filter((task) => taskBelongsToBoard(task, currentBoardId, defaultBoardId));
   }, [tasks, currentBoardId, defaultBoardId]);
 
   // 2. Board-scoped statuses: strictly filtered for currentBoardId, never pulling from other boards
   const boardStatuses = useMemo(() => {
+    if (!currentBoardId) return [];
     return statuses.filter((status) => statusBelongsToBoard(status, currentBoardId, defaultBoardId));
   }, [statuses, currentBoardId, defaultBoardId]);
 
   // 3. Board-scoped categories: strictly filtered for currentBoardId, never pulling from other boards
   const boardCategories = useMemo(() => {
+    if (!currentBoardId) return [];
     return categories.filter((category) => categoryBelongsToBoard(category, currentBoardId, defaultBoardId));
   }, [categories, currentBoardId, defaultBoardId]);
 
