@@ -3,6 +3,7 @@ import { UilPlus, UilTrashAlt } from '@iconscout/react-unicons';
 
 export default function ShoppingList({ lists, onToggle, onAddItem, onDeleteItem, onAddList, onDeleteList }) {
   const [drafts, setDrafts] = useState({});
+  const [qtys, setQtys] = useState({});
   const [newTitle, setNewTitle] = useState('');
 
   const addList = (e) => {
@@ -29,8 +30,10 @@ export default function ShoppingList({ lists, onToggle, onAddItem, onDeleteItem,
             e.preventDefault();
             const name = (drafts[list.id] || '').trim();
             if (!name) return;
-            onAddItem(list.id, name);
+            const qty = Math.min(999, Math.max(1, parseInt(qtys[list.id], 10) || 1));
+            onAddItem(list.id, name, qty);
             setDrafts({ ...drafts, [list.id]: '' });
+            setQtys({ ...qtys, [list.id]: '' });
           };
           return (
             <section key={list.id} className="b-card shopping__list">
@@ -38,8 +41,8 @@ export default function ShoppingList({ lists, onToggle, onAddItem, onDeleteItem,
                 <h3>{list.title}</h3>
                 <span className="shopping__meta">
                   <small>{bought} / {list.items.length}</small>
-                  <button type="button" className="b-icon-btn" onClick={() => onDeleteList(list.id)} aria-label="Delete list">
-                    <UilTrashAlt size="15" />
+                  <button type="button" className="b-icon-btn shopping__delete-list" onClick={() => onDeleteList(list.id)} aria-label="Delete list">
+                    <UilTrashAlt size="14" />
                   </button>
                 </span>
               </header>
@@ -49,10 +52,10 @@ export default function ShoppingList({ lists, onToggle, onAddItem, onDeleteItem,
                     <label>
                       <input type="checkbox" checked={item.is_purchased} onChange={() => onToggle(list.id, item.id)} />
                       <span>{item.name}</span>
+                      <small>×{item.quantity}</small>
                     </label>
-                    <small>×{item.quantity}</small>
                     <button type="button" className="b-icon-btn" onClick={() => onDeleteItem(list.id, item.id)} aria-label="Delete">
-                      <UilTrashAlt size="15" />
+                      <UilTrashAlt size="14" />
                     </button>
                   </li>
                 ))}
@@ -61,10 +64,20 @@ export default function ShoppingList({ lists, onToggle, onAddItem, onDeleteItem,
                 <input
                   value={drafts[list.id] || ''}
                   onChange={(e) => setDrafts({ ...drafts, [list.id]: e.target.value })}
-                  placeholder="New item"
+                  placeholder="New position"
                   maxLength={255}
                 />
-                <button type="submit" className="b-icon-btn" aria-label="Add"><UilPlus size="18" /></button>
+                <input
+                  className="shopping__qty-input"
+                  type="number"
+                  min="1"
+                  max="999"
+                  value={qtys[list.id] || ''}
+                  onChange={(e) => setQtys({ ...qtys, [list.id]: e.target.value })}
+                  placeholder="Qty"
+                  aria-label="Quantity"
+                />
+                <button type="submit" className="shopping__add-btn" aria-label="Add"><UilPlus size="16" /></button>
               </form>
             </section>
           );

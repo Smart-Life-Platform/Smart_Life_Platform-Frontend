@@ -149,8 +149,8 @@ export default function BudgetPage() {
     const done = await run(async () => { await deleteShoppingList(listId); return true; });
     if (done) setLists((ls) => ls.filter((l) => l.id !== listId));
   };
-  const addItem = async (listId, name) => {
-    const item = await run(() => createShoppingItem(listId, name));
+  const addItem = async (listId, name, quantity = 1) => {
+    const item = await run(() => createShoppingItem(listId, name, quantity));
     if (item) patchList(listId, (l) => ({ ...l, items: [...l.items, item] }));
   };
   const toggleItem = async (listId, itemId) => {
@@ -256,11 +256,9 @@ export default function BudgetPage() {
             {tab === 'limits' && (
               <div className="budget-grid budget-grid--limits">
                 <section className="b-card">
-                  <h3 className="b-card__title">Budget limits</h3>
                   <BudgetLimits items={byCategory} categories={categories} />
                 </section>
                 <section className="b-card">
-                  <h3 className="b-card__title">Set monthly limits</h3>
                   <LimitsSettings categories={categories} onChange={saveLimit} />
                 </section>
               </div>
