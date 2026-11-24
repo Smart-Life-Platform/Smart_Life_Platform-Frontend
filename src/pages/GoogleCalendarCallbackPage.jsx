@@ -16,12 +16,13 @@ export default function GoogleCalendarCallbackPage() {
     handled.current = true;
 
     const code = params.get('code');
-    if (!code) {
-      navigate('/settings', { replace: true });
+    const state = params.get('state');
+    if (!code || !state || params.has('error')) {
+      navigate('/settings?calendar=error', { replace: true });
       return;
     }
 
-    connectGoogleCalendar(code)
+    connectGoogleCalendar(code, state)
       .then(() => navigate('/settings?calendar=connected', { replace: true }))
       .catch(() => navigate('/settings?calendar=error', { replace: true }));
   }, [navigate, params]);
