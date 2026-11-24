@@ -13,6 +13,24 @@ const relationId = (value) => {
   return Number.isInteger(id) ? id : '';
 };
 
+/**
+ * Assignee ids are user ids, and those are UUIDs in this API — unlike status and
+ * category ids they must not be coerced to a number.
+ */
+const assigneeKey = (value) => {
+  if (Array.isArray(value)) return assigneeKey(value[0]);
+  if (value && typeof value === 'object') return assigneeKey(value.id);
+  if (value === '' || value === null || value === undefined) return '';
+  return String(value);
+};
+
+const taskAssignee = (task) => {
+  if (!task) return '';
+  // An explicit `assignee_id: null` means unassigned, even if a stale nested object survived.
+  if (Object.prototype.hasOwnProperty.call(task, 'assignee_id') && task.assignee_id !== undefined) return task.assignee_id;
+  return task.assignee?.id ?? task.assignee ?? '';
+};
+
 const PRIORITIES = [
   { value: 'low', label: 'Low' },
   { value: 'medium', label: 'Medium' },
@@ -37,7 +55,7 @@ export default function TaskForm({ date, task, statuses = [], categories = [], a
     priority: priorityName(task?.priority) || 'medium',
     status_id: relationId(task?.status_id ?? task?.status?.id ?? task?.status ?? statuses[0]?.id),
     category_id: relationId(task?.category_id ?? task?.category?.id ?? task?.category),
-    assignee_id: relationId(task?.assignee_id ?? task?.assignee?.id ?? task?.assignee),
+    assignee_id: assigneeKey(taskAssignee(task)),
     reminder: task?.reminder || 'none',
   });
 
@@ -236,29 +254,37 @@ export default function TaskForm({ date, task, statuses = [], categories = [], a
             {/* Existing subtasks (edit mode) — toggle done inline */}
             {isEditing && existingSubtasks.length > 0 && (
               <ul className="checklist checklist-existing">
-                {existingSubtasks.map((subtask, index) => (
-                  <li key={subtask.id ?? index} className={subtask.is_done ? 'checklist-done' : ''}>
-                    <button
-                      type="button"
-                      className="checklist-toggle"
-                      onClick={() => toggleExisting(subtask)}
-                      disabled={toggling.has(subtask.id)}
-                      aria-label={subtask.is_done ? 'Mark as not done' : 'Mark as done'}
-                    >
-                      {subtask.is_done
-                        ? <UilCheckSquare size="15" />
-                        : <UilSquareFull size="15" />}
-                    </button>
-                    <span className="checklist-title">{subtask.title}</span>
-                    <button
-                      type="button"
-                      aria-label={`Remove ${subtask.title}`}
-                      onClick={() => removeExisting(subtask)}
-                    >
-                      ×
-                    </button>
-                  </li>
-                ))}
+                {existingSubtasks.map((subtask, index) => {
+                  const isToggling = toggling.has(subtask.id);
+                  return (
+                    <li key={subtask.id ?? index} className={subtask.is_done ? 'checklist-done' : ''}>
+                      <button
+                        type="button"
+                        className="checklist-toggle"
+                        onClick={() => toggleExisting(subtask)}
+                        disabled={isToggling}
+                        title={isToggling ? 'Saving changes…' : subtask.is_done ? 'Mark as not done' : 'Mark as done'}
+                        aria-label={subtask.is_done ? 'Mark as not done' : 'Mark as done'}
+                      >
+                        {isToggling ? (
+                          <span className="subtask-spinner" aria-hidden="true" />
+                        ) : subtask.is_done ? (
+                          <UilCheckSquare size="15" />
+                        ) : (
+                          <UilSquareFull size="15" />
+                        )}
+                      </button>
+                      <span className="checklist-title">{subtask.title}</span>
+                      <button
+                        type="button"
+                        aria-label={`Remove ${subtask.title}`}
+                        onClick={() => removeExisting(subtask)}
+                      >
+                        ×
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             )}
 

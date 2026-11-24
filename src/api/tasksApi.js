@@ -10,6 +10,22 @@ function normalizeRelationId(value) {
   return Number.isInteger(id) ? id : null;
 }
 
+/**
+ * Assignees are users, and a user id is not necessarily numeric — the API issues
+ * UUIDs. Keep such an id as a string instead of nulling it the way a board
+ * relation (status / category) would be.
+ */
+function normalizeAssigneeId(value) {
+  if (Array.isArray(value)) return normalizeAssigneeId(value[0]);
+  if (value && typeof value === 'object') return normalizeAssigneeId(value.id);
+  if (value === '' || value === null || value === undefined) return null;
+
+  const text = String(value).trim();
+  if (!text) return null;
+  const id = Number(text);
+  return Number.isInteger(id) ? id : text;
+}
+
 function normalizeTaskPayload(payload) {
   const normalized = { ...payload };
 
@@ -28,7 +44,7 @@ function normalizeTaskPayload(payload) {
   }
   // Assignee must be a member of the board; null unassigns the task.
   if ('assignee_id' in normalized) {
-    normalized.assignee_id = normalizeRelationId(normalized.assignee_id);
+    normalized.assignee_id = normalizeAssigneeId(normalized.assignee_id);
   }
   if (normalized.due_time && /^\d{2}:\d{2}$/.test(normalized.due_time)) {
     normalized.due_time = `${normalized.due_time}:00`;

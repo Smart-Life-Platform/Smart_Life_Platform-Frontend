@@ -12,7 +12,6 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Avatar, { getDisplayName } from '../components/common/Avatar';
 import { deleteAvatar, getAvatarUrl, uploadAvatar } from '../api/avatarApi';
-import GoogleCalendarCard from '../components/integrations/GoogleCalendarCard';
 import '../styles/settings.css';
 
 const cards = [
@@ -103,7 +102,6 @@ export default function SettingsPage() {
             : <div className="settings-card" key={key}>{content}</div>;
         })}
       </div>
-      <GoogleCalendarCard />
       {avatarEditing && <div className="modal-backdrop" onMouseDown={() => setAvatarEditing(false)}><div className="settings-form-card account-modal" onMouseDown={(event) => event.stopPropagation()}>
         <button type="button" className="close-button account-modal-close" onClick={() => setAvatarEditing(false)}><UilTimes size="20" /></button>
         <h2>Profile icon</h2>

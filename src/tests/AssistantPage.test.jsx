@@ -97,3 +97,9 @@ test('deleting an old chat does not clear the chat selected while deletion was p
     confirm.mockRestore();
   }
 });
+
+test('the chat header uses the assistant mark from the sidebar, not a robot icon', () => {
+  renderPage();
+  expect(document.querySelector('.assistant-chat-header .assistant-glyph')).not.toBeNull();
+  expect(document.querySelector('.assistant-chat-header .assistant-glyph').getAttribute('style')).toContain('width: 20px');
+});

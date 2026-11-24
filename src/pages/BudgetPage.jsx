@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import '../styles/budget.css';
 import '../styles/budget-api.css';
 import { accounts } from '../components/budget/accounts';
@@ -51,41 +51,75 @@ export default function BudgetPage() {
 
   const [baseLoading, setBaseLoading] = useState(true);
   const [monthLoading, setMonthLoading] = useState(true);
+  const [recordsLoading, setRecordsLoading] = useState(true);
+  const [shoppingLoading, setShoppingLoading] = useState(true);
+  const shoppingLoadedKey = useRef(null);
+  const recordsLoadedKey = useRef(null);
   const [error, setError] = useState('');
   const [baseKey, setBaseKey] = useState(0); // збільшуємо, щоб перезавантажити категорії й покупки
   const [monthReload, setMonthReload] = useState(0); // збільшуємо, щоб перезавантажити записи й підсумок
 
   const month = monthKey(date);
 
-  // Категорії та списки покупок не залежать від місяця
+  // Categories are shared; shopping must not delay the budget overview.
   useEffect(() => {
     let cancelled = false;
     setBaseLoading(true);
-    Promise.all([getBudgetCategories(), getShoppingLists()])
-      .then(([cats, shopping]) => {
+    getBudgetCategories()
+      .then((cats) => {
         if (cancelled) return;
         setCategories(cats);
-        setLists(shopping);
       })
       .catch((e) => !cancelled && setError(e.message))
       .finally(() => !cancelled && setBaseLoading(false));
     return () => { cancelled = true; };
   }, [baseKey]);
 
-  // Транзакції та підсумок — за вибраним місяцем
+  // The overview only needs the summary, not the entire transaction history.
   useEffect(() => {
     let cancelled = false;
     setMonthLoading(true);
-    Promise.all([getBudgetRecords({ month }), getBudgetSummary(month)])
-      .then(([recs, sum]) => {
+    getBudgetSummary(month)
+      .then((sum) => {
         if (cancelled) return;
-        setRecords(recs);
         setSummary(sum);
       })
       .catch((e) => !cancelled && setError(e.message))
       .finally(() => !cancelled && setMonthLoading(false));
     return () => { cancelled = true; };
   }, [month, monthReload]);
+
+  useEffect(() => {
+    const key = `${month}:${monthReload}`;
+    if (tab !== 'transactions' || recordsLoadedKey.current === key) return undefined;
+    let cancelled = false;
+    setRecordsLoading(true);
+    setRecords([]);
+    getBudgetRecords({ month })
+      .then((data) => {
+        if (cancelled) return;
+        setRecords(data);
+        recordsLoadedKey.current = key;
+      })
+      .catch((e) => !cancelled && setError(e.message))
+      .finally(() => !cancelled && setRecordsLoading(false));
+    return () => { cancelled = true; };
+  }, [tab, month, monthReload]);
+
+  useEffect(() => {
+    if (tab !== 'shopping' || shoppingLoadedKey.current === baseKey) return undefined;
+    let cancelled = false;
+    setShoppingLoading(true);
+    getShoppingLists()
+      .then((data) => {
+        if (cancelled) return;
+        setLists(data);
+        shoppingLoadedKey.current = baseKey;
+      })
+      .catch((e) => !cancelled && setError(e.message))
+      .finally(() => !cancelled && setShoppingLoading(false));
+    return () => { cancelled = true; };
+  }, [tab, baseKey]);
 
   const retry = () => {
     setError('');
@@ -106,13 +140,14 @@ export default function BudgetPage() {
 
   const income = summary?.income ?? 0;
   const expense = summary?.expense ?? 0;
-  const byCategory = useMemo(
-    () =>
-      (summary?.by_category || [])
-        .map((x) => ({ category: categories.find((c) => c.id === x.category_id), total: x.total, percent: x.percent }))
-        .filter((x) => x.category),
-    [summary, categories]
-  );
+  const byCategory = useMemo(() => {
+    const byId = new Map(categories.map((category) => [category.id, category]));
+    return (summary?.by_category || [])
+      .map((x) => ({ category: byId.get(x.category_id), total: x.total, percent: x.percent }))
+      .filter((x) => x.category);
+  }, [summary, categories]);
+  const loading = tab === 'shopping' ? shoppingLoading
+    : baseLoading || (tab === 'transactions' ? recordsLoading : monthLoading);
   const months = useMemo(() => buildMonths(date), [date]);
 
   const visibleRecords = records.filter(
@@ -186,7 +221,7 @@ export default function BudgetPage() {
         </nav>
       </header>
 
-      <div className={`budget-body${monthLoading && !baseLoading ? ' is-loading' : ''}`}>
+      <div className="budget-body" aria-busy={loading}>
         {error && (
           <div className="b-alert" role="alert">
             <span>{error}</span>
@@ -195,7 +230,7 @@ export default function BudgetPage() {
           </div>
         )}
 
-        {baseLoading ? (
+        {loading ? (
           <p className="b-loading">Loading…</p>
         ) : (
           <>

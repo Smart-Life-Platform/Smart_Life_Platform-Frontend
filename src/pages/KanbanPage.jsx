@@ -16,7 +16,7 @@ import { getDisplayName } from '../components/common/Avatar';
 import { getBoardMembers } from '../api/boardsApi';
 import { getUserProfile } from '../api/usersApi';
 import { isSystemBoard } from '../api/googleCalendarApi';
-import { memberBoardId, memberKey, memberName, memberUserId } from '../components/board/MemberAvatar';
+import { memberBoardId, memberName, memberRowResolved, memberUserId } from '../components/board/MemberAvatar';
 import { createSubtask } from '../api/subtasksApi';
 
 const DONE_STATUSES = ['done', 'completed', 'cancelled'];
@@ -33,6 +33,7 @@ export default function KanbanPage() {
     loading,
     loadTasks,
     loadMetadata,
+    reloadBoardMembers,
     addCategory,
     addStatus,
     saveStatusOrder,
@@ -76,6 +77,8 @@ export default function KanbanPage() {
   const [momentumDismissed, setMomentumDismissed] = useState(false);
 
   const displayName = getDisplayName(user);
+  const userAvatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
+  const userAvatarPath = user?.user_metadata?.avatar_path || null;
   const systemBoard = isSystemBoard(activeBoard);
 
   // Members and their profiles (avatar, name, email) drive the avatar stack in the header.
@@ -92,7 +95,17 @@ export default function KanbanPage() {
       ? [{ id: 'self', board: activeBoard.id, user: user.id, role: 'owner' }]
       : [];
     const selfProfiles = user?.id
-      ? { [user.id]: { id: user.id, email: user.email || '', username: displayName } }
+      ? {
+          [user.id]: {
+            id: user.id,
+            email: user.email || '',
+            username: displayName,
+            // The signed-in user's photo lives in the Supabase metadata; other people
+            // come from the board-member rows and their profiles.
+            avatar_url: userAvatarUrl,
+            avatar_path: userAvatarPath,
+          },
+        }
       : {};
 
     try {
@@ -116,8 +129,15 @@ export default function KanbanPage() {
       }
 
       setMembers(unique);
+
+      // Member rows already carry email / full_name / avatar_url; only the ones
+      // without those fields need the /api/auth/users/{id}/ lookup.
       const resolved = await Promise.all(
-        unique.map(async (member) => [memberKey(member), await getUserProfile(memberKey(member))])
+        unique.map(async (member) => {
+          const key = memberUserId(member);
+          if (!key || memberRowResolved(member)) return [key, null];
+          return [key, await getUserProfile(key)];
+        })
       );
       setProfiles({
         ...selfProfiles,
@@ -127,21 +147,13 @@ export default function KanbanPage() {
       setMembers(selfMembers);
       setProfiles(selfProfiles);
     }
-  }, [activeBoard?.id, displayName, user?.email, user?.id]);
+  }, [activeBoard?.id, displayName, user?.email, user?.id, userAvatarPath, userAvatarUrl]);
 
   useEffect(() => {
     let cancelled = false;
     loadMembers().catch(() => { if (!cancelled) setMembers([]); });
     return () => { cancelled = true; };
   }, [loadMembers]);
-
-  const initials = displayName
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase();
 
   const openCreate = (status = null) => {
     setEditingTask(null);
@@ -205,6 +217,42 @@ export default function KanbanPage() {
     }
   };
 
+  const handleTaskPriorityChange = async (taskId, nextPriority) => {
+    try {
+      await updateTask(taskId, { priority: nextPriority });
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  };
+
+  // `null` is a valid choice here: it takes the task back to "unassigned".
+  const handleTaskAssigneeChange = async (taskId, assigneeId) => {
+    try {
+      await updateTask(taskId, { assignee_id: assigneeId ?? null });
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  };
+
+  const handleDuplicateTask = async (taskToDuplicate) => {
+    try {
+      const currentStatusId = taskToDuplicate.status_id ?? taskToDuplicate.status?.id ?? taskToDuplicate.status;
+      const currentCategoryId = taskToDuplicate.category_id ?? taskToDuplicate.category?.id ?? taskToDuplicate.category;
+      await createTask({
+        title: `${taskToDuplicate.title} (Copy)`,
+        description: taskToDuplicate.description || '',
+        due_date: taskToDuplicate.due_date || null,
+        due_time: taskToDuplicate.due_time || '09:00',
+        priority: taskToDuplicate.priority || 'medium',
+        status_id: currentStatusId || undefined,
+        category_id: currentCategoryId || undefined,
+        assignee_id: taskToDuplicate.assignee_id || taskToDuplicate.assignee?.id || null,
+      });
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  };
+
   const handleColumnsOrderChange = async (ordered) => {
     try {
       await saveStatusOrder(ordered);
@@ -230,8 +278,11 @@ export default function KanbanPage() {
   };
 
   const assignees = members.map((member) => {
-    const key = memberKey(member);
-    return { id: key, name: memberName(profiles[key], member) };
+    const key = memberUserId(member);
+    const profile = profiles[key];
+    // `member` + `profile` let the card and the assign menu show the real photo
+    // (MemberAvatar falls back to initials only when there is no image).
+    return { id: key, name: memberName(profile, member), member, profile };
   });
 
   const quickCreate = async (payload) => {
@@ -326,14 +377,17 @@ export default function KanbanPage() {
               columns={boardStatuses}
               tasks={filteredTasks}
               categories={boardCategories}
-              initials={initials}
+              assignees={assignees}
               loading={loading}
               onTaskStatusChange={handleTaskStatusChange}
+              onTaskPriorityChange={handleTaskPriorityChange}
+              onAssigneeChange={handleTaskAssigneeChange}
               onColumnsOrderChange={handleColumnsOrderChange}
               onOpenCreate={openCreate}
               onOpenEdit={openEdit}
               onRemoveTask={removeTask}
               onOpenDetails={setDetailsTask}
+              onDuplicateTask={handleDuplicateTask}
               quickAddStatus={quickAddStatus}
               onOpenQuickAdd={setQuickAddStatus}
               onCloseQuickAdd={() => setQuickAddStatus(null)}
@@ -393,7 +447,7 @@ export default function KanbanPage() {
       )}
 
       {shareOpen && (
-        <ShareBoardModal board={activeBoard} onClose={() => setShareOpen(false)} onMembersChanged={loadMembers} />
+        <ShareBoardModal board={activeBoard} onClose={() => setShareOpen(false)} onMembersChanged={() => { loadMembers(); reloadBoardMembers(); }} />
       )}
 
       <MetadataModal

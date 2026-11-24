@@ -12,14 +12,29 @@
 
 .app-sidebar .brand { min-width: 0; margin: 0 12px 25px; }
 .app-sidebar .brand img { display: block; width: 108px; height: auto; }
-.workspace-switcher { position: relative; display: flex; align-items: center; gap: 8px; padding: 9px 10px; margin-bottom: 15px; border-radius: 8px; }
-.workspace-icon { display: grid; place-items: center; width: 19px; height: 19px; color: var(--color-accent); background: var(--color-purple); border-radius: 6px; font-size: 12px; }
-.workspace-switcher span:nth-child(2) { display: grid; min-width: 0; flex: 1; }
-.workspace-switcher small { color: var(--color-secondary); font-size: 11px; }
-.workspace-switcher strong { overflow: hidden; color: var(--color-text-primary); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
-.workspace-chevron { color: var(--color-secondary); font-size: 13px; }
-.workspace-chevron { padding: 0; border: 0; background: transparent; }
-.board-selector { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
+/* Sidebar space switcher: the icon, the space + board label and the chevron share one
+   row. Both lines are single-line ellipsised text — a long name must never wrap under
+   the icon (the old copy wrapped into the chevron and overlapped the board name). */
+.workspace-switcher {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 6px 8px;
+  margin-bottom: 15px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.workspace-switcher:hover { background: var(--color-surface-muted); }
+.workspace-switcher:focus-within { border-color: var(--color-accent); box-shadow: 0 0 0 2px var(--color-purple); }
+.workspace-icon { display: grid; place-items: center; flex: 0 0 auto; width: 19px; height: 19px; color: var(--color-accent); background: var(--color-purple); border-radius: 6px; }
+.workspace-switcher-copy { display: grid; flex: 1 1 auto; min-width: 0; gap: 1px; }
+.workspace-switcher-space { display: block; max-width: 100%; overflow: hidden; color: var(--color-text-muted); font-size: 10px; line-height: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-switcher-board { display: block; max-width: 100%; overflow: hidden; color: var(--color-text-primary); font-size: 12px; font-weight: 600; line-height: 16px; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-chevron { display: grid; place-items: center; flex: 0 0 auto; padding: 0; border: 0; color: var(--color-secondary); background: transparent; font-size: 13px; pointer-events: none; }
+.board-selector { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; cursor: pointer; }
 .sidebar-nav, .sidebar-boards { display: grid; gap: 3px; }
 .sidebar-nav .nav-link { height: 34px; padding: 0 10px; border-radius: 7px; color: var(--color-secondary); font-size: 16px; }
 .sidebar-nav .nav-link.active { color: var(--color-accent); background: var(--color-purple); font-weight: 600; }
@@ -41,7 +56,6 @@
 .auth-sidebar { position: relative; width: 100%; height: 56px; min-height: 56px; flex-direction: row; align-items: center; padding: 12px 16px; border-right: 0; border-bottom: 1px solid var(--color-border-subtle); }
 .auth-sidebar .brand { margin: 0; }.auth-sidebar .brand img { width: 139px; }
 .site-content { min-height: 100vh; margin-left: 178px; background: var(--color-surface); }
-.auth-content { min-height: calc(100vh - 56px); margin-left: 0; }
 .workspace-page { min-width: 880px; padding: 0 18px 22px 20px; color: var(--color-text-primary); background: var(--color-surface); }
 .workspace-header { display: flex; align-items: center; justify-content: space-between; height: 66px; border-bottom: 1px solid var(--color-border-subtle); }
 .global-workspace-header { min-width: 0; padding: 0 20px; box-sizing: border-box; }
@@ -52,8 +66,8 @@
 /* One design for every control of the board toolbar (search field and selects). */
 .board-control { box-sizing: border-box; height: 26px; margin: 0; padding: 0 8px; border: 1px solid var(--color-border-subtle); border-radius: 6px; color: var(--color-secondary); background: var(--color-surface); font-family: inherit; font-size: 9px; line-height: 24px; }.board-tools select { max-width: 115px; }.board-empty { grid-column: 1 / -1; padding: 32px; text-align: center; }
 .board-columns { display: grid; grid-template-columns: repeat(5, minmax(155px, 1fr)); gap: 8px; align-items: start; }.board-column { min-height: 410px; padding: 9px 6px 7px; border-radius: 8px; background: var(--color-surface-muted); }.column-heading { display: flex; align-items: center; gap: 6px; padding: 0 4px 8px; font-size: 10px; }.column-heading b { display: grid; place-items: center; min-width: 17px; height: 17px; border-radius: 5px; color: var(--color-secondary); background: var(--color-surface); font-size: 9px; font-weight: 500; }.column-heading button { margin-left: auto; padding: 0 2px; border: 0; color: var(--color-secondary); background: transparent; }.column-heading button + button { margin-left: 1px; }.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-secondary); }.board-column:nth-child(2) .status-dot { background: var(--color-blue); }.board-column:nth-child(3) .status-dot { background: var(--color-accent); }.board-column:nth-child(4) .status-dot { background: var(--color-yellow); }.board-column:nth-child(5) .status-dot { background: var(--color-green); }
-.column-cards { display: grid; gap: 7px; }.board-card { padding: 10px; border: 1px solid var(--color-border); border-radius: 7px; background: var(--color-surface); box-shadow: 0 1px 1px var(--color-shadow); }.card-topline { display: flex; justify-content: space-between; color: var(--color-secondary); font-size: 8px; }.card-topline span { padding: 3px 5px; border-radius: 3px; background: var(--color-surface-muted); }.card-topline button { padding: 0; border: 0; color: var(--color-secondary); background: transparent; }.board-card h3 { margin: 9px 0 5px; color: var(--color-text-primary); font-size: 10px; font-weight: 600; }.board-card p { min-height: 27px; margin: 0; color: var(--color-secondary); font-size: 9px; line-height: 1.4; }.card-meta { display: flex; align-items: center; gap: 7px; margin-top: 10px; color: var(--color-secondary); font-size: 8px; }.mini-avatar { width: 16px; height: 16px; margin-left: auto; font-size: 6px; }.card-actions { display: flex; gap: 4px; margin-top: 8px; padding-top: 7px; border-top: 1px solid var(--color-border-subtle); }.card-actions button { display: flex; align-items: center; gap: 3px; padding: 2px; border: 0; color: var(--color-secondary); background: transparent; font-size: 8px; }.card-actions button:first-child { margin-right: auto; color: var(--color-accent); }.column-add { padding: 7px 3px; border: 0; color: var(--color-secondary); background: transparent; font-size: 9px; }
-.profile-page { min-height: calc(100vh - 66px); padding: 48px 36px; background: var(--color-surface-page); }.profile-card { margin: 0; max-width: 680px; padding: 36px; background: var(--color-surface); }
+.column-cards { display: grid; gap: 7px; }.board-card { padding: 10px; border: 1px solid var(--color-border); border-radius: 7px; background: var(--color-surface); box-shadow: 0 1px 1px var(--color-shadow); }.card-topline { display: flex; justify-content: space-between; color: var(--color-secondary); font-size: 8px; }.card-topline > span { padding: 3px 5px; border-radius: 3px; background: var(--color-surface-muted); }.card-topline button { padding: 0; border: 0; color: var(--color-secondary); background: transparent; }.board-card h3 { margin: 9px 0 5px; color: var(--color-text-primary); font-size: 10px; font-weight: 600; }.board-card p { min-height: 27px; margin: 0; color: var(--color-secondary); font-size: 9px; line-height: 1.4; }.card-meta { display: flex; align-items: center; gap: 7px; margin-top: 10px; color: var(--color-secondary); font-size: 8px; }.mini-avatar { width: 16px; height: 16px; margin-left: auto; font-size: 6px; }.card-actions { display: flex; gap: 4px; margin-top: 8px; padding-top: 7px; border-top: 1px solid var(--color-border-subtle); }.card-actions button { display: flex; align-items: center; gap: 3px; padding: 2px; border: 0; color: var(--color-secondary); background: transparent; font-size: 8px; }.card-actions button:first-child { margin-right: auto; color: var(--color-accent); }.column-add { padding: 7px 3px; border: 0; color: var(--color-secondary); background: transparent; font-size: 9px; }
+.profile-page { min-height: calc(100vh - 66px); padding: 48px 36px; background: var(--color-surface-page); }.profile-card { margin: 0 auto; max-width: 680px; padding: 36px; background: var(--color-surface); }
 .auth-logo { display: block; width: 139px; height: auto; margin: 0 auto 24px; }
 .auth-card { padding: 32px; }
 .not-found { min-height: calc(100vh - 66px); }
@@ -63,6 +77,7 @@
   .app-sidebar .brand img { width: 35px; height: 32px; object-fit: cover; object-position: left; }
   .workspace-switcher span:not(.workspace-icon), .sidebar-nav .nav-link span, .nav-count, .sidebar-section-label, .sidebar-boards, .sidebar-settings, .sidebar-user > div:not(.user-menu), .sidebar-user > span { display: none; }
   .sidebar-nav .nav-link { justify-content: center; padding: 0; }
+  .workspace-switcher { justify-content: center; padding: 6px; }
   .site-content { margin-left: 64px; }
   .board-columns { grid-template-columns: repeat(5, minmax(145px, 1fr)); overflow-x: auto; }
   .workspace-page { min-width: 800px; }
@@ -113,6 +128,14 @@
 .card-meta .mini-avatar { width: 18px; height: 18px; margin-left: 0; font-size: 7px; }
 .card-ai { display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 6px; color: var(--color-accent); background: transparent; opacity: .8; }
 .card-ai:hover { background: var(--color-purple); opacity: 1; }
+/* Task assignee: the avatar opens the assign menu; without an assignee the button shows
+   an empty person. With an assignee the member's photo is used (initials only fall back). */
+.card-assignee-container { position: relative; display: inline-flex; }
+.card-assignee { display: grid; place-items: center; width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%; color: var(--color-accent); background: var(--color-purple); cursor: pointer; }
+.card-assignee .member-avatar { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; }
+.card-assignee:hover { box-shadow: 0 0 0 2px var(--color-purple); }
+.card-assignee.is-empty { border: 1px dashed var(--color-border-input); color: var(--color-text-muted); background: transparent; }
+.card-assignee.is-empty:hover { border-color: var(--color-accent); color: var(--color-accent); }
 .card-actions { display: none; }
 .board-card:hover .card-actions,
 .board-card:focus-within .card-actions { display: flex; }
@@ -174,6 +197,8 @@
 .icon-settings { --nav-icon: url('../assets/icons/settings.svg'); width: 16px; height: 16px; }
 .icon-home { --nav-icon: url('../assets/icons/home.svg'); width: 18px; height: 18px; }
 .icon-panel-left { --nav-icon: url('../assets/icons/panel-left.svg'); }
+/* Assistant mark from src/assets/icons/assistant.svg (masked, tinted by text colour). */
+.assistant-glyph { display: inline-block; flex: 0 0 auto; background-color: currentColor; -webkit-mask-image: url('../assets/icons/assistant.svg'); mask-image: url('../assets/icons/assistant.svg'); -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; -webkit-mask-size: contain; mask-size: contain; }
 
 /* Narrow layout hides the nav labels; the masked icons must stay visible. */
 @media (max-width: 1000px) {
@@ -268,6 +293,7 @@
 .integration-copy { flex: 1; min-width: 0; }
 .integration-copy h2 { margin: 0 0 3px; font-size: 13px; font-weight: 600; }
 .integration-copy p { margin: 0; color: var(--color-secondary); font-size: 11px; }
+.integration-copy .form-error { margin: 3px 0 0; color: var(--color-status-error-muted); }
 .integration-actions { display: flex; align-items: center; gap: 8px; }
 .integration-badge { padding: 3px 8px; border-radius: 999px; color: var(--color-green); background: var(--color-green-soft); font-size: 9px; font-weight: 600; }
 
@@ -339,7 +365,29 @@
 .time-input { height: 34px; }
 .task-dialog-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--color-border-subtle); }
 .task-dialog-foot p { margin: 0; color: var(--color-secondary); font-size: 9px; }
-.task-dialog-actions { display: flex; gap: 8px; }
+.task-dialog-actions { display: flex; align-items: center; gap: 8px; }
+/* One size for both footer buttons: the shared .primary-button is 16px text with 13px
+   padding, so "Save changes" used to stand twice as tall as "Cancel". */
+.task-dialog-actions .ghost-button,
+.task-dialog-actions .primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 104px;
+  height: 34px;
+  margin: 0;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+.task-dialog-actions .ghost-button { height: 34px; padding: 0 14px; border: 1px solid var(--color-border-subtle); color: var(--color-secondary); background: var(--color-surface); font-size: 11px; }
+.task-dialog-actions .ghost-button:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.task-dialog-actions .primary-button { border: 1px solid transparent; color: var(--color-white); background: var(--color-accent); }
+.task-dialog-actions .primary-button:hover:not(:disabled) { background: var(--color-brand-dark); }
+.task-dialog-actions .primary-button:disabled { opacity: .65; cursor: default; }
 .ghost-link { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; padding: 0; border: 0; color: var(--color-accent); background: transparent; font-size: 10px; }
 .checklist { display: grid; gap: 4px; margin: 6px 0 0; padding: 0; list-style: none; }
 .checklist li { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border: 1px solid var(--color-border-subtle); border-radius: 6px; color: var(--color-text-primary); font-size: 10px; }

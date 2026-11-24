@@ -7,11 +7,14 @@ export const OAUTH_CALLBACK_PATH = '/auth/callback';
  * the origin Supabase should redirect to (for example when the app is served
  * behind a proxy or from a fixed custom domain).
  */
-export function getSiteOrigin() {
+export function getSiteOrigin(location = typeof window === 'undefined' ? null : window.location) {
+  // A production .env must not send local development sign-ins to the deployed app.
+  if (location && ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname)) {
+    return location.origin;
+  }
   const configured = (process.env.REACT_APP_SITE_URL || '').trim().replace(/\/+$/, '');
   if (configured) return configured;
-  if (typeof window === 'undefined') return '';
-  return window.location.origin;
+  return location?.origin || '';
 }
 
 /**

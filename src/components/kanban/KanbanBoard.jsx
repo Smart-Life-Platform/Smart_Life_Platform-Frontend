@@ -15,14 +15,17 @@ export default function KanbanBoard({
   columns = [],
   tasks = [],
   categories = [],
-  initials = 'U',
+  assignees = [],
   loading = false,
   onTaskStatusChange,
+  onTaskPriorityChange,
+  onAssigneeChange,
   onColumnsOrderChange,
   onOpenCreate,
   onOpenEdit,
   onRemoveTask,
   onOpenDetails,
+  onDuplicateTask,
   quickAddStatus = null,
   onOpenQuickAdd,
   onCloseQuickAdd,
@@ -223,12 +226,16 @@ export default function KanbanBoard({
             tasks={tasksForColumn(status)}
             categories={categories}
             statuses={liveColumns}
-            initials={initials}
+            assignees={assignees}
             loading={loading}
             onOpenCreate={onOpenCreate}
             onOpenEdit={onOpenEdit}
             onRemoveTask={onRemoveTask}
             onOpenDetails={onOpenDetails}
+            onDuplicateTask={onDuplicateTask}
+            onTaskStatusChange={onTaskStatusChange}
+            onTaskPriorityChange={onTaskPriorityChange}
+            onAssigneeChange={onAssigneeChange}
             isDraggingAny={Boolean(dragged)}
             quickAddOpen={String(quickAddStatus?.id) === String(status.id)}
             onOpenQuickAdd={onOpenQuickAdd}
@@ -246,7 +253,7 @@ export default function KanbanBoard({
               task={dragged.task}
               categories={categories}
               statuses={liveColumns}
-              initials={initials}
+              assignees={assignees}
               isOverlay
             />
           </div>

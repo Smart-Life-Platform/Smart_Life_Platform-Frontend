@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { UilCopy, UilTrashAlt, UilTimes } from '@iconscout/react-unicons';
 import { addBoardMember, getBoardMembers, removeBoardMember, updateBoardMember } from '../../api/boardsApi';
 import { getUserProfile } from '../../api/usersApi';
-import { MemberAvatar, memberBoardId, memberUserId } from './MemberAvatar';
+import { MemberAvatar, memberBoardId, memberName, memberRowResolved, memberUserId } from './MemberAvatar';
 
 const INVITE_ROLES = [
   { value: 'viewer', label: 'Can view' },
@@ -32,11 +32,17 @@ export default function ShareBoardModal({ board, onClose, onMembersChanged }) {
         const scoped = list.filter((member) => !board?.id || String(memberBoardId(member)) === String(board.id));
         setMembers(scoped);
 
+        // Rows already contain email / full_name / avatar_url — fetch profiles only
+        // for members that arrived without them.
         const resolved = await Promise.all(
-          scoped.map(async (member) => [memberUserId(member), await getUserProfile(memberUserId(member))])
+          scoped.map(async (member) => {
+            const key = memberUserId(member);
+            if (!key || memberRowResolved(member)) return [key, null];
+            return [key, await getUserProfile(key)];
+          })
         );
         if (cancelled) return;
-        setProfiles(Object.fromEntries(resolved));
+        setProfiles(Object.fromEntries(resolved.filter(([key, profile]) => key && profile)));
       })
       .catch((loadError) => { if (!cancelled) setError(loadError.message); });
     return () => { cancelled = true; };
@@ -53,14 +59,13 @@ export default function ShareBoardModal({ board, onClose, onMembersChanged }) {
     setBusy(true);
     setError('');
     try {
-      // The API accepts user_id (uuid) for an already registered account and also
-      // understands email, so both are sent — whichever the serializer exposes wins.
+      // Boards_Members.md: POST /api/tasks/board-members/ takes
+      // { board_id, email, role }; a user_id containing "@" is treated as an email.
       let created;
-      const base = { board: board.id, board_id: board.id, role: form.role };
       try {
-        created = await addBoardMember({ ...base, email, user_id: email, user: email });
+        created = await addBoardMember({ board_id: board.id, email, role: form.role });
       } catch (firstError) {
-        created = await addBoardMember({ ...base, user: email, user_id: email });
+        created = await addBoardMember({ board_id: board.id, user_id: email, role: form.role });
         if (!created && firstError) throw firstError;
       }
 
@@ -152,13 +157,14 @@ export default function ShareBoardModal({ board, onClose, onMembersChanged }) {
         <ul className="share-members">
           {members.length === 0 && <li className="share-empty">Only you have access so far.</li>}
           {members.map((member) => {
-            const profile = profiles[memberUserId(member)];
-            const name = profile?.full_name || profile?.name || profile?.username || member.user_name || member.name || `User ${member.user}`;
-            const email = profile?.email || member.email || '';
+            const key = memberUserId(member);
+            const profile = profiles[key];
+            const name = memberName(profile, member);
+            const email = member.email || profile?.email || '';
 
             return (
               <li key={member.id}>
-                <MemberAvatar profile={profile} name={name} size={32} />
+                <MemberAvatar profile={profile} member={member} name={name} size={32} />
                 <span className="share-member-copy">
                   <strong>{name}</strong>
                   {email && <small>{email}</small>}

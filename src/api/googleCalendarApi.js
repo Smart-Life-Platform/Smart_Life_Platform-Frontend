@@ -13,12 +13,19 @@ const BASE = '/events/google-calendar';
  *  5. POST /disconnect/ → stop syncing
  */
 
-export const getGoogleCalendarStatus = async () => (await apiClient.get(`${BASE}/status/`)).data;
+export const getGoogleCalendarStatus = async () => {
+  const { data } = await apiClient.get(`${BASE}/status/`);
+  return { ...data, connected: Boolean(data?.is_connected ?? data?.connected) };
+};
 
-export const getGoogleCalendarAuthUrl = async () => (await apiClient.get(`${BASE}/auth-url/`)).data;
+export const GOOGLE_CALENDAR_CALLBACK_PATH = '/google-calendar/callback';
+export const getGoogleCalendarRedirectUri = () => `${window.location.origin}${GOOGLE_CALENDAR_CALLBACK_PATH}`;
 
-export const connectGoogleCalendar = async (code) =>
-  (await apiClient.post(`${BASE}/callback/`, { code })).data;
+export const getGoogleCalendarAuthUrl = async () =>
+  (await apiClient.get(`${BASE}/auth-url/`, { params: { redirect_uri: getGoogleCalendarRedirectUri() } })).data;
+
+export const connectGoogleCalendar = async (code, state) =>
+  (await apiClient.post(`${BASE}/callback/`, { code, state, redirect_uri: getGoogleCalendarRedirectUri() })).data;
 
 export const syncGoogleCalendar = async () => (await apiClient.post(`${BASE}/sync/`)).data;
 

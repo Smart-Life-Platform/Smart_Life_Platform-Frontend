@@ -69,6 +69,21 @@ test('normalizes relations when creating and updating tasks', async () => {
   });
 });
 
+test('keeps a UUID assignee id and clears it on unassign', async () => {
+  apiClient.put.mockResolvedValue({ data: { id: 1 } });
+  const uuid = '6f1a2b3c-4d5e-6f70-8192-a3b4c5d6e7f8';
+
+  await updateTask(1, { assignee_id: uuid });
+  expect(apiClient.put).toHaveBeenLastCalledWith('/tasks/tasks/1/', { assignee_id: uuid });
+
+  await updateTask(1, { assignee_id: null });
+  expect(apiClient.put).toHaveBeenLastCalledWith('/tasks/tasks/1/', { assignee_id: null });
+
+  // Numeric ids still reach the API as numbers.
+  await updateTask(1, { assignee_id: '12' });
+  expect(apiClient.put).toHaveBeenLastCalledWith('/tasks/tasks/1/', { assignee_id: 12 });
+});
+
 test('deletes a task by id', async () => {
   apiClient.delete.mockResolvedValue({});
 

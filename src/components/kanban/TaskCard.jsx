@@ -1,13 +1,16 @@
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import {
   UilCalendarAlt,
   UilCheckSquare,
-  UilEditAlt,
-  UilInfoCircle,
-  UilRobot,
-  UilTrashAlt,
+  UilUser,
 } from '@iconscout/react-unicons';
+import TaskActionMenu from './TaskActionMenu';
+import SubtasksMenu from './SubtasksMenu';
+import AssigneeMenu from './AssigneeMenu';
+import AssistantGlyph from '../common/AssistantGlyph';
+import { MemberAvatar } from '../board/MemberAvatar';
 
 const PRIORITY_LABELS = { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' };
 const PRIORITY_NAMES = ['low', 'medium', 'high', 'critical'];
@@ -77,14 +80,44 @@ function PriorityFlag() {
 export default function TaskCard({
   task,
   categories = [],
-  initials = 'U',
+  statuses = [],
+  assignees = [],
   onOpenEdit,
   onRemoveTask,
   onOpenDetails,
+  onDuplicateTask,
+  onTaskStatusChange,
+  onTaskPriorityChange,
+  onAssigneeChange,
+  onSubtasksChange,
   isOverlay = false,
 }) {
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [subtasksMenuOpen, setSubtasksMenuOpen] = useState(false);
+  const [assigneeMenuOpen, setAssigneeMenuOpen] = useState(false);
+  const assigneeButtonRef = useRef(null);
+  const [localSubtasks, setLocalSubtasks] = useState(task.subtasks);
   const currentStatusId = task.status_id ?? task.status?.id ?? task.status;
+
+  // An unassigned task must not borrow the signed-in user's initials: the avatar
+  // shows an empty person until somebody is picked from the assign menu.
+  const hasAssigneeId = Object.prototype.hasOwnProperty.call(task, 'assignee_id') && task.assignee_id !== undefined;
+  const assigneeId = hasAssigneeId ? task.assignee_id : task.assignee?.id ?? task.assignee ?? null;
+  const assignee = assigneeId === null || assigneeId === undefined || assigneeId === ''
+    ? null
+    : assignees.find((member) => String(member.id) === String(assigneeId)) || null;
+  // The member list may not contain the assignee any more (removed from the board), so
+  // keep showing that the task is assigned instead of an empty person. A nested
+  // `task.assignee` object can still carry the avatar.
+  const isAssigned = assigneeId !== null && assigneeId !== undefined && assigneeId !== '';
+  const assigneeLabel = assignee?.name
+    || task.assignee_name
+    || task.assignee?.full_name
+    || task.assignee?.email
+    || null;
+  const assigneeProfile = assignee?.profile
+    || (task.assignee && typeof task.assignee === 'object' ? task.assignee : null);
 
   const {
     attributes,
@@ -124,16 +157,12 @@ export default function TaskCard({
       }
     : undefined;
 
-  const categoryName = getCategoryName(task, categories);
-  const categoryColor = getCategoryColor(task, categories);
-  const priority = normalizePriority(task.priority);
-  const { total, done } = subtaskStats(task);
+  const effectiveTask = localSubtasks ? { ...task, subtasks: localSubtasks } : task;
+  const categoryName = getCategoryName(effectiveTask, categories);
+  const categoryColor = getCategoryColor(effectiveTask, categories);
+  const priority = normalizePriority(effectiveTask.priority);
+  const { total, done } = subtaskStats(effectiveTask);
   const progress = total > 0 ? Math.round((done / total) * 100) : 0;
-
-  const handleActionClick = (event, callback) => {
-    event.stopPropagation();
-    callback?.(task);
-  };
 
   const askAssistant = (event) => {
     event.stopPropagation();
@@ -155,6 +184,11 @@ export default function TaskCard({
       {...(isOverlay ? {} : attributes)}
       className={`board-card ${isOverlay ? 'board-drag-overlay-card' : ''} ${isDragging ? 'is-dragging' : ''} ${isOver ? 'drag-over' : ''}`}
       style={style}
+      onClick={() => {
+        if (!isDragging && !isOverlay) {
+          setMenuOpen((prev) => !prev);
+        }
+      }}
     >
       <div className="card-topline">
         <span
@@ -171,15 +205,35 @@ export default function TaskCard({
               {PRIORITY_LABELS[priority]}
             </span>
           )}
-          <button
-            type="button"
-            className="card-menu"
-            aria-label="Task details"
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={(event) => handleActionClick(event, onOpenDetails || onOpenEdit)}
-          >
-            •••
-          </button>
+          <div className="card-menu-container">
+            <button
+              type="button"
+              className="card-menu"
+              aria-label="Task details"
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                setMenuOpen((prev) => !prev);
+              }}
+            >
+              •••
+            </button>
+            {menuOpen && !isOverlay && (
+              <TaskActionMenu
+                task={task}
+                statuses={statuses}
+                onClose={() => setMenuOpen(false)}
+                onEdit={onOpenEdit}
+                onDetails={onOpenDetails}
+                onDelete={onRemoveTask}
+                onDuplicate={onDuplicateTask}
+                onStatusChange={onTaskStatusChange}
+                onPriorityChange={onTaskPriorityChange}
+              />
+            )}
+          </div>
         </div>
       </div>
 
@@ -204,12 +258,63 @@ export default function TaskCard({
           <UilCalendarAlt size="12" /> {formatDate(task.due_date)}
         </span>
         <div className="card-meta-right">
-          {total > 0 && (
-            <span className="card-meta-item" title={`${done} of ${total} subtasks done`}>
-              <UilCheckSquare size="12" /> {done}/{total}
-            </span>
-          )}
-          <span className="mini-avatar">{initials}</span>
+          <div className="card-subtasks-container">
+            <button
+              type="button"
+              className="card-meta-item-btn"
+              title={total > 0 ? `${done} of ${total} subtasks done. Click to view.` : 'Subtasks. Click to add/view.'}
+              aria-label="Subtasks menu"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                setSubtasksMenuOpen((prev) => !prev);
+              }}
+            >
+              <UilCheckSquare size="12" /> {total > 0 ? `${done}/${total}` : '0/0'}
+            </button>
+            {subtasksMenuOpen && !isOverlay && (
+              <SubtasksMenu
+                task={effectiveTask}
+                onClose={() => setSubtasksMenuOpen(false)}
+                onSubtaskToggled={(taskId, nextSubtasks) => {
+                  setLocalSubtasks(nextSubtasks);
+                  onSubtasksChange?.(taskId, nextSubtasks);
+                }}
+              />
+            )}
+          </div>
+          <div className="card-assignee-container">
+            <button
+              ref={assigneeButtonRef}
+              type="button"
+              className={`card-assignee${isAssigned ? '' : ' is-empty'}`}
+              title={isAssigned ? `Assigned to ${assigneeLabel || 'a member'} — click to change` : 'Unassigned — click to assign'}
+              aria-label={isAssigned ? `Assigned to ${assigneeLabel || 'a board member'}. Change assignee` : 'Assign task'}
+              aria-haspopup="menu"
+              aria-expanded={assigneeMenuOpen}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                setAssigneeMenuOpen((prev) => !prev);
+              }}
+            >
+              {isAssigned && assigneeLabel
+                ? <MemberAvatar profile={assigneeProfile} member={assignee?.member} name={assigneeLabel} size={18} />
+                : <UilUser size="12" />}
+            </button>
+            {assigneeMenuOpen && !isOverlay && (
+              <AssigneeMenu
+                anchorRef={assigneeButtonRef}
+                assignees={assignees}
+                value={assigneeId}
+                onClose={() => setAssigneeMenuOpen(false)}
+                onSelect={(memberId) => {
+                  setAssigneeMenuOpen(false);
+                  onAssigneeChange?.(task.id, memberId, task);
+                }}
+              />
+            )}
+          </div>
           <button
             type="button"
             className="card-ai"
@@ -218,37 +323,9 @@ export default function TaskCard({
             onPointerDown={(event) => event.stopPropagation()}
             onClick={askAssistant}
           >
-            <UilRobot size="13" />
+            <AssistantGlyph size={13} />
           </button>
         </div>
-      </div>
-
-      <div className="card-actions">
-        <button
-          type="button"
-          onPointerDown={(event) => event.stopPropagation()}
-          onClick={(event) => handleActionClick(event, onOpenEdit)}
-        >
-          <UilEditAlt size="13" /> Edit
-        </button>
-        {onOpenDetails && (
-          <button
-            type="button"
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={(event) => handleActionClick(event, onOpenDetails)}
-            title="View details"
-          >
-            <UilInfoCircle size="13" />
-          </button>
-        )}
-        <button
-          type="button"
-          aria-label="Delete task"
-          onPointerDown={(event) => event.stopPropagation()}
-          onClick={(event) => handleActionClick(event, onRemoveTask)}
-        >
-          <UilTrashAlt size="13" />
-        </button>
       </div>
     </article>
   );

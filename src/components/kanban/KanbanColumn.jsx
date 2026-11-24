@@ -9,12 +9,16 @@ export default function KanbanColumn({
   tasks = [],
   categories = [],
   statuses = [],
-  initials = 'U',
+  assignees = [],
   loading = false,
   onOpenCreate,
   onOpenEdit,
   onRemoveTask,
   onOpenDetails,
+  onDuplicateTask,
+  onTaskStatusChange,
+  onTaskPriorityChange,
+  onAssigneeChange,
   quickAddOpen = false,
   onOpenQuickAdd,
   onCloseQuickAdd,
@@ -95,10 +99,14 @@ export default function KanbanColumn({
               task={task}
               categories={categories}
               statuses={statuses}
-              initials={initials}
+              assignees={assignees}
               onOpenEdit={onOpenEdit}
               onRemoveTask={onRemoveTask}
               onOpenDetails={onOpenDetails}
+              onDuplicateTask={onDuplicateTask}
+              onTaskStatusChange={onTaskStatusChange}
+              onTaskPriorityChange={onTaskPriorityChange}
+              onAssigneeChange={onAssigneeChange}
             />
           ))
         )}

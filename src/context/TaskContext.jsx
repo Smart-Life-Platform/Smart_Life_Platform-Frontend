@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { deleteTask as deleteTaskRequest, getOverdueTasks, getTasks, getTasksByDay, getTasksByMonth, getTasksByWeek, createTask as createTaskRequest, updateTask as updateTaskRequest, setTaskStatus as setTaskStatusRequest } from '../api/tasksApi';
-import { createBoard, getBoards, updateBoard } from '../api/boardsApi';
+import { createBoard, getBoardMembers, getBoards, updateBoard } from '../api/boardsApi';
 import { createCategory, getCategories } from '../api/categoriesApi';
 import { createBoardStatus, getAllBoardStatuses, updateBoardStatus, saveBoardStatusesOrder } from '../api/boardStatusesApi';
 import { getPriorities } from '../api/prioritiesApi';
@@ -41,6 +41,10 @@ export function TaskProvider({ children }) {
   const [allCategories, setAllCategories] = useState([]);
   const [priorities, setPriorities] = useState([]);
   const [boards, setBoards] = useState([]);
+  // Membership rows of every board the user can see, used to tell a personal board
+  // (owner only) from a public one (owner + invited people) and from a board that
+  // belongs to somebody else. Loaded once, together with the other metadata.
+  const [boardMembers, setBoardMembers] = useState([]);
   const [activeBoard, setActiveBoard] = useState(null);
   const [calendarTasks, setCalendarTasks] = useState([]);
   const taskRequestId = useRef(0);
@@ -105,11 +109,15 @@ export function TaskProvider({ children }) {
         : availableBoards[0] || null;
     });
 
-    const [statusData, categoryData, priorityData] = await Promise.all([
+    const [statusData, categoryData, priorityData, memberData] = await Promise.all([
       getAllBoardStatuses(),
       getCategories(),
       getPriorities(),
+      // Optional: when the endpoint is unavailable the switcher falls back to the
+      // board's own owner field instead of failing the whole metadata load.
+      getBoardMembers().catch(() => []),
     ]);
+    setBoardMembers(listOf(memberData));
 
     const nextStatuses = listOf(statusData).map((status) => {
       const boardId = boardIdOf(status);
@@ -130,6 +138,19 @@ export function TaskProvider({ children }) {
       const value = Number(priority);
       return ['low', 'medium', 'high', 'critical'][value - 1] || String(priority);
     }));
+  }, []);
+
+  /** Re-reads the membership list after a board was shared or a member removed. */
+  const reloadBoardMembers = useCallback(async () => {
+    try {
+      const data = await getBoardMembers();
+      const rows = listOf(data);
+      setBoardMembers(rows);
+      return rows;
+    } catch (error) {
+      console.error('Unable to load board members:', error);
+      return [];
+    }
   }, []);
 
   const addCategory = useCallback(async (payload) => {
@@ -251,6 +272,11 @@ export function TaskProvider({ children }) {
     const updatedTask = {
       ...(boardId ? { board: boardId, board_id: boardId } : {}),
       ...task,
+      // A PUT response does not always echo the relation, so keep the assignee the
+      // user just picked — and drop the old nested object when unassigning.
+      ...('assignee_id' in payload
+        ? { assignee_id: payload.assignee_id, ...(payload.assignee_id ? {} : { assignee: null }) }
+        : {}),
     };
     if (boardId) {
       setStoredTaskBoard(id, boardId);
@@ -307,12 +333,14 @@ export function TaskProvider({ children }) {
     categories,
     priorities,
     boards,
+    boardMembers,
     activeBoard,
     setActiveBoard,
     loading,
     loadTasks,
     loadCalendarTasks,
     loadMetadata,
+    reloadBoardMembers,
     addCategory,
     addStatus,
     saveStatusOrder,
@@ -324,9 +352,9 @@ export function TaskProvider({ children }) {
     deleteTask,
   }), [
     tasks, overdueTasks, calendarTasks, statuses, categories, priorities, boards,
-    activeBoard, loading, loadTasks, loadCalendarTasks, loadMetadata, addCategory,
-    addStatus, saveStatusOrder, createBoardForUser, saveBoard, createTask, updateTask,
-    setTaskStatus, deleteTask,
+    boardMembers, activeBoard, loading, loadTasks, loadCalendarTasks, loadMetadata,
+    reloadBoardMembers, addCategory, addStatus, saveStatusOrder, createBoardForUser,
+    saveBoard, createTask, updateTask, setTaskStatus, deleteTask,
   ]);
 
   return <TaskContext.Provider value={value}>{children}</TaskContext.Provider>;
