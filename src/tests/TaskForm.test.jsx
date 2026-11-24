@@ -23,6 +23,26 @@ test('rejects a title containing only spaces', () => {
   expect(screen.getByText('Enter a task title.')).toBeInTheDocument();
 });
 
+test('keeps a UUID assignee when editing a task', () => {
+  const onSubmit = jest.fn().mockResolvedValue(undefined);
+  const uuid = '8d1f2c34-5a6b-4c7d-8e9f-0a1b2c3d4e5f';
+
+  render(
+    <TaskForm
+      {...props}
+      task={{ id: 9, title: 'Existing task', status_id: 1, assignee_id: uuid }}
+      assignees={[{ id: uuid, name: 'Casey One' }]}
+      onSubmit={onSubmit}
+    />
+  );
+
+  // The assignee dropdown resolves the user id instead of falling back to "Unassigned".
+  expect(screen.getByRole('button', { name: 'Assignee' })).toHaveTextContent('Casey One');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+  expect(onSubmit.mock.calls[0][0].assignee_id).toBe(uuid);
+});
+
 test('blocks duplicate submissions and allows retry after an error', async () => {
   let rejectRequest;
   const onSubmit = jest.fn(() => new Promise((resolve, reject) => { rejectRequest = reject; }));

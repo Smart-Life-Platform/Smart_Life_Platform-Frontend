@@ -69,7 +69,6 @@ describe('Kanban Components', () => {
         task={mockTask}
         categories={mockCategories}
         statuses={mockStatuses}
-        initials="JD"
         onOpenEdit={handleEdit}
         onRemoveTask={handleDelete}
         onOpenDetails={handleDetails}
@@ -79,7 +78,8 @@ describe('Kanban Components', () => {
     expect(screen.getByText('Test Task 1')).toBeInTheDocument();
     expect(screen.getByText('Work')).toBeInTheDocument();
     expect(screen.getByText('High')).toBeInTheDocument();
-    expect(screen.getByText('JD')).toBeInTheDocument();
+    // No assignee on the task: the footer shows an empty person, not the user's initials.
+    expect(screen.getByLabelText('Assign task')).toBeInTheDocument();
 
     // Click on the task card to open the action menu
     fireEvent.click(screen.getByText('Test Task 1'));
@@ -100,7 +100,7 @@ describe('Kanban Components', () => {
   test('TaskCard shows the priority flag, subtask progress and the assistant shortcut', () => {
     const task = { ...mockTask, subtasks_count: 4, completed_subtasks_count: 1 };
 
-    renderWithRouter(<TaskCard task={task} categories={mockCategories} initials="JD" />);
+    renderWithRouter(<TaskCard task={task} categories={mockCategories} />);
 
     expect(screen.getByText('High')).toBeInTheDocument();
     expect(screen.getByText('1/4')).toBeInTheDocument();
@@ -111,6 +111,45 @@ describe('Kanban Components', () => {
     cleanup();
     renderWithRouter(<TaskCard task={{ ...mockTask, subtasks_count: 0 }} categories={mockCategories} />);
     expect(document.querySelector('.card-progress')).toBeNull();
+  });
+
+  test('the card avatar shows the assignee and opens the assign menu', () => {
+    const onAssigneeChange = jest.fn();
+    const assignees = [
+      { id: 'u-2', name: 'Casey One' },
+      { id: 'u-3', name: 'Alex Two' },
+    ];
+    const task = { ...mockTask, assignee_id: 'u-2' };
+
+    renderWithRouter(
+      <TaskCard task={task} categories={mockCategories} assignees={assignees} onAssigneeChange={onAssigneeChange} />
+    );
+
+    const avatar = screen.getByLabelText(/Assigned to Casey One/);
+    expect(avatar).toBeInTheDocument();
+
+    fireEvent.click(avatar);
+    expect(screen.getByRole('menu', { name: 'Assign task' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Alex Two'));
+    expect(onAssigneeChange).toHaveBeenCalledWith(task.id, 'u-3', task);
+  });
+
+  test('an unassigned card shows an empty person and assigns from the menu', () => {
+    const onAssigneeChange = jest.fn();
+    const assignees = [{ id: 'u-2', name: 'Casey One' }];
+    const task = { ...mockTask, assignee_id: null };
+
+    renderWithRouter(
+      <TaskCard task={task} categories={mockCategories} assignees={assignees} onAssigneeChange={onAssigneeChange} />
+    );
+
+    const avatar = screen.getByLabelText('Assign task');
+    expect(avatar).toHaveClass('is-empty');
+
+    fireEvent.click(avatar);
+    fireEvent.click(screen.getByText('Casey One'));
+    expect(onAssigneeChange).toHaveBeenCalledWith(task.id, 'u-2', task);
   });
 
   test('TaskDetailsPopover displays full details and allows actions', () => {

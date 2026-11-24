@@ -30,24 +30,30 @@ function PlannerRoute() {
 
 function SiteLayout() {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isAuthPage = ['/login', '/register', '/auth/callback'].includes(location.pathname);
+
+  // Login, registration and the OAuth callback are standalone screens: no sidebar, no
+  // workspace header, no task store. They used to be drawn inside the workspace shell,
+  // so a redirect to /login while a session was still present produced the login card
+  // next to the full sidebar. Unauthenticated visitors of an app route get the bare
+  // layout too, so ProtectedRoute redirects instead of flashing a sidebar.
+  const withWorkspaceShell = !isAuthPage && (isAuthenticated || loading);
+  if (!withWorkspaceShell) return <Outlet />;
 
   // Re-mount the task store when the account changes, so boards, statuses and tasks
   // of the previous account cannot survive in memory.
   return (
     <TaskProvider key={user?.id || 'anonymous'}>
       <Header collapsed={sidebarCollapsed} />
-      <main className={`site-content${isAuthPage ? ' auth-content' : ''}${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
-        {!isAuthPage && (
-          <WorkspaceHeader
-            sidebarCollapsed={sidebarCollapsed}
-            onToggleSidebar={() => setSidebarCollapsed((current) => !current)}
-          />
-        )}
+      <main className={`site-content${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
+        <WorkspaceHeader
+          sidebarCollapsed={sidebarCollapsed}
+          onToggleSidebar={() => setSidebarCollapsed((current) => !current)}
+        />
         <Outlet />
-        {!isAuthPage && <ConnectCalendarPrompt />}
+        <ConnectCalendarPrompt />
       </main>
     </TaskProvider>
   );

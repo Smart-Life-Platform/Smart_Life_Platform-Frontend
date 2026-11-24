@@ -143,14 +143,6 @@ export default function KanbanPage() {
     return () => { cancelled = true; };
   }, [loadMembers]);
 
-  const initials = displayName
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase();
-
   const openCreate = (status = null) => {
     setEditingTask(null);
     setCreateInitialStatus(status?.id || null);
@@ -216,6 +208,15 @@ export default function KanbanPage() {
   const handleTaskPriorityChange = async (taskId, nextPriority) => {
     try {
       await updateTask(taskId, { priority: nextPriority });
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  };
+
+  // `null` is a valid choice here: it takes the task back to "unassigned".
+  const handleTaskAssigneeChange = async (taskId, assigneeId) => {
+    try {
+      await updateTask(taskId, { assignee_id: assigneeId ?? null });
     } catch (requestError) {
       setError(requestError.message);
     }
@@ -361,10 +362,11 @@ export default function KanbanPage() {
               columns={boardStatuses}
               tasks={filteredTasks}
               categories={boardCategories}
-              initials={initials}
+              assignees={assignees}
               loading={loading}
               onTaskStatusChange={handleTaskStatusChange}
               onTaskPriorityChange={handleTaskPriorityChange}
+              onAssigneeChange={handleTaskAssigneeChange}
               onColumnsOrderChange={handleColumnsOrderChange}
               onOpenCreate={openCreate}
               onOpenEdit={openEdit}

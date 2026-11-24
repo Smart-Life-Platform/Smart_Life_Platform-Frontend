@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import {
   UilCalendarAlt,
   UilCheckSquare,
   UilRobot,
+  UilUser,
 } from '@iconscout/react-unicons';
 import TaskActionMenu from './TaskActionMenu';
 import SubtasksMenu from './SubtasksMenu';
+import AssigneeMenu from './AssigneeMenu';
+import { initialsOf } from '../../utils/initials';
 
 const PRIORITY_LABELS = { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' };
 const PRIORITY_NAMES = ['low', 'medium', 'high', 'critical'];
@@ -78,21 +81,40 @@ export default function TaskCard({
   task,
   categories = [],
   statuses = [],
-  initials = 'U',
+  assignees = [],
   onOpenEdit,
   onRemoveTask,
   onOpenDetails,
   onDuplicateTask,
   onTaskStatusChange,
   onTaskPriorityChange,
+  onAssigneeChange,
   onSubtasksChange,
   isOverlay = false,
 }) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [subtasksMenuOpen, setSubtasksMenuOpen] = useState(false);
+  const [assigneeMenuOpen, setAssigneeMenuOpen] = useState(false);
+  const assigneeButtonRef = useRef(null);
   const [localSubtasks, setLocalSubtasks] = useState(task.subtasks);
   const currentStatusId = task.status_id ?? task.status?.id ?? task.status;
+
+  // An unassigned task must not borrow the signed-in user's initials: the avatar
+  // shows an empty person until somebody is picked from the assign menu.
+  const hasAssigneeId = Object.prototype.hasOwnProperty.call(task, 'assignee_id') && task.assignee_id !== undefined;
+  const assigneeId = hasAssigneeId ? task.assignee_id : task.assignee?.id ?? task.assignee ?? null;
+  const assignee = assigneeId === null || assigneeId === undefined || assigneeId === ''
+    ? null
+    : assignees.find((member) => String(member.id) === String(assigneeId)) || null;
+  // The member list may not contain the assignee any more (removed from the board), so
+  // keep showing that the task is assigned instead of an empty person.
+  const isAssigned = assigneeId !== null && assigneeId !== undefined && assigneeId !== '';
+  const assigneeLabel = assignee?.name
+    || task.assignee_name
+    || task.assignee?.full_name
+    || task.assignee?.email
+    || null;
 
   const {
     attributes,
@@ -258,7 +280,38 @@ export default function TaskCard({
               />
             )}
           </div>
-          <span className="mini-avatar">{initials}</span>
+          <div className="card-assignee-container">
+            <button
+              ref={assigneeButtonRef}
+              type="button"
+              className={`card-assignee${isAssigned ? '' : ' is-empty'}`}
+              title={isAssigned ? `Assigned to ${assigneeLabel || 'a member'} — click to change` : 'Unassigned — click to assign'}
+              aria-label={isAssigned ? `Assigned to ${assigneeLabel || 'a board member'}. Change assignee` : 'Assign task'}
+              aria-haspopup="menu"
+              aria-expanded={assigneeMenuOpen}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                setAssigneeMenuOpen((prev) => !prev);
+              }}
+            >
+              {isAssigned && assigneeLabel
+                ? <span className="card-assignee-initials">{initialsOf(assigneeLabel)}</span>
+                : <UilUser size="12" />}
+            </button>
+            {assigneeMenuOpen && !isOverlay && (
+              <AssigneeMenu
+                anchorRef={assigneeButtonRef}
+                assignees={assignees}
+                value={assigneeId}
+                onClose={() => setAssigneeMenuOpen(false)}
+                onSelect={(memberId) => {
+                  setAssigneeMenuOpen(false);
+                  onAssigneeChange?.(task.id, memberId, task);
+                }}
+              />
+            )}
+          </div>
           <button
             type="button"
             className="card-ai"

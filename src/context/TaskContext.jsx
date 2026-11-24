@@ -272,6 +272,11 @@ export function TaskProvider({ children }) {
     const updatedTask = {
       ...(boardId ? { board: boardId, board_id: boardId } : {}),
       ...task,
+      // A PUT response does not always echo the relation, so keep the assignee the
+      // user just picked — and drop the old nested object when unassigning.
+      ...('assignee_id' in payload
+        ? { assignee_id: payload.assignee_id, ...(payload.assignee_id ? {} : { assignee: null }) }
+        : {}),
     };
     if (boardId) {
       setStoredTaskBoard(id, boardId);
