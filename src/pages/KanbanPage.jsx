@@ -16,7 +16,7 @@ import { getDisplayName } from '../components/common/Avatar';
 import { getBoardMembers } from '../api/boardsApi';
 import { getUserProfile } from '../api/usersApi';
 import { isSystemBoard } from '../api/googleCalendarApi';
-import { memberBoardId, memberKey, memberName, memberUserId } from '../components/board/MemberAvatar';
+import { memberBoardId, memberName, memberRowResolved, memberUserId } from '../components/board/MemberAvatar';
 import { createSubtask } from '../api/subtasksApi';
 
 const DONE_STATUSES = ['done', 'completed', 'cancelled'];
@@ -33,6 +33,7 @@ export default function KanbanPage() {
     loading,
     loadTasks,
     loadMetadata,
+    reloadBoardMembers,
     addCategory,
     addStatus,
     saveStatusOrder,
@@ -116,8 +117,15 @@ export default function KanbanPage() {
       }
 
       setMembers(unique);
+
+      // Member rows already carry email / full_name / avatar_url; only the ones
+      // without those fields need the /api/auth/users/{id}/ lookup.
       const resolved = await Promise.all(
-        unique.map(async (member) => [memberKey(member), await getUserProfile(memberKey(member))])
+        unique.map(async (member) => {
+          const key = memberUserId(member);
+          if (!key || memberRowResolved(member)) return [key, null];
+          return [key, await getUserProfile(key)];
+        })
       );
       setProfiles({
         ...selfProfiles,
@@ -257,7 +265,7 @@ export default function KanbanPage() {
   };
 
   const assignees = members.map((member) => {
-    const key = memberKey(member);
+    const key = memberUserId(member);
     return { id: key, name: memberName(profiles[key], member) };
   });
 
@@ -422,7 +430,7 @@ export default function KanbanPage() {
       )}
 
       {shareOpen && (
-        <ShareBoardModal board={activeBoard} onClose={() => setShareOpen(false)} onMembersChanged={loadMembers} />
+        <ShareBoardModal board={activeBoard} onClose={() => setShareOpen(false)} onMembersChanged={() => { loadMembers(); reloadBoardMembers(); }} />
       )}
 
       <MetadataModal

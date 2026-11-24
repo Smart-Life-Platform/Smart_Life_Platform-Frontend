@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { TaskProvider, useTaskContext } from '../context/TaskContext';
 import { createTask, getTasksByDay, getTasks, getOverdueTasks } from '../api/tasksApi';
-import { getBoards } from '../api/boardsApi';
+import { getBoards, getBoardMembers } from '../api/boardsApi';
 import { getAllBoardStatuses } from '../api/boardStatusesApi';
 import { getCategories } from '../api/categoriesApi';
 import { getPriorities } from '../api/prioritiesApi';
@@ -12,7 +12,7 @@ jest.mock('../api/tasksApi', () => ({
 }));
 jest.mock('../api/categoriesApi', () => ({ getCategories: jest.fn() }));
 jest.mock('../api/statusesApi', () => ({ getStatuses: jest.fn() }));
-jest.mock('../api/boardsApi', () => ({ getBoards: jest.fn() }));
+jest.mock('../api/boardsApi', () => ({ getBoards: jest.fn(), getBoardMembers: jest.fn() }));
 jest.mock('../api/boardStatusesApi', () => ({
   getAllBoardStatuses: jest.fn(),
   createBoardStatus: jest.fn(),
@@ -24,6 +24,7 @@ jest.mock('../api/prioritiesApi', () => ({ getPriorities: jest.fn() }));
 beforeEach(() => {
   jest.resetAllMocks();
   getOverdueTasks.mockResolvedValue([]);
+  getBoardMembers.mockResolvedValue([]);
 });
 
 test('a slow calendar response cannot replace the latest selected day', async () => {
@@ -62,6 +63,9 @@ test('a new task appears immediately in the list and calendar', async () => {
 
 test('statuses belong to their own board and switching boards refetches nothing', async () => {
   getBoards.mockResolvedValue([{ id: 1, name: 'Work' }, { id: 2, name: 'Home' }]);
+  getBoardMembers.mockResolvedValue([
+    { id: 5, board: 2, user: 'friend', role: 'editor', full_name: 'Friend' },
+  ]);
   getAllBoardStatuses.mockResolvedValue([
     { id: 10, board_id: 1, name: 'To Do', position: 1 },
     { id: 20, board_id: 2, name: 'Doing', position: 1 },
@@ -73,6 +77,12 @@ test('statuses belong to their own board and switching boards refetches nothing'
   await act(async () => { await result.current.loadMetadata(); });
 
   expect(result.current.statuses.map((status) => status.id)).toEqual([10]);
+
+  // Membership rows are loaded with the rest of the metadata, so the sidebar can
+  // classify the board without a second request when the active board changes.
+  expect(result.current.boardMembers).toEqual([
+    expect.objectContaining({ board: 2, user: 'friend', role: 'editor' }),
+  ]);
 
   act(() => { result.current.setActiveBoard({ id: 2, name: 'Home' }); });
 

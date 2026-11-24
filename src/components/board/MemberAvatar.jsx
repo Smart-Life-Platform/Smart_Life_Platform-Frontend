@@ -8,42 +8,45 @@ export const memberBoardId = (member) => idOf(member?.board_id ?? member?.board)
 export const memberKey = (member) => memberUserId(member) ?? member?.id;
 
 /**
- * `/api/auth/users/{id}/` returns `{ id, email, is_admin, username }` — `username`
- * is the display name ("John Doe"), so it wins over everything else. Falling back
- * to the email local part and finally to the id keeps the UI readable even when a
- * profile cannot be loaded.
+ * Board member rows are already enriched by the backend with
+ * `email`, `full_name` and `avatar_url` (see Boards_Members.md), so those win.
+ * The `/api/auth/users/{id}/` profile is only a fallback.
  */
 export function memberName(profile, member) {
-  const name = profile?.username
-    || profile?.full_name
-    || profile?.name
+  const name = member?.full_name
     || member?.user_name
     || member?.username
-    || member?.name;
+    || member?.name
+    || profile?.username
+    || profile?.full_name
+    || profile?.name;
   if (name) return String(name).trim();
 
-  const email = profile?.email || member?.email;
+  const email = member?.email || profile?.email;
   if (email) return email.split('@')[0];
 
-  const id = idOf(member?.user) ?? member?.id;
+  const id = memberUserId(member) ?? member?.id;
   return id ? `User ${id}` : 'Member';
 }
 
 export function memberEmail(profile, member) {
-  return profile?.email || member?.email || '';
+  return member?.email || profile?.email || '';
 }
 
-/** Avatar URL from a profile: absolute `avatar_url`, or a Supabase storage path. */
-export function memberPhoto(profile) {
-  const url = profile?.avatar_url || profile?.photo_url || profile?.picture;
+export function memberPhoto(profile, member) {
+  const url = member?.avatar_url || profile?.avatar_url || profile?.photo_url || profile?.picture;
   if (url) return url;
   if (profile?.avatar_path) return getAvatarUrl({ user_metadata: { avatar_path: profile.avatar_path } });
   return null;
 }
 
-export function MemberAvatar({ profile, name, size = 32, className = '' }) {
-  const photo = memberPhoto(profile);
-  const initials = String(name || 'U')
+/** True when the row already carries everything needed to render the member. */
+export const memberRowResolved = (member) => Boolean(member?.full_name || member?.email || member?.avatar_url);
+
+export function MemberAvatar({ profile, member, name, size = 32, className = '' }) {
+  const photo = memberPhoto(profile, member);
+  const label = name || memberName(profile, member);
+  const initials = String(label || 'U')
     .trim()
     .split(/\s+/)
     .slice(0, 2)
@@ -86,12 +89,13 @@ export function MemberAvatars({ members = [], profiles = {}, max = 4, size = 26 
   return (
     <div className="board-collaborators" aria-label={`${members.length} board members`}>
       {visible.map((member) => {
-        const key = memberKey(member);
+        const key = memberUserId(member) ?? member.id;
         const profile = profiles[key];
         const name = memberName(profile, member);
+        const email = memberEmail(profile, member);
         return (
-          <span className="board-collaborator" key={member.id || key} title={`${name}${memberEmail(profile, member) ? ` · ${memberEmail(profile, member)}` : ''}`}>
-            <MemberAvatar profile={profile} name={name} size={size} />
+          <span className="board-collaborator" key={member.id || key} title={`${name}${email ? ` · ${email}` : ''}`}>
+            <MemberAvatar profile={profile} member={member} name={name} size={size} />
           </span>
         );
       })}

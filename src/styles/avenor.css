@@ -12,14 +12,29 @@
 
 .app-sidebar .brand { min-width: 0; margin: 0 12px 25px; }
 .app-sidebar .brand img { display: block; width: 108px; height: auto; }
-.workspace-switcher { position: relative; display: flex; align-items: center; gap: 8px; padding: 9px 10px; margin-bottom: 15px; border-radius: 8px; }
-.workspace-icon { display: grid; place-items: center; width: 19px; height: 19px; color: var(--color-accent); background: var(--color-purple); border-radius: 6px; font-size: 12px; }
-.workspace-switcher span:nth-child(2) { display: grid; min-width: 0; flex: 1; }
-.workspace-switcher small { color: var(--color-secondary); font-size: 11px; }
-.workspace-switcher strong { overflow: hidden; color: var(--color-text-primary); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
-.workspace-chevron { color: var(--color-secondary); font-size: 13px; }
-.workspace-chevron { padding: 0; border: 0; background: transparent; }
-.board-selector { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
+/* Sidebar space switcher: the icon, the space + board label and the chevron share one
+   row. Both lines are single-line ellipsised text — a long name must never wrap under
+   the icon (the old copy wrapped into the chevron and overlapped the board name). */
+.workspace-switcher {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 6px 8px;
+  margin-bottom: 15px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.workspace-switcher:hover { background: var(--color-surface-muted); }
+.workspace-switcher:focus-within { border-color: var(--color-accent); box-shadow: 0 0 0 2px var(--color-purple); }
+.workspace-icon { display: grid; place-items: center; flex: 0 0 auto; width: 19px; height: 19px; color: var(--color-accent); background: var(--color-purple); border-radius: 6px; }
+.workspace-switcher-copy { display: grid; flex: 1 1 auto; min-width: 0; gap: 1px; }
+.workspace-switcher-space { display: block; max-width: 100%; overflow: hidden; color: var(--color-text-muted); font-size: 10px; line-height: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-switcher-board { display: block; max-width: 100%; overflow: hidden; color: var(--color-text-primary); font-size: 12px; font-weight: 600; line-height: 16px; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-chevron { display: grid; place-items: center; flex: 0 0 auto; padding: 0; border: 0; color: var(--color-secondary); background: transparent; font-size: 13px; pointer-events: none; }
+.board-selector { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; cursor: pointer; }
 .sidebar-nav, .sidebar-boards { display: grid; gap: 3px; }
 .sidebar-nav .nav-link { height: 34px; padding: 0 10px; border-radius: 7px; color: var(--color-secondary); font-size: 16px; }
 .sidebar-nav .nav-link.active { color: var(--color-accent); background: var(--color-purple); font-weight: 600; }
@@ -63,6 +78,7 @@
   .app-sidebar .brand img { width: 35px; height: 32px; object-fit: cover; object-position: left; }
   .workspace-switcher span:not(.workspace-icon), .sidebar-nav .nav-link span, .nav-count, .sidebar-section-label, .sidebar-boards, .sidebar-settings, .sidebar-user > div:not(.user-menu), .sidebar-user > span { display: none; }
   .sidebar-nav .nav-link { justify-content: center; padding: 0; }
+  .workspace-switcher { justify-content: center; padding: 6px; }
   .site-content { margin-left: 64px; }
   .board-columns { grid-template-columns: repeat(5, minmax(145px, 1fr)); overflow-x: auto; }
   .workspace-page { min-width: 800px; }
