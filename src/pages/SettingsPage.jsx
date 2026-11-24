@@ -8,11 +8,10 @@ import {
   UilTimes,
 } from '@iconscout/react-unicons';
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Avatar, { getDisplayName } from '../components/common/Avatar';
 import { deleteAvatar, getAvatarUrl, uploadAvatar } from '../api/avatarApi';
-import GoogleCalendarCard from '../components/integrations/GoogleCalendarCard';
 import '../styles/settings.css';
 
 const cards = [
@@ -26,8 +25,6 @@ const cards = [
 
 export default function SettingsPage() {
   const { user } = useAuth();
-  const [params] = useSearchParams();
-  const calendarResult = params.get('calendar');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -105,9 +102,6 @@ export default function SettingsPage() {
             : <div className="settings-card" key={key}>{content}</div>;
         })}
       </div>
-      <GoogleCalendarCard />
-      {calendarResult === 'connected' && <p className="settings-success" role="status">Google Calendar connected.</p>}
-      {calendarResult === 'error' && <p className="settings-error" role="alert">Google Calendar could not be connected. Please try connecting again.</p>}
       {avatarEditing && <div className="modal-backdrop" onMouseDown={() => setAvatarEditing(false)}><div className="settings-form-card account-modal" onMouseDown={(event) => event.stopPropagation()}>
         <button type="button" className="close-button account-modal-close" onClick={() => setAvatarEditing(false)}><UilTimes size="20" /></button>
         <h2>Profile icon</h2>

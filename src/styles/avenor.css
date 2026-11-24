@@ -67,7 +67,7 @@
 .board-control { box-sizing: border-box; height: 26px; margin: 0; padding: 0 8px; border: 1px solid var(--color-border-subtle); border-radius: 6px; color: var(--color-secondary); background: var(--color-surface); font-family: inherit; font-size: 9px; line-height: 24px; }.board-tools select { max-width: 115px; }.board-empty { grid-column: 1 / -1; padding: 32px; text-align: center; }
 .board-columns { display: grid; grid-template-columns: repeat(5, minmax(155px, 1fr)); gap: 8px; align-items: start; }.board-column { min-height: 410px; padding: 9px 6px 7px; border-radius: 8px; background: var(--color-surface-muted); }.column-heading { display: flex; align-items: center; gap: 6px; padding: 0 4px 8px; font-size: 10px; }.column-heading b { display: grid; place-items: center; min-width: 17px; height: 17px; border-radius: 5px; color: var(--color-secondary); background: var(--color-surface); font-size: 9px; font-weight: 500; }.column-heading button { margin-left: auto; padding: 0 2px; border: 0; color: var(--color-secondary); background: transparent; }.column-heading button + button { margin-left: 1px; }.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-secondary); }.board-column:nth-child(2) .status-dot { background: var(--color-blue); }.board-column:nth-child(3) .status-dot { background: var(--color-accent); }.board-column:nth-child(4) .status-dot { background: var(--color-yellow); }.board-column:nth-child(5) .status-dot { background: var(--color-green); }
 .column-cards { display: grid; gap: 7px; }.board-card { padding: 10px; border: 1px solid var(--color-border); border-radius: 7px; background: var(--color-surface); box-shadow: 0 1px 1px var(--color-shadow); }.card-topline { display: flex; justify-content: space-between; color: var(--color-secondary); font-size: 8px; }.card-topline > span { padding: 3px 5px; border-radius: 3px; background: var(--color-surface-muted); }.card-topline button { padding: 0; border: 0; color: var(--color-secondary); background: transparent; }.board-card h3 { margin: 9px 0 5px; color: var(--color-text-primary); font-size: 10px; font-weight: 600; }.board-card p { min-height: 27px; margin: 0; color: var(--color-secondary); font-size: 9px; line-height: 1.4; }.card-meta { display: flex; align-items: center; gap: 7px; margin-top: 10px; color: var(--color-secondary); font-size: 8px; }.mini-avatar { width: 16px; height: 16px; margin-left: auto; font-size: 6px; }.card-actions { display: flex; gap: 4px; margin-top: 8px; padding-top: 7px; border-top: 1px solid var(--color-border-subtle); }.card-actions button { display: flex; align-items: center; gap: 3px; padding: 2px; border: 0; color: var(--color-secondary); background: transparent; font-size: 8px; }.card-actions button:first-child { margin-right: auto; color: var(--color-accent); }.column-add { padding: 7px 3px; border: 0; color: var(--color-secondary); background: transparent; font-size: 9px; }
-.profile-page { min-height: calc(100vh - 66px); padding: 48px 36px; background: var(--color-surface-page); }.profile-card { margin: 0; max-width: 680px; padding: 36px; background: var(--color-surface); }
+.profile-page { min-height: calc(100vh - 66px); padding: 48px 36px; background: var(--color-surface-page); }.profile-card { margin: 0 auto; max-width: 680px; padding: 36px; background: var(--color-surface); }
 .auth-logo { display: block; width: 139px; height: auto; margin: 0 auto 24px; }
 .auth-card { padding: 32px; }
 .not-found { min-height: calc(100vh - 66px); }
@@ -129,10 +129,10 @@
 .card-ai { display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 6px; color: var(--color-accent); background: transparent; opacity: .8; }
 .card-ai:hover { background: var(--color-purple); opacity: 1; }
 /* Task assignee: the avatar opens the assign menu; without an assignee the button shows
-   an empty person instead of the signed-in user's initials. */
+   an empty person. With an assignee the member's photo is used (initials only fall back). */
 .card-assignee-container { position: relative; display: inline-flex; }
-.card-assignee { display: grid; place-items: center; width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%; color: var(--color-accent); background: var(--color-purple); font-size: 8px; font-weight: 700; cursor: pointer; }
-.card-assignee-initials { font-size: 8px; font-weight: 700; line-height: 1; letter-spacing: .01em; }
+.card-assignee { display: grid; place-items: center; width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%; color: var(--color-accent); background: var(--color-purple); cursor: pointer; }
+.card-assignee .member-avatar { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; }
 .card-assignee:hover { box-shadow: 0 0 0 2px var(--color-purple); }
 .card-assignee.is-empty { border: 1px dashed var(--color-border-input); color: var(--color-text-muted); background: transparent; }
 .card-assignee.is-empty:hover { border-color: var(--color-accent); color: var(--color-accent); }
@@ -197,6 +197,8 @@
 .icon-settings { --nav-icon: url('../assets/icons/settings.svg'); width: 16px; height: 16px; }
 .icon-home { --nav-icon: url('../assets/icons/home.svg'); width: 18px; height: 18px; }
 .icon-panel-left { --nav-icon: url('../assets/icons/panel-left.svg'); }
+/* Assistant mark from src/assets/icons/assistant.svg (masked, tinted by text colour). */
+.assistant-glyph { display: inline-block; flex: 0 0 auto; background-color: currentColor; -webkit-mask-image: url('../assets/icons/assistant.svg'); mask-image: url('../assets/icons/assistant.svg'); -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; -webkit-mask-size: contain; mask-size: contain; }
 
 /* Narrow layout hides the nav labels; the masked icons must stay visible. */
 @media (max-width: 1000px) {
@@ -291,6 +293,7 @@
 .integration-copy { flex: 1; min-width: 0; }
 .integration-copy h2 { margin: 0 0 3px; font-size: 13px; font-weight: 600; }
 .integration-copy p { margin: 0; color: var(--color-secondary); font-size: 11px; }
+.integration-copy .form-error { margin: 3px 0 0; color: var(--color-status-error-muted); }
 .integration-actions { display: flex; align-items: center; gap: 8px; }
 .integration-badge { padding: 3px 8px; border-radius: 999px; color: var(--color-green); background: var(--color-green-soft); font-size: 9px; font-weight: 600; }
 

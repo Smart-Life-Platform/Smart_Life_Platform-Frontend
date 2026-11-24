@@ -19,6 +19,9 @@ import {
 
 const renderWithRouter = (ui) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
+// TaskCard renders member avatars, which import the Supabase client at module scope.
+jest.mock('../lib/supabase', () => ({ supabase: {} }));
+
 jest.mock('../api/apiClient', () => ({
   apiClient: {
     get: jest.fn().mockRejectedValue(new Error('Network error')),
@@ -80,6 +83,8 @@ describe('Kanban Components', () => {
     expect(screen.getByText('High')).toBeInTheDocument();
     // No assignee on the task: the footer shows an empty person, not the user's initials.
     expect(screen.getByLabelText('Assign task')).toBeInTheDocument();
+    // The AI shortcut uses the same assistant mark as the sidebar, not a robot icon.
+    expect(document.querySelector('.card-ai .assistant-glyph')).not.toBeNull();
 
     // Click on the task card to open the action menu
     fireEvent.click(screen.getByText('Test Task 1'));
@@ -113,10 +118,10 @@ describe('Kanban Components', () => {
     expect(document.querySelector('.card-progress')).toBeNull();
   });
 
-  test('the card avatar shows the assignee and opens the assign menu', () => {
+  test('the card avatar shows the assignee photo and opens the assign menu', () => {
     const onAssigneeChange = jest.fn();
     const assignees = [
-      { id: 'u-2', name: 'Casey One' },
+      { id: 'u-2', name: 'Casey One', profile: { avatar_url: 'https://cdn.example.com/casey.png' } },
       { id: 'u-3', name: 'Alex Two' },
     ];
     const task = { ...mockTask, assignee_id: 'u-2' };
@@ -126,7 +131,7 @@ describe('Kanban Components', () => {
     );
 
     const avatar = screen.getByLabelText(/Assigned to Casey One/);
-    expect(avatar).toBeInTheDocument();
+    expect(avatar.querySelector('img.member-avatar')).toHaveAttribute('src', 'https://cdn.example.com/casey.png');
 
     fireEvent.click(avatar);
     expect(screen.getByRole('menu', { name: 'Assign task' })).toBeInTheDocument();

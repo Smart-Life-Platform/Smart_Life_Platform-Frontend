@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { UilCheck, UilTimes, UilUser } from '@iconscout/react-unicons';
-import { initialsOf } from '../../utils/initials';
+import { MemberAvatar } from '../board/MemberAvatar';
 
 const VIEWPORT_MARGIN = 8;
 
@@ -110,7 +110,7 @@ export default function AssigneeMenu({ anchorRef, assignees = [], value, onSelec
                 className={`assignee-option${selected ? ' is-selected' : ''}`}
                 onClick={() => onSelect?.(member.id)}
               >
-                <span className="assignee-option-avatar" aria-hidden="true">{initialsOf(member.name)}</span>
+                <MemberAvatar profile={member.profile} member={member.member} name={member.name} size={22} />
                 <span className="assignee-option-name">{member.name}</span>
                 {selected && <span className="assignee-option-check"><UilCheck size="14" /></span>}
               </button>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { UilCalendarAlt } from '@iconscout/react-unicons';
 import { useAuth } from '../../context/AuthContext';
 import { getGoogleCalendarAuthUrl, getGoogleCalendarStatus } from '../../api/googleCalendarApi';
+import { errorText } from '../../utils/errorMessage';
 
 const SKIP_KEY = 'avenor_calendar_prompt_skipped';
 
@@ -41,9 +42,10 @@ export default function ConnectCalendarPrompt() {
     setError('');
     try {
       const { auth_url: authUrl } = await getGoogleCalendarAuthUrl();
+      if (!authUrl) throw new Error('Google Calendar is not configured on the server.');
       window.location.href = authUrl;
     } catch (connectError) {
-      setError(connectError.message);
+      setError(errorText(connectError, 'Could not connect Google Calendar.'));
       setBusy(false);
     }
   }

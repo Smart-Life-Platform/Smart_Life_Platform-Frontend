@@ -4,13 +4,13 @@ import { useDraggable, useDroppable } from '@dnd-kit/core';
 import {
   UilCalendarAlt,
   UilCheckSquare,
-  UilRobot,
   UilUser,
 } from '@iconscout/react-unicons';
 import TaskActionMenu from './TaskActionMenu';
 import SubtasksMenu from './SubtasksMenu';
 import AssigneeMenu from './AssigneeMenu';
-import { initialsOf } from '../../utils/initials';
+import AssistantGlyph from '../common/AssistantGlyph';
+import { MemberAvatar } from '../board/MemberAvatar';
 
 const PRIORITY_LABELS = { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' };
 const PRIORITY_NAMES = ['low', 'medium', 'high', 'critical'];
@@ -108,13 +108,16 @@ export default function TaskCard({
     ? null
     : assignees.find((member) => String(member.id) === String(assigneeId)) || null;
   // The member list may not contain the assignee any more (removed from the board), so
-  // keep showing that the task is assigned instead of an empty person.
+  // keep showing that the task is assigned instead of an empty person. A nested
+  // `task.assignee` object can still carry the avatar.
   const isAssigned = assigneeId !== null && assigneeId !== undefined && assigneeId !== '';
   const assigneeLabel = assignee?.name
     || task.assignee_name
     || task.assignee?.full_name
     || task.assignee?.email
     || null;
+  const assigneeProfile = assignee?.profile
+    || (task.assignee && typeof task.assignee === 'object' ? task.assignee : null);
 
   const {
     attributes,
@@ -296,7 +299,7 @@ export default function TaskCard({
               }}
             >
               {isAssigned && assigneeLabel
-                ? <span className="card-assignee-initials">{initialsOf(assigneeLabel)}</span>
+                ? <MemberAvatar profile={assigneeProfile} member={assignee?.member} name={assigneeLabel} size={18} />
                 : <UilUser size="12" />}
             </button>
             {assigneeMenuOpen && !isOverlay && (
@@ -320,7 +323,7 @@ export default function TaskCard({
             onPointerDown={(event) => event.stopPropagation()}
             onClick={askAssistant}
           >
-            <UilRobot size="13" />
+            <AssistantGlyph size={13} />
           </button>
         </div>
       </div>

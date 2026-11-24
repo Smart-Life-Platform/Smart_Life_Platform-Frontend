@@ -34,9 +34,17 @@ export function memberEmail(profile, member) {
 }
 
 export function memberPhoto(profile, member) {
-  const url = member?.avatar_url || profile?.avatar_url || profile?.photo_url || profile?.picture;
+  const url = member?.avatar_url
+    || member?.user?.avatar_url
+    || profile?.avatar_url
+    || profile?.photo_url
+    || profile?.picture
+    || profile?.user_metadata?.avatar_url
+    || profile?.user_metadata?.picture;
   if (url) return url;
-  if (profile?.avatar_path) return getAvatarUrl({ user_metadata: { avatar_path: profile.avatar_path } });
+
+  const path = member?.avatar_path || profile?.avatar_path || profile?.user_metadata?.avatar_path;
+  if (path) return getAvatarUrl({ user_metadata: { avatar_path: path } });
   return null;
 }
 
@@ -71,7 +79,7 @@ export function MemberAvatar({ profile, member, name, size = 32, className = '' 
   return (
     <span
       className={`member-avatar member-avatar-initials ${className}`.trim()}
-      style={{ width: size, height: size, fontSize: Math.round(size * 0.36) }}
+      style={{ width: size, height: size, fontSize: Math.max(8, Math.round(size * 0.36)) }}
       aria-hidden="true"
     >
       {initials}

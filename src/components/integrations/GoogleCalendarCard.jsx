@@ -6,6 +6,7 @@ import {
   getGoogleCalendarStatus,
   syncGoogleCalendar,
 } from '../../api/googleCalendarApi';
+import { errorText } from '../../utils/errorMessage';
 
 const today = () => new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
@@ -19,7 +20,7 @@ export default function GoogleCalendarCard() {
     let cancelled = false;
     getGoogleCalendarStatus()
       .then((data) => { if (!cancelled) setStatus(data || { connected: false }); })
-      .catch((loadError) => { if (!cancelled) setError(loadError.message); });
+      .catch((loadError) => { if (!cancelled) setError(errorText(loadError, 'Could not load the Google Calendar connection.')); });
     return () => { cancelled = true; };
   }, []);
 
@@ -28,9 +29,10 @@ export default function GoogleCalendarCard() {
     setError('');
     try {
       const { auth_url: authUrl } = await getGoogleCalendarAuthUrl();
+      if (!authUrl) throw new Error('Google Calendar is not configured on the server.');
       window.location.href = authUrl;
     } catch (connectError) {
-      setError(connectError.message);
+      setError(errorText(connectError, 'Could not connect Google Calendar.'));
       setBusy(false);
     }
   }
@@ -43,7 +45,7 @@ export default function GoogleCalendarCard() {
       setStatus({ connected: false, connection: null });
       setMessage('Google Calendar disconnected.');
     } catch (disconnectError) {
-      setError(disconnectError.message);
+      setError(errorText(disconnectError, 'Could not disconnect Google Calendar.'));
     } finally {
       setBusy(false);
     }
@@ -59,13 +61,17 @@ export default function GoogleCalendarCard() {
       setStatus(data || { connected: false });
       setMessage(`Synced ${today()}.`);
     } catch (syncError) {
-      setError(syncError.message);
+      setError(errorText(syncError, 'Could not sync Google Calendar.'));
     } finally {
       setBusy(false);
     }
   }
 
   const connection = status?.connection;
+  // Guard against non-string fields: React renders an object as "[object Object]".
+  const googleEmail = typeof connection?.google_email === 'string' ? connection.google_email : '';
+  const lastSync = typeof connection?.last_sync_at === 'string' ? new Date(connection.last_sync_at) : null;
+  const lastSyncText = lastSync && !Number.isNaN(lastSync.getTime()) ? lastSync.toLocaleString() : '';
 
   return (
     <section className="integration-card">
@@ -74,8 +80,8 @@ export default function GoogleCalendarCard() {
         <h2>Google Calendar</h2>
         {status?.connected ? (
           <p>
-            Connected as {connection?.google_email || 'your Google account'}
-            {connection?.last_sync_at ? ` · last sync ${new Date(connection.last_sync_at).toLocaleString()}` : ''}
+            Connected as {googleEmail || 'your Google account'}
+            {lastSyncText ? ` · last sync ${lastSyncText}` : ''}
           </p>
         ) : (
           <p>Sync events, deadlines and reminders with your calendar.</p>

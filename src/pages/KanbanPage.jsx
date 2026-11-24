@@ -77,6 +77,8 @@ export default function KanbanPage() {
   const [momentumDismissed, setMomentumDismissed] = useState(false);
 
   const displayName = getDisplayName(user);
+  const userAvatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
+  const userAvatarPath = user?.user_metadata?.avatar_path || null;
   const systemBoard = isSystemBoard(activeBoard);
 
   // Members and their profiles (avatar, name, email) drive the avatar stack in the header.
@@ -93,7 +95,17 @@ export default function KanbanPage() {
       ? [{ id: 'self', board: activeBoard.id, user: user.id, role: 'owner' }]
       : [];
     const selfProfiles = user?.id
-      ? { [user.id]: { id: user.id, email: user.email || '', username: displayName } }
+      ? {
+          [user.id]: {
+            id: user.id,
+            email: user.email || '',
+            username: displayName,
+            // The signed-in user's photo lives in the Supabase metadata; other people
+            // come from the board-member rows and their profiles.
+            avatar_url: userAvatarUrl,
+            avatar_path: userAvatarPath,
+          },
+        }
       : {};
 
     try {
@@ -135,7 +147,7 @@ export default function KanbanPage() {
       setMembers(selfMembers);
       setProfiles(selfProfiles);
     }
-  }, [activeBoard?.id, displayName, user?.email, user?.id]);
+  }, [activeBoard?.id, displayName, user?.email, user?.id, userAvatarPath, userAvatarUrl]);
 
   useEffect(() => {
     let cancelled = false;
@@ -267,7 +279,10 @@ export default function KanbanPage() {
 
   const assignees = members.map((member) => {
     const key = memberUserId(member);
-    return { id: key, name: memberName(profiles[key], member) };
+    const profile = profiles[key];
+    // `member` + `profile` let the card and the assign menu show the real photo
+    // (MemberAvatar falls back to initials only when there is no image).
+    return { id: key, name: memberName(profile, member), member, profile };
   });
 
   const quickCreate = async (payload) => {

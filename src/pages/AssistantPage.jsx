@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { UilArrowRight, UilPlus, UilRobot, UilTrashAlt } from '@iconscout/react-unicons';
+import { UilArrowRight, UilPlus, UilTrashAlt } from '@iconscout/react-unicons';
 import { useAuth } from '../context/AuthContext';
 import { useTaskContext } from '../context/TaskContext';
 import { getDisplayName } from '../components/common/Avatar';
+import AssistantGlyph from '../components/common/AssistantGlyph';
 import {
   deleteConversation,
   getConversation,
@@ -249,7 +250,7 @@ export default function AssistantPage() {
 
       <section className="assistant-chat">
         <header className="assistant-chat-header">
-          <span className="assistant-avatar"><UilRobot size="18" /></span>
+          <span className="assistant-avatar"><AssistantGlyph size={20} /></span>
           <div>
             <h1>AI assistant</h1>
             <p>Tasks, boards and shopping lists in plain language.</p>
@@ -261,7 +262,7 @@ export default function AssistantPage() {
 
           {!loadingThread && messages.length === 0 && (
             <div className="assistant-empty">
-              <span className="assistant-empty-icon"><UilRobot size="24" /></span>
+              <span className="assistant-empty-icon"><AssistantGlyph size={26} /></span>
               <h2>How can I help, {firstName}?</h2>
               <p>I can create tasks and boards, tell you what is due, and manage shopping lists.</p>
               <div className="assistant-suggestions">
@@ -282,7 +283,7 @@ export default function AssistantPage() {
           {messages.map((message) => (
             <div key={message.id} className={`assistant-message ${message.role}`}>
               {message.role === 'assistant' && (
-                <span className="assistant-avatar small"><UilRobot size="14" /></span>
+                <span className="assistant-avatar small"><AssistantGlyph size={15} /></span>
               )}
               <div className="assistant-bubble">
                 <div className="assistant-text">{message.content}</div>
@@ -295,7 +296,7 @@ export default function AssistantPage() {
 
           {sending && (
             <div className="assistant-message assistant">
-              <span className="assistant-avatar small"><UilRobot size="14" /></span>
+              <span className="assistant-avatar small"><AssistantGlyph size={15} /></span>
               <div className="assistant-bubble assistant-typing" aria-label="Assistant is typing">
                 <i /><i /><i />
               </div>

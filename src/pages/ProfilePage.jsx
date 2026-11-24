@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
 import { UilCloudUpload, UilTrashAlt } from '@iconscout/react-unicons';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { deleteAvatar, getAvatarUrl, uploadAvatar } from '../api/avatarApi';
+import GoogleCalendarCard from '../components/integrations/GoogleCalendarCard';
 import '../styles/profile.css';
 
 export default function ProfilePage() {
   const { user } = useAuth();
+  const [params] = useSearchParams();
+  const calendarResult = params.get('calendar');
   const [savedUser, setSavedUser] = useState(null);
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -151,6 +155,13 @@ export default function ProfilePage() {
         {message && <p className="profile-success" role="status">{message}</p>}
         {error && <p className="profile-error" role="alert">{error}</p>}
       </section>
+
+      {/* Google Calendar connection lives on the profile page, next to the account. */}
+      <div className="profile-integrations">
+        {calendarResult === 'connected' && <p className="profile-success" role="status">Google Calendar connected.</p>}
+        {calendarResult === 'error' && <p className="profile-error" role="alert">Google Calendar could not be connected. Please try connecting again.</p>}
+        <GoogleCalendarCard />
+      </div>
     </main>
   );
 }
