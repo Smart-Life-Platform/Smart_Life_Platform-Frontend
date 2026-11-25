@@ -186,8 +186,9 @@ describe('Kanban Components', () => {
     fireEvent.click(screen.getByText('Delete'));
     expect(handleDelete).toHaveBeenCalledWith(mockTask);
 
-    const statusSelect = screen.getByLabelText(/Move to status/i);
-    fireEvent.change(statusSelect, { target: { value: '2' } });
+    const statusControl = screen.getByLabelText(/Move to status/i);
+    fireEvent.click(statusControl);
+    fireEvent.click(screen.getByRole('option', { name: 'In Progress' }));
     expect(handleStatusChange).toHaveBeenCalledWith(101, mockStatuses[1]);
   });
 
@@ -268,14 +269,17 @@ describe('Kanban Components', () => {
     expect(screen.getByText('New status')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Enter status name')).toBeInTheDocument();
     expect(screen.queryByText('Position')).not.toBeInTheDocument();
+    // Colour comes from the five-colour palette, not a native colour input.
+    expect(screen.getByRole('radiogroup', { name: 'Color' })).toBeInTheDocument();
 
     fireEvent.change(screen.getByPlaceholderText('Enter status name'), {
       target: { value: 'In Review' },
     });
+    fireEvent.click(screen.getByRole('radio', { name: 'Green' }));
     await act(async () => {
       fireEvent.click(screen.getByText('Create status'));
     });
-    expect(handleSubmit).toHaveBeenCalledWith({ name: 'In Review', color: '#6d5ce7' });
+    expect(handleSubmit).toHaveBeenCalledWith({ name: 'In Review', color: '#4A9B79' });
   });
 });
 

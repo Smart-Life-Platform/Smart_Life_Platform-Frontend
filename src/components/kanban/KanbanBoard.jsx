@@ -17,6 +17,8 @@ export default function KanbanBoard({
   categories = [],
   assignees = [],
   loading = false,
+  readOnly = false,
+  onAddColumn,
   onTaskStatusChange,
   onTaskPriorityChange,
   onAssigneeChange,
@@ -214,9 +216,18 @@ export default function KanbanBoard({
     >
       <div className="board-columns" id="board">
         {!liveColumns.length && (
-          <p className="muted board-empty">
-            Немає статусів для цієї дошки. Створіть статус через кнопку Status.
-          </p>
+          <div className="board-empty-columns">
+            <span className="board-empty-icon" aria-hidden="true">
+              <span className="nav-icon icon-task-board" />
+            </span>
+            <h2>No columns yet</h2>
+            <p>Columns are the stages your tasks move through.</p>
+            {!readOnly && (
+              <button type="button" className="primary-button" onClick={onAddColumn}>
+                Add your first column
+              </button>
+            )}
+          </div>
         )}
 
         {liveColumns.map((status) => (
@@ -228,6 +239,7 @@ export default function KanbanBoard({
             statuses={liveColumns}
             assignees={assignees}
             loading={loading}
+            readOnly={readOnly}
             onOpenCreate={onOpenCreate}
             onOpenEdit={onOpenEdit}
             onRemoveTask={onRemoveTask}
@@ -254,6 +266,7 @@ export default function KanbanBoard({
               categories={categories}
               statuses={liveColumns}
               assignees={assignees}
+              readOnly
               isOverlay
             />
           </div>

@@ -11,6 +11,7 @@ export default function KanbanColumn({
   statuses = [],
   assignees = [],
   loading = false,
+  readOnly = false,
   onOpenCreate,
   onOpenEdit,
   onRemoveTask,
@@ -46,6 +47,7 @@ export default function KanbanColumn({
       type: 'column',
       status,
     },
+    disabled: readOnly,
   });
 
   const columnStyle = colTransform
@@ -78,6 +80,7 @@ export default function KanbanColumn({
           type="button"
           aria-label="Add task to column"
           onClick={() => onOpenCreate?.(status)}
+          disabled={readOnly}
         >
           <UilPlus size="14" />
         </button>
@@ -107,6 +110,7 @@ export default function KanbanColumn({
               onTaskStatusChange={onTaskStatusChange}
               onTaskPriorityChange={onTaskPriorityChange}
               onAssigneeChange={onAssigneeChange}
+              readOnly={readOnly}
             />
           ))
         )}
@@ -119,12 +123,13 @@ export default function KanbanColumn({
           type="button"
           className="column-add"
           onClick={() => onOpenQuickAdd?.(status)}
+          disabled={readOnly}
         >
           + Add task
         </button>
       </div>
 
-      {quickAddOpen && (
+      {quickAddOpen && !readOnly && (
         <QuickAddTask
           status={status}
           onClose={onCloseQuickAdd}

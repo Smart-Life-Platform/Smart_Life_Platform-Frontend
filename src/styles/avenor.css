@@ -316,6 +316,15 @@
 .share-invite input,
 .share-invite select { width: 100%; height: 34px; margin-top: 5px; padding: 0 10px; border: 1px solid var(--color-border-input); border-radius: 8px; color: var(--color-text-primary); background: var(--color-surface); font-size: 11px; }
 .share-invite .primary-button { height: 34px; padding: 0 12px; font-size: 11px; }
+/* Read-only share panel: an editor/viewer sees the form and the member list, but
+   nothing can be changed (the backend would answer 403). */
+.share-invite.is-readonly { opacity: .55; }
+.share-invite.is-readonly input,
+.share-invite.is-readonly select,
+.share-invite.is-readonly .dropdown-trigger { cursor: not-allowed; background: var(--color-surface-muted); }
+.share-invite .primary-button:disabled { opacity: .5; cursor: not-allowed; }
+.share-readonly { margin: 10px 0 0; color: var(--color-secondary); font-size: 10px; }
+.share-role-select:disabled { cursor: not-allowed; color: var(--color-text-muted); }
 .share-section-title { margin: 18px 0 8px; font-size: 12px; font-weight: 600; }
 .share-members { display: grid; gap: 2px; max-height: 230px; margin: 0; padding: 0; overflow-y: auto; list-style: none; }
 .share-members li { display: flex; align-items: center; gap: 10px; padding: 8px 6px; border: 0; border-radius: 8px; }
@@ -326,8 +335,13 @@
 .share-member-copy strong { overflow: hidden; font-size: 11px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .share-member-copy small { overflow: hidden; color: var(--color-secondary); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .share-role { color: var(--color-secondary); font-size: 10px; }
-.share-role-select { height: 26px; padding: 0 4px; border: 1px solid transparent; border-radius: 6px; color: var(--color-secondary); background: transparent; font-size: 10px; }
-.share-role-select:hover { border-color: var(--color-border-subtle); }
+/* Member role picker: the app's standard dropdown, kept compact inside the row. */
+.share-role-dropdown { flex: 0 0 auto; }
+.share-role-dropdown .dropdown-trigger { width: auto; height: 26px; padding: 0 4px; border-color: transparent; border-radius: 6px; color: var(--color-secondary); background: transparent; font-size: 10px; }
+.share-role-dropdown .dropdown-trigger:hover { border-color: var(--color-border-subtle); }
+.share-role-dropdown .dropdown-trigger:disabled { cursor: not-allowed; color: var(--color-text-muted); }
+.share-role-dropdown .dropdown-chevron { font-size: 9px; }
+.share-role-dropdown .dropdown-panel { left: auto; right: 0; min-width: 150px; }
 .share-remove { display: grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 6px; color: var(--color-secondary); background: transparent; opacity: 0; transition: opacity .15s ease, color .15s ease; }
 .share-members li:hover .share-remove,
 .share-remove:focus-visible { opacity: 1; }
@@ -337,7 +351,27 @@
 .share-link-label { display: block; color: var(--color-secondary); font-size: 9px; }
 .share-link { display: block; margin-top: 4px; color: var(--color-text-primary); font-size: 10px; word-break: break-all; }
 .share-footer-actions { display: flex; gap: 8px; }
-.share-footer-actions .primary-button { padding: 8px 12px; font-size: 11px; }
+/* Footer buttons follow the design: 85 × 40 px, 8 px radius, 1 px border. */
+.share-footer-actions .ghost-button,
+.share-footer-actions .primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 85px;
+  height: 40px;
+  padding: 0 8px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 8px;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.share-footer-actions .ghost-button { color: var(--color-secondary); }
+.share-footer-actions .ghost-button:hover,
+.share-footer-actions .primary-button:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.share-footer-actions .primary-button:disabled { opacity: .6; cursor: not-allowed; }
 
 /* ---------- Member avatars (real profiles) ---------- */
 .member-avatar { display: grid; place-items: center; flex: 0 0 auto; border-radius: 50%; object-fit: cover; color: var(--color-accent); background: var(--color-purple); font-weight: 700; line-height: 1; }
@@ -464,3 +498,104 @@
 .checklist-toggle { flex-shrink: 0; border: 0; background: transparent; padding: 0; display: flex; align-items: center; color: var(--color-secondary); cursor: pointer; }
 .checklist-done .checklist-toggle { color: var(--color-accent); }
 .checklist-new-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--color-accent); flex-shrink: 0; }
+
+/* ---------- Design system additions (palette, dialog actions, board surfaces) ---------- */
+
+/* Colour picker: five brand colours, painted from CSS variables. */
+.color-field { display: grid; gap: 8px; }
+.color-field-label { color: var(--color-secondary); font-size: 11px; }
+.color-palette { display: flex; align-items: center; gap: 10px; }
+.color-swatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: border-color .15s ease, transform .15s ease;
+}
+.color-swatch.is-selected { border-color: var(--color-accent); box-shadow: inset 0 0 0 2px var(--color-surface); }
+.color-swatch:hover { transform: scale(1.06); }
+.color-swatch:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+/* One button language for every dialog. */
+.dialog-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--color-border-subtle); }
+.dialog-actions .primary-button,
+.dialog-actions .ghost-button,
+.dialog-actions .secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 85px;
+  height: 40px;
+  margin: 0;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+.dialog-actions .primary-button { border: 0; color: var(--color-accent-foreground); background: var(--color-accent); }
+.dialog-actions .primary-button:hover:not(:disabled) { background: var(--color-brand-dark); }
+.dialog-actions .primary-button:disabled { opacity: .55; cursor: not-allowed; }
+.dialog-actions .ghost-button,
+.dialog-actions .secondary-button { border: 1px dashed #E7E7EC; color: var(--color-text-primary); background: var(--color-surface); }
+.dialog-actions .ghost-button:hover:not(:disabled),
+.dialog-actions .secondary-button:hover:not(:disabled) { border-color: var(--color-accent); color: var(--color-accent); }
+
+/* Board menu (the "..." at the top right) */
+.board-menu-list { min-width: 236px; padding: 8px; border-radius: 12px; }
+.board-menu-list button { display: flex; align-items: center; width: 100%; padding: 9px 10px; border-radius: 6px; font-size: 12px; }
+.board-menu-separator { height: 1px; margin: 6px 0; background: var(--color-border-subtle); }
+
+/* Board toolbar surfaces (sort / filter) */
+.board-tools .board-tool-button { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; border: 1px dashed #E7E7EC; border-radius: 8px; color: var(--color-secondary); background: var(--color-surface); font-size: 10px; }
+.board-tools .board-tool-button:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.board-tools .board-tool-button.is-active { border-style: solid; border-color: var(--color-accent); color: var(--color-accent); background: var(--color-accent-subtle); }
+.board-popover { position: absolute; top: calc(100% + 6px); right: 0; z-index: 60; width: 220px; padding: 8px; border: 1px solid #E7E7EC; border-radius: 12px; background: var(--color-surface); box-shadow: 0 16px 34px var(--color-shadow); }
+.filter-surface { width: 300px; max-height: 420px; overflow-y: auto; padding: 12px; }
+.filter-surface h3 { margin: 0 0 10px; font-size: 13px; font-weight: 600; }
+.filter-section { padding: 8px 0; border-top: 1px solid var(--color-border-subtle); }
+.filter-section h4 { margin: 0 0 6px; color: var(--color-secondary); font-size: 10px; font-weight: 500; }
+.filter-options { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+.filter-option { display: flex; align-items: center; gap: 7px; padding: 4px 2px; border: 0; border-radius: 6px; color: var(--color-text-primary); background: transparent; font-size: 10px; text-align: left; }
+.filter-option:hover { background: var(--color-surface-muted); }
+.filter-option .filter-check { display: grid; place-items: center; width: 13px; height: 13px; flex: 0 0 auto; border: 1px solid #E7E7EC; border-radius: 3px; color: var(--color-accent-foreground); background: var(--color-surface); font-size: 9px; }
+.filter-option.is-checked .filter-check { border-color: var(--color-accent); background: var(--color-accent); }
+.filter-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--color-border-subtle); }
+.filter-reset { padding: 0; border: 0; color: var(--color-secondary); background: transparent; font-size: 10px; }
+.filter-reset:hover { color: var(--color-accent); }
+.filter-apply { height: 30px; min-width: 0; padding: 0 12px; border-radius: 8px; font-size: 10px; }
+.sort-surface { width: 250px; }
+.sort-option { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 8px 9px; border: 0; border-radius: 6px; color: var(--color-text-primary); background: transparent; font-size: 10px; text-align: left; }
+.sort-option:hover { background: var(--color-surface-muted); }
+.sort-option.is-selected { color: var(--color-accent); font-weight: 600; }
+.sort-check { display: grid; place-items: center; width: 13px; height: 13px; border: 1px solid #E7E7EC; border-radius: 3px; color: var(--color-accent-foreground); font-size: 9px; }
+.sort-option.is-selected .sort-check { border-color: var(--color-accent); background: var(--color-accent); }
+
+/* Empty board: one clear call to action in the middle of the canvas. */
+.board-empty-columns { grid-column: 1 / -1; display: grid; justify-items: center; gap: 8px; padding: 64px 20px; border: 1px dashed #E7E7EC; border-radius: 12px; background: var(--color-surface); text-align: center; }
+.board-empty-columns h2 { margin: 6px 0 0; font-size: 15px; font-weight: 600; }
+.board-empty-columns p { margin: 0 0 12px; color: var(--color-secondary); font-size: 11px; }
+.board-empty-icon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; color: var(--color-accent); background: var(--color-accent-subtle); }
+
+/* Task board icon from src/assets/icons (masked, tinted by text colour). */
+.icon-task-board { --nav-icon: url('../assets/icons/task-board.svg'); }
+.icon-list { --nav-icon: url('../assets/icons/overview.svg'); }
+
+/* Design accent (#6558C8) on the task details popover and the date picker. */
+.calendar-day.is-selected { color: var(--color-accent); background: var(--color-accent-subtle); font-weight: 600; }
+.task-popover .primary-button { background: var(--color-accent); color: var(--color-accent-foreground); }
+.task-popover .eyebrow { color: var(--color-accent); }
+
+.modal-subtitle { margin: 4px 0 0; color: var(--color-secondary); font-size: 11px; }
+
+.board-setting-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid var(--color-border-subtle); font-size: 12px; }
+
+.filter-empty { grid-column: 1 / -1; color: var(--color-secondary); font-size: 10px; }
+.task-popover-status { display: grid; gap: 4px; margin-top: 10px; color: var(--color-secondary); font-size: 10px; }
+.board-menu-list button:disabled { opacity: .45; cursor: not-allowed; }
+.card-meta-item-btn:disabled, .card-assignee:disabled, .card-ai:disabled { cursor: not-allowed; opacity: .5; }
+.new-task-button:disabled { opacity: .55; cursor: not-allowed; }
+.column-add:disabled, .column-heading button:disabled { opacity: .4; cursor: not-allowed; }

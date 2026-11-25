@@ -1,7 +1,16 @@
 import { useState } from 'react';
 import { UilTimes } from '@iconscout/react-unicons';
 
-export default function ConfirmModal({ title, message, onClose, onConfirm }) {
+export default function ConfirmModal({
+  title,
+  message,
+  onClose,
+  onConfirm,
+  confirmLabel = 'Delete',
+  busyLabel = 'Deleting…',
+  danger = true,
+  eyebrow = 'CONFIRM ACTION',
+}) {
   const [submitting, setSubmitting] = useState(false);
 
   const handleConfirm = async () => {
@@ -29,7 +38,7 @@ export default function ConfirmModal({ title, message, onClose, onConfirm }) {
       >
         <div className="modal-heading">
           <div>
-            <p className="eyebrow">CONFIRM ACTION</p>
+            <p className="eyebrow">{eyebrow}</p>
             <h2 id="confirm-modal-title">{title}</h2>
           </div>
           <button type="button" className="close-button" aria-label="Close" onClick={onClose} disabled={submitting}>
@@ -37,10 +46,15 @@ export default function ConfirmModal({ title, message, onClose, onConfirm }) {
           </button>
         </div>
         <p className="confirm-modal-message">{message}</p>
-        <div className="confirm-modal-actions">
-          <button type="button" className="secondary-button" onClick={onClose} disabled={submitting}>Cancel</button>
-          <button type="button" className="danger-button" onClick={handleConfirm} disabled={submitting}>
-            {submitting ? 'Deleting…' : 'Delete'}
+        <div className="dialog-actions">
+          <button type="button" className="ghost-button" onClick={onClose} disabled={submitting}>Cancel</button>
+          <button
+            type="button"
+            className={danger ? 'danger-button' : 'primary-button'}
+            onClick={handleConfirm}
+            disabled={submitting}
+          >
+            {submitting ? busyLabel : confirmLabel}
           </button>
         </div>
       </section>

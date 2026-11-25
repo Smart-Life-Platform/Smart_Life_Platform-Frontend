@@ -90,6 +90,7 @@ export default function TaskCard({
   onTaskPriorityChange,
   onAssigneeChange,
   onSubtasksChange,
+  readOnly = false,
   isOverlay = false,
 }) {
   const navigate = useNavigate();
@@ -132,7 +133,7 @@ export default function TaskCard({
       task,
       statusId: currentStatusId,
     },
-    disabled: isOverlay,
+    disabled: isOverlay || readOnly,
   });
 
   const { setNodeRef: setDropRef, isOver } = useDroppable({
@@ -185,7 +186,13 @@ export default function TaskCard({
       className={`board-card ${isOverlay ? 'board-drag-overlay-card' : ''} ${isDragging ? 'is-dragging' : ''} ${isOver ? 'drag-over' : ''}`}
       style={style}
       onClick={() => {
-        if (!isDragging && !isOverlay) {
+        if (isOverlay) return;
+        // Viewers can still open the task details, but get no action menu.
+        if (readOnly) {
+          onOpenDetails?.(task);
+          return;
+        }
+        if (!isDragging) {
           setMenuOpen((prev) => !prev);
         }
       }}
@@ -206,20 +213,22 @@ export default function TaskCard({
             </span>
           )}
           <div className="card-menu-container">
-            <button
-              type="button"
-              className="card-menu"
-              aria-label="Task details"
-              aria-haspopup="menu"
-              aria-expanded={menuOpen}
-              onPointerDown={(event) => event.stopPropagation()}
-              onClick={(event) => {
-                event.stopPropagation();
-                setMenuOpen((prev) => !prev);
-              }}
-            >
-              •••
-            </button>
+            {!readOnly && (
+              <button
+                type="button"
+                className="card-menu"
+                aria-label="Task details"
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setMenuOpen((prev) => !prev);
+                }}
+              >
+                •••
+              </button>
+            )}
             {menuOpen && !isOverlay && (
               <TaskActionMenu
                 task={task}
@@ -262,8 +271,9 @@ export default function TaskCard({
             <button
               type="button"
               className="card-meta-item-btn"
-              title={total > 0 ? `${done} of ${total} subtasks done. Click to view.` : 'Subtasks. Click to add/view.'}
+              title={readOnly ? 'View-only access' : total > 0 ? `${done} of ${total} subtasks done. Click to view.` : 'Subtasks. Click to add/view.'}
               aria-label="Subtasks menu"
+              disabled={readOnly}
               onPointerDown={(event) => event.stopPropagation()}
               onClick={(event) => {
                 event.stopPropagation();
@@ -292,6 +302,7 @@ export default function TaskCard({
               aria-label={isAssigned ? `Assigned to ${assigneeLabel || 'a board member'}. Change assignee` : 'Assign task'}
               aria-haspopup="menu"
               aria-expanded={assigneeMenuOpen}
+              disabled={readOnly}
               onPointerDown={(event) => event.stopPropagation()}
               onClick={(event) => {
                 event.stopPropagation();

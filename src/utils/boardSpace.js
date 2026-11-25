@@ -96,8 +96,9 @@ function detailFor(kind, { otherPeople, ownerName, accessLabel }) {
  * Classifies one board. `members` are that board's membership rows; when they are
  * missing the board object itself (`members`, `members_count`, `role`) is used.
  */
-export function resolveBoardSpace(board, { userId, members } = {}) {
+export function resolveBoardSpace(board, { userId, userEmail, members } = {}) {
   const currentUserId = idOf(userId);
+  const currentEmail = textOf(userEmail)?.toLowerCase() ?? null;
 
   if (!board) {
     return {
@@ -121,14 +122,30 @@ export function resolveBoardSpace(board, { userId, members } = {}) {
 
   const ownerRow = rows.find((member) => roleOf(member) === 'owner') ?? null;
   const ownerId = boardOwnerId(board) ?? memberUserId(ownerRow);
-  const selfRow = rows.find((member) => sameId(memberUserId(member), currentUserId)) ?? null;
+  // Supabase and the Django backend can use different ids for the same person, so the
+  // email in the enriched member row is an equal identifier.
+  const selfRow = rows.find((member) => {
+    if (sameId(memberUserId(member), currentUserId)) return true;
+    const memberEmail = textOf(member.email)?.toLowerCase() ?? null;
+    return Boolean(currentEmail) && memberEmail === currentEmail;
+  }) ?? null;
+  const selfRole = roleOf(selfRow);
   const declaredRole = roleOf({ role: board.role ?? board.permission ?? board.access });
+  // Some board payloads embed the owner as an object with an email; that is another
+  // identifier that survives different id spaces.
+  const ownerEmail = textOf(board.owner_email, board.owner?.email, board.user?.email)?.toLowerCase() ?? null;
+  const ownerIsCurrentUser = (ownerId !== null && sameId(ownerId, currentUserId))
+    || (Boolean(currentEmail) && ownerEmail === currentEmail);
 
-  const isOwner = ownerId !== null
-    ? sameId(ownerId, currentUserId)
-    : declaredRole !== null
-      ? declaredRole === 'owner'
-      : true;
+  // An explicit owner identity wins; otherwise the user's own membership row decides.
+  // Without either, the board is treated as the user's own (APIs that omit ownership).
+  const isOwner = ownerIsCurrentUser
+    ? true
+    : selfRole
+      ? selfRole === 'owner'
+      : declaredRole
+        ? declaredRole === 'owner'
+        : ownerId === null;
 
   // "Other people" = everyone on the board apart from its owner.
   const others = rows.filter((member) => {
@@ -146,7 +163,7 @@ export function resolveBoardSpace(board, { userId, members } = {}) {
     : Math.max(0, declaredCount - (isOwner ? 1 : 0));
 
   const kind = !isOwner ? SPACE_OTHER : otherPeople > 0 ? SPACE_PUBLIC : SPACE_PERSONAL;
-  const role = isOwner ? 'owner' : roleOf(selfRow) ?? declaredRole;
+  const role = isOwner ? 'owner' : selfRole ?? declaredRole;
   const accessLabel = ACCESS_LABELS[role] ?? null;
   const ownerName = textOf(board.owner_name, board.owner_full_name) ?? memberDisplayName(ownerRow);
 
@@ -169,7 +186,7 @@ export function resolveBoardSpace(board, { userId, members } = {}) {
  * Boards grouped into the order the switcher lists them: personal, public, other.
  * Boards keep their incoming order inside a group.
  */
-export function boardSpaceGroups(boards, { userId, membersByBoard } = {}) {
+export function boardSpaceGroups(boards, { userId, userEmail, membersByBoard } = {}) {
   const grouped = membersByBoard instanceof Map ? membersByBoard : groupMembersByBoard(membersByBoard);
   const groups = new Map(SPACE_ORDER.map((kind) => [kind, { kind, label: SPACE_LABELS[kind], boards: [] }]));
 
@@ -177,6 +194,7 @@ export function boardSpaceGroups(boards, { userId, membersByBoard } = {}) {
     if (!board) return;
     const space = resolveBoardSpace(board, {
       userId,
+      userEmail,
       members: grouped.get(String(board.id)) ?? [],
     });
     groups.get(space.kind).boards.push({ board, space });

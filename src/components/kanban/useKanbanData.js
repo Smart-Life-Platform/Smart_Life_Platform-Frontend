@@ -4,6 +4,59 @@ import {
   statusBelongsToBoard,
   categoryBelongsToBoard,
 } from '../../utils/boardScope';
+import { priorityName } from '../../utils/priority';
+
+const EMPTY_FILTERS = { status: [], category: [], priority: [], assignee: [], due: [] };
+const PRIORITY_RANK = { low: 0, medium: 1, high: 2, critical: 3 };
+
+const asList = (value) => (Array.isArray(value) ? value : value ? [String(value)] : []);
+
+/** Today / this week / next week / no date — the buckets of the filter panel. */
+const dueBucket = (dueDate) => {
+  if (!dueDate) return 'none';
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const date = new Date(`${dueDate}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return 'none';
+  const diff = Math.round((date - today) / 86400000);
+  if (diff === 0) return 'today';
+  if (diff > 0 && diff <= 6) return 'week';
+  if (diff >= 7 && diff <= 13) return 'next_week';
+  return '';
+};
+
+const compareTasks = (first, second, ordering) => {
+  const direction = ordering.startsWith('-') ? -1 : 1;
+  const field = ordering.replace(/^-/, '');
+
+  if (field === 'due_date') {
+    const keyA = first.due_date ? `${first.due_date}T${first.due_time || '00:00'}` : '';
+    const keyB = second.due_date ? `${second.due_date}T${second.due_time || '00:00'}` : '';
+    if (!keyA && !keyB) return 0;
+    if (!keyA) return 1;
+    if (!keyB) return -1;
+    return keyA.localeCompare(keyB) * direction;
+  }
+
+  if (field === 'priority') {
+    return ((PRIORITY_RANK[priorityName(first.priority)] ?? 1) - (PRIORITY_RANK[priorityName(second.priority)] ?? 1)) * direction;
+  }
+
+  if (field === 'created_at') {
+    const keyA = String(first.created_at || '');
+    const keyB = String(second.created_at || '');
+    if (!keyA && !keyB) return 0;
+    if (!keyA) return 1;
+    if (!keyB) return -1;
+    return keyA.localeCompare(keyB) * direction;
+  }
+
+  if (field === 'title') {
+    return String(first.title || '').localeCompare(String(second.title || '')) * direction;
+  }
+
+  return 0;
+};
 
 export function useKanbanData({
   tasks,
@@ -14,13 +67,7 @@ export function useKanbanData({
   loadTasks,
   loadMetadata,
 }) {
-  const [filters, setFilters] = useState({
-    search: '',
-    status: '',
-    category: '',
-    priority: '',
-    ordering: 'position',
-  });
+  const [filters, setFilters] = useState({ ...EMPTY_FILTERS, ordering: 'position' });
   const [error, setError] = useState('');
 
   // Initial load of metadata
@@ -28,12 +75,13 @@ export function useKanbanData({
     loadMetadata().catch((requestError) => setError(requestError.message));
   }, [loadMetadata]);
 
-  // Load tasks when activeBoard or filters change
+  // Tasks are fetched per board; filtering and sorting happen locally so the panels can
+  // offer the values the tasks really contain.
   useEffect(() => {
     if (activeBoard?.id) {
-      loadTasks(filters).catch((requestError) => setError(requestError.message));
+      loadTasks().catch((requestError) => setError(requestError.message));
     }
-  }, [activeBoard, filters, loadTasks]);
+  }, [activeBoard, loadTasks]);
 
   const defaultBoardId = boards[0]?.id;
   const currentBoardId = activeBoard?.id || defaultBoardId;
@@ -56,47 +104,64 @@ export function useKanbanData({
     return categories.filter((category) => categoryBelongsToBoard(category, currentBoardId, defaultBoardId));
   }, [categories, currentBoardId, defaultBoardId]);
 
-  // 4. Tasks filtered by user search, status, category, priority, ordering
+  // 4. Tasks filtered and sorted by the board toolbar
   const filteredTasks = useMemo(() => {
-    const search = filters.search.trim().toLowerCase();
+    const selectedStatuses = asList(filters.status);
+    const selectedCategories = asList(filters.category);
+    const selectedPriorities = asList(filters.priority);
+    const selectedAssignees = asList(filters.assignee);
+    const selectedDue = asList(filters.due);
+
     return [...boardTasks]
-      .filter(
-        (task) =>
-          !search ||
-          task.title?.toLowerCase().includes(search) ||
-          task.description?.toLowerCase().includes(search)
-      )
       .filter((task) => {
-        if (!filters.status) return true;
-        const currentStatusId = task.status_id ?? task.status?.id ?? task.status;
-        return String(currentStatusId) === filters.status;
+        if (!selectedStatuses.length) return true;
+        const statusId = task.status_id ?? task.status?.id ?? task.status;
+        return selectedStatuses.includes(String(statusId));
       })
       .filter((task) => {
-        if (!filters.category) return true;
-        const currentCategoryId = task.category_id ?? task.category?.id ?? task.category;
-        return String(currentCategoryId) === filters.category;
+        if (!selectedCategories.length) return true;
+        const categoryId = task.category_id ?? task.category?.id ?? task.category;
+        return selectedCategories.includes(String(categoryId));
       })
-      .filter((task) => !filters.priority || task.priority === filters.priority)
-      .sort((first, second) => {
-        if (filters.ordering === 'due_date') {
-          return `${first.due_date || ''}T${first.due_time || ''}`.localeCompare(
-            `${second.due_date || ''}T${second.due_time || ''}`
-          );
-        }
-        if (filters.ordering === '-created_at') {
-          return String(second.created_at || '').localeCompare(String(first.created_at || ''));
-        }
-        return 0;
-      });
+      .filter((task) => {
+        if (!selectedPriorities.length) return true;
+        return selectedPriorities.includes(priorityName(task.priority));
+      })
+      .filter((task) => {
+        if (!selectedAssignees.length) return true;
+        const assigneeId = task.assignee_id ?? task.assignee?.id ?? task.assignee;
+        const key = assigneeId === null || assigneeId === undefined || assigneeId === '' ? 'unassigned' : String(assigneeId);
+        return selectedAssignees.includes(key);
+      })
+      .filter((task) => {
+        if (!selectedDue.length) return true;
+        return selectedDue.includes(dueBucket(task.due_date));
+      })
+      .sort((first, second) => compareTasks(first, second, filters.ordering || 'position'));
   }, [boardTasks, filters]);
 
-  const updateFilter = (field) => (event) => {
-    setFilters((current) => ({ ...current, [field]: event.target.value }));
+  const applyFilters = (next) => {
+    setFilters((current) => ({
+      ...current,
+      ...EMPTY_FILTERS,
+      ...next,
+      ordering: current.ordering,
+    }));
+  };
+
+  const resetFilters = () => {
+    setFilters((current) => ({ ...current, ...EMPTY_FILTERS }));
+  };
+
+  const setOrdering = (ordering) => {
+    setFilters((current) => ({ ...current, ordering }));
   };
 
   return {
     filters,
-    updateFilter,
+    applyFilters,
+    resetFilters,
+    setOrdering,
     boardTasks,
     boardStatuses,
     boardCategories,

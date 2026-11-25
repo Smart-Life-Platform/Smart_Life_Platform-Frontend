@@ -93,6 +93,45 @@ describe('resolveBoardSpace', () => {
     expect(space.kind).toBe(SPACE_PERSONAL);
     expect(space.label).toBe('Personal space');
   });
+
+  test('the owner is recognised by email when Supabase and backend use different ids', () => {
+    const space = resolveBoardSpace(
+      { id: 5, name: 'Team', user: 'django-id' },
+      {
+        userId: 'supabase-id',
+        userEmail: 'Owner@Example.com',
+        members: [
+          { id: 1, board: 5, user: 'django-id', role: 'owner', email: 'owner@example.com' },
+          { id: 2, board: 5, user: 'other-id', role: 'editor', email: 'other@example.com' },
+        ],
+      }
+    );
+
+    expect(space.isOwner).toBe(true);
+    expect(space.kind).toBe(SPACE_PUBLIC);
+  });
+
+  test('an embedded owner email also proves ownership', () => {
+    const space = resolveBoardSpace(
+      { id: 8, name: 'Team', owner: { email: 'Owner@Example.com' } },
+      { userId: 'supabase-id', userEmail: 'owner@example.com', members: [] }
+    );
+
+    expect(space.isOwner).toBe(true);
+  });
+
+  test('a member row with an editor role blocks ownership when the board has no owner field', () => {
+    const space = resolveBoardSpace(
+      { id: 6, name: 'Shared' },
+      {
+        userId: 'u-2',
+        members: [{ id: 3, board: 6, user: 'u-2', role: 'editor', email: 'me@example.com' }],
+      }
+    );
+
+    expect(space.isOwner).toBe(false);
+    expect(space.kind).toBe(SPACE_OTHER);
+  });
 });
 
 describe('groupMembersByBoard', () => {

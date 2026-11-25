@@ -8,6 +8,8 @@ import TaskDetailsPopover from '../components/kanban/TaskDetailsPopover';
 import ConfirmModal from '../components/common/ConfirmModal';
 import ShareBoardModal from '../components/board/ShareBoardModal';
 import CreateBoardModal from '../components/board/CreateBoardModal';
+import EditBoardModal from '../components/board/EditBoardModal';
+import BoardSettingsModal from '../components/board/BoardSettingsModal';
 import KanbanEmptyBoard from '../components/kanban/KanbanEmptyBoard';
 import { useKanbanData } from '../components/kanban/useKanbanData';
 import { useTaskContext } from '../context/TaskContext';
@@ -18,6 +20,9 @@ import { getUserProfile } from '../api/usersApi';
 import { isSystemBoard } from '../api/googleCalendarApi';
 import { memberBoardId, memberName, memberRowResolved, memberUserId } from '../components/board/MemberAvatar';
 import { createSubtask } from '../api/subtasksApi';
+import { createBoardStatus } from '../api/boardStatusesApi';
+import { createCategory } from '../api/categoriesApi';
+import { resolveBoardSpace } from '../utils/boardSpace';
 
 const DONE_STATUSES = ['done', 'completed', 'cancelled'];
 
@@ -27,7 +32,6 @@ export default function KanbanPage() {
     tasks,
     statuses,
     categories,
-    priorities,
     boards,
     activeBoard,
     loading,
@@ -42,11 +46,15 @@ export default function KanbanPage() {
     updateTask,
     deleteTask,
     createBoardForUser,
+    saveBoard,
   } = useTaskContext();
 
   const {
     filters,
-    updateFilter,
+    applyFilters,
+    resetFilters,
+    setOrdering,
+    boardTasks,
     boardStatuses,
     boardCategories,
     filteredTasks,
@@ -71,6 +79,9 @@ export default function KanbanPage() {
   const [view, setView] = useState('board');
   const [shareOpen, setShareOpen] = useState(false);
   const [createBoardOpen, setCreateBoardOpen] = useState(false);
+  const [editBoardOpen, setEditBoardOpen] = useState(false);
+  const [boardSettingsOpen, setBoardSettingsOpen] = useState(false);
+  const [duplicateOpen, setDuplicateOpen] = useState(false);
   const [quickAddStatus, setQuickAddStatus] = useState(null);
   const [members, setMembers] = useState([]);
   const [profiles, setProfiles] = useState({});
@@ -79,6 +90,13 @@ export default function KanbanPage() {
   const displayName = getDisplayName(user);
   const userAvatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
   const userAvatarPath = user?.user_metadata?.avatar_path || null;
+  const boardSpace = resolveBoardSpace(activeBoard, {
+    userId: user?.id ?? null,
+    userEmail: user?.email ?? null,
+    members,
+  });
+  // Viewers see the board but cannot change it: no drag, no add, no assign, no edit.
+  const readOnly = boardSpace.role === 'viewer';
   const systemBoard = isSystemBoard(activeBoard);
 
   // Members and their profiles (avatar, name, email) drive the avatar stack in the header.
@@ -307,6 +325,66 @@ export default function KanbanPage() {
     }
   };
 
+  const handleBoardSave = async (patch) => {
+    if (!activeBoard?.id) return;
+    await saveBoard(activeBoard.id, patch);
+  };
+
+  /** Copies the board with its columns, categories and tasks. */
+  const duplicateBoard = async () => {
+    const source = activeBoard;
+    if (!source) return;
+    try {
+      const copy = await createBoardForUser({
+        user_id: user?.id,
+        name: `${source.name || 'Board'} (copy)`,
+        description: source.description || '',
+        color: source.color || '',
+        icon: source.icon || '',
+      });
+
+      const statusMap = new Map();
+      for (const status of boardStatuses) {
+        const created = await createBoardStatus({
+          board_id: copy.id,
+          name: status.name,
+          color: status.color || null,
+          position: status.position ?? 1,
+          order: status.order ?? status.position ?? 1,
+        });
+        if (created?.id) statusMap.set(String(status.id), created.id);
+      }
+
+      const categoryMap = new Map();
+      for (const category of boardCategories) {
+        const created = await createCategory({ board_id: copy.id, name: category.name, color: category.color || null });
+        if (created?.id) categoryMap.set(String(category.id), created.id);
+      }
+
+      for (const task of boardTasks) {
+        const statusId = task.status_id ?? task.status?.id ?? task.status;
+        const categoryId = task.category_id ?? task.category?.id ?? task.category;
+        await createTask({
+          board_id: copy.id,
+          title: task.title,
+          description: task.description || '',
+          due_date: task.due_date || null,
+          due_time: task.due_time || null,
+          priority: task.priority || 'medium',
+          status_id: statusMap.get(String(statusId)) ?? undefined,
+          category_id: categoryMap.get(String(categoryId)) ?? undefined,
+          assignee_id: task.assignee_id ?? task.assignee?.id ?? task.assignee ?? null,
+        });
+      }
+
+      await loadMetadata();
+    } catch (duplicateError) {
+      setError(duplicateError.message);
+    } finally {
+      setDuplicateOpen(false);
+    }
+  };
+
   const hasBoards = Boolean(activeBoard || boards.length > 0);
 
   return (
@@ -317,11 +395,16 @@ export default function KanbanPage() {
             boardName={activeBoard?.name || 'My task board'}
             boardDescription={activeBoard?.description || 'A clearer day starts here. Plan it, delegate it, get it done.'}
             systemBoard={systemBoard}
+            canManage={!readOnly}
             members={members}
             profiles={profiles}
             onOpenShare={() => setShareOpen(true)}
             onOpenCategoryModal={() => setMetadataModal('category')}
             onOpenStatusModal={() => setMetadataModal('status')}
+            onOpenColumnModal={() => setMetadataModal('status')}
+            onEditBoard={() => setEditBoardOpen(true)}
+            onDuplicateBoard={() => setDuplicateOpen(true)}
+            onOpenBoardSettings={() => setBoardSettingsOpen(true)}
             onOpenCreateTask={() => openCreate(boardStatuses[0])}
           />
 
@@ -329,10 +412,13 @@ export default function KanbanPage() {
             view={view}
             onViewChange={setView}
             filters={filters}
-            onFilterChange={updateFilter}
+            onApplyFilters={applyFilters}
+            onResetFilters={resetFilters}
+            onOrderingChange={setOrdering}
             statuses={boardStatuses}
             categories={boardCategories}
-            priorities={priorities}
+            tasks={boardTasks}
+            assignees={assignees}
           />
 
           {!momentumDismissed && filteredTasks.length > 0 && (
@@ -393,6 +479,8 @@ export default function KanbanPage() {
               onCloseQuickAdd={() => setQuickAddStatus(null)}
               onQuickCreate={quickCreate}
               onOpenFullTask={(status) => openCreate(status)}
+              readOnly={readOnly}
+              onAddColumn={() => setMetadataModal('status')}
             />
           )}
 
@@ -410,6 +498,31 @@ export default function KanbanPage() {
         <CreateBoardModal
           onClose={() => setCreateBoardOpen(false)}
           onSubmit={handleCreateBoard}
+        />
+      )}
+
+      {editBoardOpen && activeBoard && (
+        <EditBoardModal
+          board={activeBoard}
+          onClose={() => setEditBoardOpen(false)}
+          onSubmit={handleBoardSave}
+        />
+      )}
+
+      {boardSettingsOpen && activeBoard && (
+        <BoardSettingsModal board={activeBoard} onClose={() => setBoardSettingsOpen(false)} />
+      )}
+
+      {duplicateOpen && activeBoard && (
+        <ConfirmModal
+          title="Duplicate board?"
+          message="Create a separate copy of this board and its tasks."
+          confirmLabel="Duplicate"
+          busyLabel="Duplicating…"
+          eyebrow="DUPLICATE"
+          danger={false}
+          onClose={() => setDuplicateOpen(false)}
+          onConfirm={duplicateBoard}
         />
       )}
 

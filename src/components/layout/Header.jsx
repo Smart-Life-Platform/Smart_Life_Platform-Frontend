@@ -1,6 +1,6 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { UilCalendarAlt, UilHome, UilPlus, UilSort, UilWallet, UilWindowSection } from '@iconscout/react-unicons';
+import { UilCalendarAlt, UilHome, UilPlus, UilSort, UilWallet } from '@iconscout/react-unicons';
 import { useAuth } from '../../context/AuthContext';
 import { useTaskContext } from '../../context/TaskContext';
 import UserMenu from './UserMenu';
@@ -12,7 +12,7 @@ import logo from '../../assets/Logo.svg';
 const items = [
   { to: '/overview', icon: 'overview', label: 'Overview' },
   { to: '/ai-assistant', icon: 'assistant', label: 'AI assistant' },
-  { to: '/kanban', Icon: UilWindowSection, label: 'Task board', countsTasks: true },
+  { to: '/kanban', icon: 'task-board', label: 'Task board', countsTasks: true },
   { to: '/planner?view=calendar', Icon: UilCalendarAlt, label: 'Calendar', view: 'calendar' },
   { to: '/budget', Icon: UilWallet, label: 'Budget' },
   { to: '/automations', icon: 'automations', label: 'Automations' },
