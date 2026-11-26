@@ -65,12 +65,12 @@ export default function Header({ collapsed = false }) {
               other members is a personal space, the same board once people are invited
               is a public space, and a board owned by somebody else is an "other" space. */}
           <div className="workspace-switcher" title={spaceTitle(activeSpace, activeBoard)}>
-            <span className="workspace-icon" aria-hidden="true"><UilHome size="12" /></span>
+            <span className="workspace-icon" aria-hidden="true"><UilHome size="22" /></span>
             <span className="workspace-switcher-copy">
               <small className="workspace-switcher-space">{activeSpace.label}</small>
               <strong className="workspace-switcher-board">{boardLabel}</strong>
             </span>
-            <span className="workspace-chevron" aria-hidden="true"><UilSort size="13" /></span>
+            <span className="workspace-chevron" aria-hidden="true"><UilSort size="18" /></span>
             <select
               className="board-selector"
               value={activeBoard ? String(activeBoard.id) : ''}

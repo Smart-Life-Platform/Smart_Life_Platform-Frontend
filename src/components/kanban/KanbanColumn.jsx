@@ -79,7 +79,7 @@ export default function KanbanColumn({
         <button
           type="button"
           aria-label="Add task to column"
-          onClick={() => onOpenCreate?.(status)}
+          onClick={() => onOpenQuickAdd?.(status)}
           disabled={readOnly}
         >
           <UilPlus size="14" />

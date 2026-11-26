@@ -26,8 +26,8 @@
 }
 
 .modal-heading h2 {
-    margin: 0;
-    font-size: 22px;
+    margin: 0 0 10px 0 ;
+    font-size: 16px;
 }
 
 .close-button {
