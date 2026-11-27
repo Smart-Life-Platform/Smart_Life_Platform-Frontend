@@ -20,6 +20,7 @@ import GoogleCalendarCallbackPage from '../pages/GoogleCalendarCallbackPage';
 import ConnectCalendarPrompt from '../components/integrations/ConnectCalendarPrompt';
 import { TaskProvider } from '../context/TaskContext';
 import { useAuth } from '../context/AuthContext';
+import useThemeSync from '../hooks/useThemeSync';
 import WorkspaceHeader from '../components/layout/WorkspaceHeader';
 
 /** The planner page now only hosts the calendar view; the board lives in /kanban. */
@@ -31,6 +32,7 @@ function PlannerRoute() {
 function SiteLayout() {
   const location = useLocation();
   const { user, isAuthenticated, loading } = useAuth();
+  useThemeSync();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isAuthPage = ['/login', '/register', '/auth/callback'].includes(location.pathname);
 

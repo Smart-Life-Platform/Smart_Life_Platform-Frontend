@@ -10,7 +10,7 @@
   padding: 36px;
   border: 1px solid var(--line);
   border-radius: 20px;
-  background: var(--color-white);
+  background: var(--color-surface);
   box-shadow: 0 12px 35px var(--color-profile-shadow);
 }
 
@@ -63,7 +63,7 @@
   font-weight: 600;
 }
 .profile-save-button { padding: 10px 18px; border: 0; color: var(--color-white); background: var(--purple); }
-.profile-cancel-button { padding: 9px 17px; border: 1px solid var(--color-control-border); color: var(--color-control-text); background: var(--color-white); }
+.profile-cancel-button { padding: 9px 17px; border: 1px solid var(--color-control-border); color: var(--color-control-text); background: var(--color-surface); }
 .profile-remove-button { margin: 18px auto 0; padding: 8px 12px; border: 0; color: var(--color-status-danger-text); background: transparent; }
 .profile-save-button:disabled, .profile-cancel-button:disabled, .profile-remove-button:disabled { cursor: not-allowed; opacity: .6; }
 

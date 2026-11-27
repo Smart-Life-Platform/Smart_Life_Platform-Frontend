@@ -26,7 +26,7 @@
   right: 0;
   top: calc(100% + 10px);
   width: 280px;
-  background: var(--color-white);
+  background: var(--color-surface);
   border: 1px solid var(--color-menu-border);
   border-radius: 14px;
   box-shadow: 0 10px 30px var(--color-menu-shadow);
@@ -107,14 +107,14 @@
   gap: 20px;
 }
 .settings-card {
-  background: var(--color-white);
+  background: var(--color-surface);
   border: 1px solid var(--color-menu-border);
   border-radius: 14px;
   padding: 24px;
 }
 .settings-card-title { margin: 12px 0 6px; font-size: 16px; }
 .settings-card-text { margin: 0; color: var(--color-settings-muted); font-size: 15px; line-height: 1.5; }
-.settings-form-card { position: relative; width: min(100%, 520px); margin-top: 24px; padding: 24px; border: 1px solid var(--color-menu-border); border-radius: 14px; background: var(--color-white); }
+.settings-form-card { position: relative; width: min(100%, 520px); margin-top: 24px; padding: 24px; border: 1px solid var(--color-menu-border); border-radius: 14px; background: var(--color-surface); }
 .account-modal-close { position: absolute; top: 16px; right: 16px; }
 .account-avatar-editor { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
 .avatar-preview-large { display: grid; place-items: center; min-height: 120px; margin: 8px 0 18px; }
@@ -124,7 +124,7 @@
 .settings-form-card h2 { margin-top: 0; }
 .settings-form-card label { max-width: 520px; }
 .settings-form-actions { display: flex; gap: 10px; align-items: center; }
-.settings-cancel-button { padding: 12px 18px; border: 1px solid var(--color-menu-border); border-radius: 8px; background: var(--color-white); cursor: pointer; }
+.settings-cancel-button { padding: 12px 18px; border: 1px solid var(--color-menu-border); border-radius: 8px; background: var(--color-surface); cursor: pointer; }
 .settings-success { color: var(--color-green); }
 .settings-error { color: var(--color-red); }
 
@@ -174,7 +174,7 @@ a.settings-card.is-link:hover {
   align-items: center;
   gap: 14px;
   padding: 14px 16px;
-  background: var(--color-white);
+  background: var(--color-surface);
   border: 1px solid var(--color-menu-border);
   border-radius: 14px;
 }
@@ -186,7 +186,7 @@ a.settings-card.is-link:hover {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--color-white);
+  background: var(--color-surface);
   color: #4285f4;
   font-size: 12px;
   font-weight: 700;
@@ -232,7 +232,7 @@ a.settings-card.is-link:hover {
 }
 
 .cal-calendar-card {
-  background: var(--color-white);
+  background: var(--color-surface);
   border: 1px solid var(--color-menu-border);
   border-radius: 14px;
   padding: 16px 20px;
@@ -276,7 +276,7 @@ a.settings-card.is-link:hover {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--color-white);
+  background: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
   transition: transform 0.18s ease;
 }
@@ -298,7 +298,7 @@ a.settings-card.is-link:hover {
   padding: 10px 40px 10px 18px;
   border: 1px solid var(--color-accent, #4f46e5);
   border-radius: 999px;
-  background: var(--color-white);
+  background: var(--color-surface);
   color: var(--color-accent, #4f46e5);
   font-size: 15px;
   font-weight: 500;
@@ -357,7 +357,7 @@ a.settings-card.is-link:hover {
   padding: 8px 18px;
   border: 1px solid var(--color-menu-border);
   border-radius: 999px;
-  background: var(--color-white);
+  background: var(--color-surface);
   color: var(--color-menu-heading);
   font-size: 16px;
   cursor: pointer;
@@ -365,7 +365,7 @@ a.settings-card.is-link:hover {
 .pref-pill.active {
   background: var(--color-menu-heading);
   border-color: var(--color-menu-heading);
-  color: var(--color-white);
+  color: var(--color-surface);
 }
 
 .pref-example-title { margin-top: 20px; font-weight: 500; color: var(--color-menu-heading); }
@@ -398,7 +398,7 @@ a.settings-card.is-link:hover {
   padding: 14px 16px;
   border: 1px solid var(--color-menu-border);
   border-radius: 8px;
-  background: var(--color-white);
+  background: var(--color-surface);
   color: var(--color-menu-heading);
   font-size: 16px;
 }
@@ -413,7 +413,7 @@ a.settings-card.is-link:hover {
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
-  background: var(--color-white);
+  background: var(--color-surface);
 }
 .acc-secondary-button { border: 1px solid var(--color-accent, #4f46e5); color: var(--color-accent, #4f46e5); }
 .acc-danger-button { border: 1px solid #d93025; color: #d93025; }
@@ -452,7 +452,7 @@ a.settings-card.is-link:hover {
   padding: 8px 10px;
   border: 1px solid var(--color-menu-border);
   border-radius: 8px;
-  background: var(--color-white);
+  background: var(--color-surface);
   color: var(--color-menu-heading);
   font-size: 15px;
 }

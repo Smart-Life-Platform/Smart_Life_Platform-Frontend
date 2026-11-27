@@ -464,3 +464,6 @@
 .checklist-toggle { flex-shrink: 0; border: 0; background: transparent; padding: 0; display: flex; align-items: center; color: var(--color-secondary); cursor: pointer; }
 .checklist-done .checklist-toggle { color: var(--color-accent); }
 .checklist-new-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--color-accent); flex-shrink: 0; }
+
+.global-search input { background: transparent; }
+.global-search input::placeholder { color: var(--color-text-muted); }
