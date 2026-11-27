@@ -19,6 +19,10 @@ export default function KanbanBoard({
   loading = false,
   readOnly = false,
   onAddColumn,
+  onRenameColumn,
+  onChangeColumnColor,
+  onMoveColumn,
+  onArchiveColumn,
   onTaskStatusChange,
   onTaskPriorityChange,
   onAssigneeChange,
@@ -36,6 +40,17 @@ export default function KanbanBoard({
 }) {
   const [dragged, setDragged] = useState(null);
   const [liveColumns, setLiveColumns] = useState(columns);
+
+  // Auto-move task to last column when all subtasks are complete
+  const handleAllSubtasksComplete = (taskId) => {
+    const lastColumn = liveColumns[liveColumns.length - 1];
+    if (lastColumn) {
+      const task = tasks.find((t) => String(t.id) === String(taskId));
+      if (task) {
+        onTaskStatusChange?.(taskId, lastColumn, task);
+      }
+    }
+  };
 
   useEffect(() => {
     setLiveColumns(columns);
@@ -148,18 +163,19 @@ export default function KanbanBoard({
       return;
     }
 
-    // 2. Column drag and drop: save final reordered columns
+    // 2. Column drag and drop: always save final reordered columns to backend
     if (currentDragged.type === 'column') {
       const hasChanged = liveColumns.some(
         (col, idx) => String(col.id) !== String(columns[idx]?.id)
       );
 
       if (hasChanged) {
+        // Always send the request to backend for column reordering
         onColumnsOrderChange?.(liveColumns);
         return;
       }
 
-      // If not swapped yet during dragOver, swap now
+      // If not swapped yet during dragOver, swap now and send to backend
       if (over) {
         const overData = over.data?.current;
         let targetStatus = null;
@@ -184,6 +200,7 @@ export default function KanbanBoard({
             const [moved] = reordered.splice(fromIndex, 1);
             reordered.splice(toIndex, 0, moved);
             setLiveColumns(reordered);
+            // Always send to backend
             onColumnsOrderChange?.(reordered);
           }
         }
@@ -230,7 +247,7 @@ export default function KanbanBoard({
           </div>
         )}
 
-        {liveColumns.map((status) => (
+        {liveColumns.map((status, index) => (
           <KanbanColumn
             key={status.id}
             status={status}
@@ -240,6 +257,13 @@ export default function KanbanBoard({
             assignees={assignees}
             loading={loading}
             readOnly={readOnly}
+            canMoveLeft={index > 0}
+            canMoveRight={index < liveColumns.length - 1}
+            isLastColumn={index === liveColumns.length - 1}
+            onRenameColumn={onRenameColumn}
+            onChangeColumnColor={onChangeColumnColor}
+            onMoveColumn={onMoveColumn}
+            onArchiveColumn={onArchiveColumn}
             onOpenCreate={onOpenCreate}
             onOpenEdit={onOpenEdit}
             onRemoveTask={onRemoveTask}
@@ -254,6 +278,7 @@ export default function KanbanBoard({
             onCloseQuickAdd={onCloseQuickAdd}
             onQuickCreate={onQuickCreate}
             onOpenFullTask={onOpenFullTask}
+            onAllSubtasksComplete={handleAllSubtasksComplete}
           />
         ))}
       </div>

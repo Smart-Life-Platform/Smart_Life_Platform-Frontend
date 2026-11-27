@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useMemo, useRef, useState } fro
 import { deleteTask as deleteTaskRequest, getOverdueTasks, getTasks, getTasksByDay, getTasksByMonth, getTasksByWeek, createTask as createTaskRequest, updateTask as updateTaskRequest, setTaskStatus as setTaskStatusRequest } from '../api/tasksApi';
 import { createBoard, getBoardMembers, getBoards, updateBoard } from '../api/boardsApi';
 import { createCategory, getCategories } from '../api/categoriesApi';
-import { createBoardStatus, getAllBoardStatuses, updateBoardStatus, saveBoardStatusesOrder } from '../api/boardStatusesApi';
+import { createBoardStatus, deleteBoardStatus, getAllBoardStatuses, updateBoardStatus, saveBoardStatusesOrder } from '../api/boardStatusesApi';
 import { getPriorities } from '../api/prioritiesApi';
 import {
   setStoredTaskBoard,
@@ -201,6 +201,11 @@ export function TaskProvider({ children }) {
       statuses.map((status) => [String(status.id), Number(status.position ?? status.order ?? 0)])
     );
     const positionsById = new Map(normalized.map((status) => [String(status.id), status]));
+
+    // Store the original state for rollback
+    const originalStatuses = [...statuses];
+
+    // Optimistically update UI
     setAllStatuses((current) =>
       current.map((status) => {
         const next = positionsById.get(String(status.id));
@@ -208,23 +213,65 @@ export function TaskProvider({ children }) {
       })
     );
 
-    await saveBoardStatusesOrder(boardId, normalized).catch(() => {});
+    try {
+      // First, save the bulk order
+      await saveBoardStatusesOrder(boardId, normalized);
 
-    // Only statuses whose position actually changed are sent to the backend.
-    const changed = normalized.filter(
-      (status) => previousPositions.get(String(status.id)) !== status.position
-    );
-    await Promise.all(
-      changed.map((status) =>
-        updateBoardStatus(status.id, {
-          position: status.position,
-          order: status.order,
-          board_id: status.board_id ?? boardId,
-          name: status.name,
-        }).catch(() => {})
-      )
-    );
-  }, [activeBoard, statuses]);
+      // Then, only statuses whose position actually changed are sent to the backend individually
+      const changed = normalized.filter(
+        (status) => previousPositions.get(String(status.id)) !== status.position
+      );
+
+      if (changed.length > 0) {
+        await Promise.all(
+          changed.map((status) =>
+            updateBoardStatus(status.id, {
+              position: status.position,
+              order: status.order,
+              board_id: status.board_id ?? boardId,
+              name: status.name,
+            })
+          )
+        );
+      }
+
+      // Verify the change was successful by reloading statuses
+      await loadMetadata();
+    } catch (error) {
+      // Rollback to original state on error
+      setAllStatuses(originalStatuses);
+      throw error;
+    }
+  }, [activeBoard, statuses, loadMetadata]);
+
+  const updateStatus = useCallback(async (status, patch = {}) => {
+    const id = typeof status === 'object' ? status?.id : status;
+    if (!id) return null;
+    const current = statuses.find((item) => String(item.id) === String(id))
+      || (typeof status === 'object' ? status : { id });
+    const name = patch.name !== undefined ? patch.name.trim() : current.name;
+    const position = patch.position ?? current.position ?? 1;
+    const payload = {
+      name,
+      position,
+      order: patch.order ?? current.order ?? position,
+      board_id: current.board_id ?? activeBoard?.id,
+    };
+    if (patch.color !== undefined) payload.color = patch.color;
+
+    const updated = await updateBoardStatus(id, payload);
+    const next = { ...current, ...updated, ...payload };
+    setAllStatuses((list) => list.map((item) => (String(item.id) === String(id) ? { ...item, ...next } : item)));
+    return next;
+  }, [statuses, activeBoard]);
+
+  /** Archives (removes) a column of the active board. */
+  const archiveStatus = useCallback(async (status) => {
+    const id = typeof status === 'object' ? status?.id : status;
+    if (!id) return;
+    await deleteBoardStatus(id);
+    setAllStatuses((list) => list.filter((item) => String(item.id) !== String(id)));
+  }, []);
 
   const createBoardForUser = useCallback(async (payload) => {
     const board = await createBoard(payload);
@@ -344,6 +391,8 @@ export function TaskProvider({ children }) {
     addCategory,
     addStatus,
     saveStatusOrder,
+    updateStatus,
+    archiveStatus,
     createBoardForUser,
     saveBoard,
     createTask,
@@ -354,6 +403,7 @@ export function TaskProvider({ children }) {
     tasks, overdueTasks, calendarTasks, statuses, categories, priorities, boards,
     boardMembers, activeBoard, loading, loadTasks, loadCalendarTasks, loadMetadata,
     reloadBoardMembers, addCategory, addStatus, saveStatusOrder, createBoardForUser,
+    updateStatus, archiveStatus,
     saveBoard, createTask, updateTask, setTaskStatus, deleteTask,
   ]);
 

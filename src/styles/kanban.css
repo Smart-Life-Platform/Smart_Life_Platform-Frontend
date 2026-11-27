@@ -177,6 +177,26 @@
   border: 2px dashed var(--color-accent);
 }
 
+/* Last column (Done) styling
+.board-column.is-last-column {
+  background: linear-gradient(180deg, rgba(76, 175, 80, 0.08) 0%, rgba(76, 175, 80, 0.12) 100%);
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.board-column.is-last-column .column-cards {
+  background: rgba(76, 175, 80, 0.05);
+  border-radius: 6px;
+  padding: 8px;
+  min-height: 100px;
+}
+
+.board-column.is-last-column .board-card {
+  border-left: 3px solid #4CAF50;
+  background: rgba(76, 175, 80, 0.02);
+} */
+
 .board-drag-overlay-column {
   cursor: grabbing !important;
   transform: rotate(2deg) scale(1.02);
@@ -506,14 +526,18 @@
   padding: 2px 4px;
   border-radius: 4px;
   cursor: pointer;
-  color: var(--color-secondary, #64748b);
+  color: var(--meta-color, var(--color-secondary));
   font-size: 12px;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
+.card-meta-item-btn svg {
+  color: var(--meta-color, var(--color-secondary));
+}
+
 .card-meta-item-btn:hover {
   background: var(--color-surface-muted, #f1f5f9);
-  color: var(--color-accent, #6d5ce7);
+  color: var(--meta-color, var(--color-accent));
 }
 
 .subtasks-popup-menu {

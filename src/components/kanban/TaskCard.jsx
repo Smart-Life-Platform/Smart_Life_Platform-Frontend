@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import {
   UilCalendarAlt,
-  UilCheckSquare,
+  UilPlus,
   UilUser,
 } from '@iconscout/react-unicons';
 import TaskActionMenu from './TaskActionMenu';
@@ -11,6 +11,19 @@ import SubtasksMenu from './SubtasksMenu';
 import AssigneeMenu from './AssigneeMenu';
 import AssistantGlyph from '../common/AssistantGlyph';
 import { MemberAvatar } from '../board/MemberAvatar';
+
+const DoneIcon = ({ color, size = 12 }) => (
+  <svg width={size} height={size} viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="6" cy="6" r="5" stroke={color} strokeWidth="1.6" fill="none" />
+    <path d="M4.30008 5.8002L5.30016 6.80028L7.30032 4.80012" stroke={color} strokeWidth="1.6" strokeLinecap="round" fill="none" />
+  </svg>
+);
+
+const SubDoneIcon = ({ color, size = 10 }) => (
+  <svg width={size} height={size} viewBox="0 0 10 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M5.38314 0.799805H9.0498M5.38314 4.0085H9.0498M5.38314 7.2172H9.0498M0.799805 6.30043L1.71647 7.2172L3.5498 5.38366M0.799805 1.71658L1.71647 2.63335L3.5498 0.799805" strokeWidth="1.6" strokeLinecap="round" stroke={color} />
+  </svg>
+);
 
 const PRIORITY_LABELS = { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' };
 const PRIORITY_NAMES = ['low', 'medium', 'high', 'critical'];
@@ -82,6 +95,8 @@ export default function TaskCard({
   categories = [],
   statuses = [],
   assignees = [],
+  statusColor = null,
+  isLastColumn = false,
   onOpenEdit,
   onRemoveTask,
   onOpenDetails,
@@ -90,6 +105,7 @@ export default function TaskCard({
   onTaskPriorityChange,
   onAssigneeChange,
   onSubtasksChange,
+  onAllSubtasksComplete,
   readOnly = false,
   isOverlay = false,
 }) {
@@ -164,6 +180,12 @@ export default function TaskCard({
   const priority = normalizePriority(effectiveTask.priority);
   const { total, done } = subtaskStats(effectiveTask);
   const progress = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  // Check if task is in Done column
+  const currentStatus = statuses.find((s) => String(s.id) === String(currentStatusId));
+  const isDoneColumn = currentStatus?.name?.toLowerCase() === 'done' ||
+                      currentStatus?.name?.toLowerCase() === 'completed' ||
+                      currentStatus?.name?.toLowerCase() === 'finished';
 
   const askAssistant = (event) => {
     event.stopPropagation();
@@ -257,12 +279,18 @@ export default function TaskCard({
           aria-valuenow={done}
           aria-valuemin={0}
           aria-valuemax={total}
+          title={`${done} of ${total} subtasks completed (${progress}%)`}
         >
-          <span style={{ width: `${progress}%` }} />
+          <span style={{ width: `${progress}%`, backgroundColor: statusColor }} />
         </div>
       )}
 
-      <div className="card-meta">
+      <div className="card-meta" style={{ '--meta-color': isLastColumn ? '#4CAF50' : (statusColor || undefined) }}>
+        {isDoneColumn && (
+          <div style={{ marginRight: '4px', display: 'inline-flex' }}>
+            <DoneIcon color={isLastColumn ? '#4CAF50' : (statusColor || '#4D8A72')} size={12} />
+          </div>
+        )}
         <span className="card-meta-item">
           <UilCalendarAlt size="12" /> {formatDate(task.due_date)}
         </span>
@@ -280,7 +308,19 @@ export default function TaskCard({
                 setSubtasksMenuOpen((prev) => !prev);
               }}
             >
-              <UilCheckSquare size="12" /> {total > 0 ? `${done}/${total}` : '0/0'}
+              {total > 0 && (
+                <div style={{ marginRight: '2px', display: 'inline-flex' }}>
+                  <SubDoneIcon color={done === total ? (isLastColumn ? '#4CAF50' : (statusColor || '#4D8A72')) : '#000000'} size={10} />
+                </div>
+              )}
+              {total > 0 ? `${done}/${total}` : (
+                <span
+                  style={{ display: 'inline-flex', color: isLastColumn ? '#4CAF50' : (statusColor || '#4D8A72') }}
+                  title="Add subtasks"
+                >
+                  <UilPlus size="10" />
+                </span>
+              )}
             </button>
             {subtasksMenuOpen && !isOverlay && (
               <SubtasksMenu
@@ -290,6 +330,7 @@ export default function TaskCard({
                   setLocalSubtasks(nextSubtasks);
                   onSubtasksChange?.(taskId, nextSubtasks);
                 }}
+                onAllSubtasksComplete={onAllSubtasksComplete}
               />
             )}
           </div>

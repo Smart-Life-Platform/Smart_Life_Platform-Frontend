@@ -6,6 +6,7 @@ export default function SubtasksMenu({
   task,
   onClose,
   onSubtaskToggled,
+  onAllSubtasksComplete,
 }) {
   const menuRef = useRef(null);
   const [subtasks, setSubtasks] = useState(
@@ -66,6 +67,12 @@ export default function SubtasksMenu({
 
     try {
       await updateSubtask(id, { is_done: next });
+
+      // Check if all subtasks are now complete
+      const allComplete = updated.every((s) => s.is_done ?? s.completed ?? s.is_completed ?? s.done);
+      if (allComplete && updated.length > 0) {
+        onAllSubtasksComplete?.(task.id);
+      }
     } catch {
       // Revert on error
       const reverted = subtasks.map((s) => (s.id === id ? { ...s, is_done: !next } : s));

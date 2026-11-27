@@ -4,6 +4,7 @@ import KanbanBoard from '../components/kanban/KanbanBoard';
 import KanbanHeader from '../components/kanban/KanbanHeader';
 import KanbanToolbar from '../components/kanban/KanbanToolbar';
 import MetadataModal from '../components/kanban/MetadataModal';
+import RenameColumnModal from '../components/kanban/RenameColumnModal';
 import TaskDetailsPopover from '../components/kanban/TaskDetailsPopover';
 import ConfirmModal from '../components/common/ConfirmModal';
 import ShareBoardModal from '../components/board/ShareBoardModal';
@@ -47,6 +48,8 @@ export default function KanbanPage() {
     deleteTask,
     createBoardForUser,
     saveBoard,
+    updateStatus,
+    archiveStatus,
   } = useTaskContext();
 
   const {
@@ -82,6 +85,8 @@ export default function KanbanPage() {
   const [editBoardOpen, setEditBoardOpen] = useState(false);
   const [boardSettingsOpen, setBoardSettingsOpen] = useState(false);
   const [duplicateOpen, setDuplicateOpen] = useState(false);
+  const [columnToRename, setColumnToRename] = useState(null);
+  const [columnToArchive, setColumnToArchive] = useState(null);
   const [quickAddStatus, setQuickAddStatus] = useState(null);
   const [members, setMembers] = useState([]);
   const [profiles, setProfiles] = useState({});
@@ -274,6 +279,42 @@ export default function KanbanPage() {
   const handleColumnsOrderChange = async (ordered) => {
     try {
       await saveStatusOrder(ordered);
+      // Success - the order has been verified by saveStatusOrder
+    } catch (requestError) {
+      setError(requestError.message);
+      // Error will trigger rollback in saveStatusOrder
+    }
+  };
+
+  const handleColumnRename = async (name) => {
+    if (!columnToRename) return;
+    await updateStatus(columnToRename, { name });
+  };
+
+  const handleColumnColor = async (status, color) => {
+    try {
+      await updateStatus(status, { color });
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  };
+
+  /** Moves one column one step to the left (-1) or right (1) and persists the order. */
+  const handleColumnMove = async (status, direction) => {
+    const index = boardStatuses.findIndex((item) => String(item.id) === String(status.id));
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= boardStatuses.length) return;
+    const ordered = [...boardStatuses];
+    const [moved] = ordered.splice(index, 1);
+    ordered.splice(target, 0, moved);
+    await handleColumnsOrderChange(ordered);
+  };
+
+  const confirmArchiveColumn = async () => {
+    if (!columnToArchive) return;
+    try {
+      await archiveStatus(columnToArchive);
+      setColumnToArchive(null);
     } catch (requestError) {
       setError(requestError.message);
     }
@@ -469,6 +510,10 @@ export default function KanbanPage() {
               onTaskPriorityChange={handleTaskPriorityChange}
               onAssigneeChange={handleTaskAssigneeChange}
               onColumnsOrderChange={handleColumnsOrderChange}
+              onRenameColumn={setColumnToRename}
+              onChangeColumnColor={handleColumnColor}
+              onMoveColumn={handleColumnMove}
+              onArchiveColumn={setColumnToArchive}
               onOpenCreate={openCreate}
               onOpenEdit={openEdit}
               onRemoveTask={removeTask}
@@ -511,6 +556,26 @@ export default function KanbanPage() {
 
       {boardSettingsOpen && activeBoard && (
         <BoardSettingsModal board={activeBoard} onClose={() => setBoardSettingsOpen(false)} />
+      )}
+
+      {columnToRename && (
+        <RenameColumnModal
+          column={columnToRename}
+          onClose={() => setColumnToRename(null)}
+          onSubmit={handleColumnRename}
+        />
+      )}
+
+      {columnToArchive && (
+        <ConfirmModal
+          title="Archive column?"
+          message={`“${columnToArchive.name}” and the tasks inside it will be removed from this board.`}
+          confirmLabel="Archive"
+          busyLabel="Archiving…"
+          eyebrow="ARCHIVE"
+          onClose={() => setColumnToArchive(null)}
+          onConfirm={confirmArchiveColumn}
+        />
       )}
 
       {duplicateOpen && activeBoard && (

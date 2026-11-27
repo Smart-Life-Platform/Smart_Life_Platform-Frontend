@@ -219,6 +219,79 @@ describe('Kanban Components', () => {
     expect(handleCreate).toHaveBeenCalledWith(mockStatuses[0]);
   });
 
+  test('Column menu offers rename, colour, move and archive', () => {
+    const handleRename = jest.fn();
+    const handleColor = jest.fn();
+    const handleMove = jest.fn();
+    const handleArchive = jest.fn();
+
+    renderWithRouter(
+      <KanbanColumn
+        status={mockStatuses[1]}
+        tasks={[]}
+        categories={mockCategories}
+        statuses={mockStatuses}
+        canMoveLeft
+        canMoveRight
+        onRenameColumn={handleRename}
+        onChangeColumnColor={handleColor}
+        onMoveColumn={handleMove}
+        onArchiveColumn={handleArchive}
+      />
+    );
+
+    fireEvent.click(screen.getByLabelText('Actions for In Progress'));
+    expect(screen.getByRole('menu', { name: 'In Progress actions' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Rename column' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Change color' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Move column left' })).toBeEnabled();
+    expect(screen.getByRole('menuitem', { name: 'Move column right' })).toBeEnabled();
+    expect(screen.getByRole('menuitem', { name: 'Archive column' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Rename column' }));
+    expect(handleRename).toHaveBeenCalledWith(mockStatuses[1]);
+
+    fireEvent.click(screen.getByLabelText('Actions for In Progress'));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Move column right' }));
+    expect(handleMove).toHaveBeenCalledWith(mockStatuses[1], 1);
+
+    fireEvent.click(screen.getByLabelText('Actions for In Progress'));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Change color' }));
+    expect(screen.getByRole('group', { name: 'Column color' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('radio', { name: 'Blue' }));
+    expect(handleColor).toHaveBeenCalledWith(mockStatuses[1], '#5980B6');
+  });
+
+  test('First column cannot move left and viewers get no column menu', () => {
+    const { unmount } = renderWithRouter(
+      <KanbanColumn
+        status={mockStatuses[0]}
+        tasks={[]}
+        categories={mockCategories}
+        statuses={mockStatuses}
+        canMoveLeft={false}
+        canMoveRight
+        onMoveColumn={jest.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByLabelText('Actions for To Do'));
+    expect(screen.getByRole('menuitem', { name: 'Move column left' })).toBeDisabled();
+    expect(screen.getByRole('menuitem', { name: 'Move column right' })).toBeEnabled();
+    unmount();
+
+    renderWithRouter(
+      <KanbanColumn
+        status={mockStatuses[0]}
+        tasks={[]}
+        categories={mockCategories}
+        statuses={mockStatuses}
+        readOnly
+      />
+    );
+    expect(screen.queryByLabelText('Actions for To Do')).not.toBeInTheDocument();
+  });
+
   test('KanbanBoard renders columns and handles empty state', () => {
     renderWithRouter(
       <KanbanBoard
