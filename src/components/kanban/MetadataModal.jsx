@@ -1,12 +1,9 @@
 import { useState } from 'react';
 import { UilTimes } from '@iconscout/react-unicons';
+import ColorPalette, { PALETTE } from '../common/ColorPalette';
 
-export default function MetadataModal({
-  type,
-  onClose,
-  onSubmit,
-}) {
-  const [form, setForm] = useState({ name: '', color: '#6d5ce7' });
+export default function MetadataModal({ type, onClose, onSubmit }) {
+  const [form, setForm] = useState({ name: '', color: PALETTE[0].value });
   const [submitting, setSubmitting] = useState(false);
 
   if (!type) return null;
@@ -31,13 +28,13 @@ export default function MetadataModal({
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="modal-heading">
-          <h2>New {type}</h2>
-          <button
-            type="button"
-            className="close-button"
-            onClick={onClose}
-            aria-label="Close"
-          >
+          <div>
+            <h2>New {type}</h2>
+            <p className="modal-subtitle">
+              {type === 'status' ? 'Columns are the stages tasks move through.' : 'Group tasks by area of work.'}
+            </p>
+          </div>
+          <button type="button" className="close-button" onClick={onClose} aria-label="Close">
             <UilTimes size="20" />
           </button>
         </div>
@@ -53,22 +50,14 @@ export default function MetadataModal({
           />
         </label>
 
-        <label>
-          Color
-          <input
-            type="color"
-            value={form.color}
-            onChange={(event) => setForm({ ...form, color: event.target.value })}
-          />
-        </label>
+        <ColorPalette label="Color" value={form.color} onChange={(color) => setForm({ ...form, color })} />
 
-        <button
-          className="primary-button full-width"
-          type="submit"
-          disabled={submitting}
-        >
-          {submitting ? 'Creating…' : `Create ${type}`}
-        </button>
+        <div className="dialog-actions">
+          <button type="button" className="ghost-button" onClick={onClose}>Cancel</button>
+          <button className="primary-button" type="submit" disabled={submitting}>
+            {submitting ? 'Creating…' : `Create ${type}`}
+          </button>
+        </div>
       </form>
     </div>
   );

@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
-import { UilCopy, UilTrashAlt, UilTimes } from '@iconscout/react-unicons';
+import { UilTrashAlt, UilTimes } from '@iconscout/react-unicons';
 import { addBoardMember, getBoardMembers, removeBoardMember, updateBoardMember } from '../../api/boardsApi';
 import { getUserProfile } from '../../api/usersApi';
+import { useAuth } from '../../context/AuthContext';
+import { resolveBoardSpace } from '../../utils/boardSpace';
+import ConfirmModal from '../common/ConfirmModal';
+import Dropdown from '../common/Dropdown';
 import { MemberAvatar, memberBoardId, memberName, memberRowResolved, memberUserId } from './MemberAvatar';
 
 const INVITE_ROLES = [
@@ -15,12 +19,29 @@ const isEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.trim());
 
 
 export default function ShareBoardModal({ board, onClose, onMembersChanged }) {
+  const { user } = useAuth();
   const [members, setMembers] = useState([]);
   const [profiles, setProfiles] = useState({});
   const [form, setForm] = useState({ email: '', role: 'viewer' });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [membersLoaded, setMembersLoaded] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState(null);
+
+  // Only the board owner may change access. Until the member list is known the controls
+  // stay disabled — an editor used to click "Invite" and receive a 403 instead.
+  // Supabase ids and backend ids can differ, so rows are also matched by email.
+  const ownershipRows = members.map((member) => {
+    const key = memberUserId(member);
+    const email = member.email || profiles[key]?.email || '';
+    return email ? { ...member, email } : member;
+  });
+  const canManage = membersLoaded && resolveBoardSpace(board, {
+    userId: user?.id ?? null,
+    userEmail: user?.email ?? null,
+    members: ownershipRows,
+  }).isOwner;
 
   const boardLink = `${window.location.origin}/kanban?board=${board?.id ?? ''}`;
 
@@ -31,6 +52,8 @@ export default function ShareBoardModal({ board, onClose, onMembersChanged }) {
         if (cancelled) return;
         const scoped = list.filter((member) => !board?.id || String(memberBoardId(member)) === String(board.id));
         setMembers(scoped);
+        // Ownership is known as soon as the rows arrive; profile photos can follow.
+        setMembersLoaded(true);
 
         // Rows already contain email / full_name / avatar_url — fetch profiles only
         // for members that arrived without them.
@@ -44,12 +67,18 @@ export default function ShareBoardModal({ board, onClose, onMembersChanged }) {
         if (cancelled) return;
         setProfiles(Object.fromEntries(resolved.filter(([key, profile]) => key && profile)));
       })
-      .catch((loadError) => { if (!cancelled) setError(loadError.message); });
+      .catch((loadError) => {
+        if (cancelled) return;
+        setError(loadError.message);
+        // Without rows the board row still tells whether the user is the owner.
+        setMembersLoaded(true);
+      });
     return () => { cancelled = true; };
   }, [board?.id]);
 
   async function invite(event) {
     event.preventDefault();
+    if (!canManage) return;
     const email = form.email.trim();
     if (!isEmail(email)) {
       setError('Enter a valid email address.');
@@ -84,6 +113,7 @@ export default function ShareBoardModal({ board, onClose, onMembersChanged }) {
   }
 
   async function changeRole(member, role) {
+    if (!canManage) return;
     setError('');
     try {
       const updated = await updateBoardMember(member.id, { role });
@@ -94,7 +124,9 @@ export default function ShareBoardModal({ board, onClose, onMembersChanged }) {
     }
   }
 
-  async function remove(member) {
+  async function confirmRemove() {
+    const member = memberToRemove;
+    if (!member || !canManage) return;
     setError('');
     try {
       await removeBoardMember(member.id);
@@ -102,6 +134,8 @@ export default function ShareBoardModal({ board, onClose, onMembersChanged }) {
       onMembersChanged?.();
     } catch (removeError) {
       setError(removeError.message);
+    } finally {
+      setMemberToRemove(null);
     }
   }
 
@@ -129,7 +163,7 @@ export default function ShareBoardModal({ board, onClose, onMembersChanged }) {
           <button type="button" className="close-button" aria-label="Close" onClick={onClose}><UilTimes size="20" /></button>
         </header>
 
-        <form className="share-invite" onSubmit={invite}>
+        <form className={`share-invite${canManage ? '' : ' is-readonly'}`} onSubmit={invite}>
           <label>
             Invite people
             <input
@@ -138,24 +172,37 @@ export default function ShareBoardModal({ board, onClose, onMembersChanged }) {
               placeholder="Enter email address"
               type="email"
               aria-label="Invite by email"
+              disabled={!canManage}
             />
           </label>
           <label>
             Access
-            <select value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })} aria-label="Access level">
-              {INVITE_ROLES.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}
-            </select>
+            <Dropdown
+              value={form.role}
+              options={INVITE_ROLES}
+              onChange={(role) => setForm({ ...form, role })}
+              ariaLabel="Access level"
+              disabled={!canManage}
+            />
           </label>
-          <button type="submit" className="primary-button" disabled={busy || !form.email.trim()}>
+          <button type="submit" className="primary-button" disabled={!canManage || busy || !form.email.trim()}>
             {busy ? 'Inviting…' : 'Invite'}
           </button>
         </form>
+
+        {!canManage && membersLoaded && (
+          <p className="share-readonly">Only the board owner can change who has access.</p>
+        )}
 
         {error && <p className="form-error">{error}</p>}
 
         <h3 className="share-section-title">People with access</h3>
         <ul className="share-members">
-          {members.length === 0 && <li className="share-empty">Only you have access so far.</li>}
+          {members.length === 0 && (
+            <li className="share-empty">
+              {canManage ? 'Only you have access so far.' : 'No one has been added to this board yet.'}
+            </li>
+          )}
           {members.map((member) => {
             const key = memberUserId(member);
             const profile = profiles[key];
@@ -173,17 +220,19 @@ export default function ShareBoardModal({ board, onClose, onMembersChanged }) {
                   <span className="share-role">Owner</span>
                 ) : (
                   <>
-                    <select
-                      className="share-role-select"
+                    <Dropdown
+                      className="share-role-dropdown"
                       value={member.role}
-                      onChange={(event) => changeRole(member, event.target.value)}
-                      aria-label={`Access for ${name}`}
-                    >
-                      {INVITE_ROLES.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}
-                    </select>
-                    <button type="button" className="share-remove" onClick={() => remove(member)} aria-label={`Remove ${name}`}>
-                      <UilTrashAlt size="14" />
-                    </button>
+                      options={INVITE_ROLES}
+                      onChange={(role) => changeRole(member, role)}
+                      ariaLabel={`Access for ${name}`}
+                      disabled={!canManage}
+                    />
+                    {canManage && (
+                      <button type="button" className="share-remove" onClick={() => setMemberToRemove(member)} aria-label={`Remove ${name}`}>
+                        <UilTrashAlt size="14" />
+                      </button>
+                    )}
                   </>
                 )}
               </li>
@@ -199,10 +248,19 @@ export default function ShareBoardModal({ board, onClose, onMembersChanged }) {
           <div className="share-footer-actions">
             <button type="button" className="ghost-button" onClick={onClose}>Cancel</button>
             <button type="button" className="primary-button" onClick={copyLink}>
-              <UilCopy size="15" /> {copied ? 'Copied!' : 'Copy link'}
+              {copied ? 'Copied!' : 'Copy link'}
             </button>
           </div>
         </footer>
+
+        {memberToRemove && (
+          <ConfirmModal
+            title="Remove from board?"
+            message={`${memberName(profiles[memberUserId(memberToRemove)], memberToRemove)} will lose access to “${board?.name || 'this board'}”. You can invite them again later.`}
+            onClose={() => setMemberToRemove(null)}
+            onConfirm={confirmRemove}
+          />
+        )}
       </section>
     </div>
   );

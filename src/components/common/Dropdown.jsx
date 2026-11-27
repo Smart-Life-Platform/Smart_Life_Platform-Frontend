@@ -12,9 +12,14 @@ export default function Dropdown({
   ariaLabel,
   className = '',
   panelClassName = '',
+  disabled = false,
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+
+  useEffect(() => {
+    if (disabled) setOpen(false);
+  }, [disabled]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -43,6 +48,7 @@ export default function Dropdown({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={ariaLabel}
+        disabled={disabled}
       >
         <span className={selected ? 'dropdown-value' : 'dropdown-value is-placeholder'}>
           {selected ? selected.label : placeholder}

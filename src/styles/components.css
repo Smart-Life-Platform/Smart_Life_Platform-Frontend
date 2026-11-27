@@ -1,0 +1,308 @@
+/* Shared components: avatars, dropdown, date picker, colour picker, dialog actions. */
+
+/* ---------- Member avatars (real profiles) ---------- */
+.member-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+  color: var(--color-accent);
+  background: var(--color-purple);
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ---------- Dropdown (popover select) ---------- */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border-input);
+  border-radius: 8px;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  font-size: 16px;
+  text-align: left;
+}
+
+.dropdown-trigger:hover {
+  border-color: var(--color-border);
+}
+
+.dropdown-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-value.is-placeholder {
+  color: var(--color-secondary);
+}
+
+.dropdown-chevron {
+  color: var(--color-secondary);
+  font-size: 12px;
+}
+
+.dropdown-panel {
+  position: absolute;
+  z-index: 1200;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  max-height: 220px;
+  overflow: auto;
+  padding: 6px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 10px;
+  background: var(--color-surface);
+  box-shadow: 0 14px 30px var(--color-shadow);
+}
+
+.dropdown-option {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--color-text-primary);
+  background: transparent;
+  font-size: 14px;
+  text-align: left;
+}
+
+.dropdown-option:hover {
+  background: var(--color-surface-muted);
+}
+
+.dropdown-option.is-selected {
+  color: var(--color-accent);
+  background: var(--color-purple);
+  font-weight: 600;
+}
+
+/* ---------- Calendar popover ---------- */
+.calendar-panel {
+  position: absolute;
+  z-index: 1300;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 288px;
+  padding: 12px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 12px;
+  background: var(--color-surface);
+  box-shadow: 0 16px 34px var(--color-shadow);
+}
+
+.calendar-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.calendar-panel-head strong {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.calendar-panel-nav {
+  display: flex;
+  gap: 2px;
+}
+
+.calendar-panel-nav button {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--color-secondary);
+  background: transparent;
+  font-size: 14px;
+}
+
+.calendar-panel-nav button:hover {
+  color: var(--color-accent);
+  background: var(--color-surface-muted);
+}
+
+.calendar-panel-weekdays,
+.calendar-panel-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calendar-panel-weekdays span {
+  display: grid;
+  place-items: center;
+  height: 20px;
+  color: var(--color-secondary);
+  font-size: 12px;
+}
+
+.calendar-day {
+  display: grid;
+  place-items: center;
+  height: 26px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--color-text-primary);
+  background: transparent;
+  font-size: 12px;
+}
+
+.calendar-day:hover {
+  background: var(--color-surface-muted);
+}
+
+.calendar-day.is-today {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.calendar-day.is-selected {
+  color: #fff;
+  background: var(--color-accent);
+}
+
+.calendar-day.is-empty {
+  visibility: hidden;
+}
+
+.calendar-clear {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px 0 0;
+  border: 0;
+  border-top: 1px solid var(--color-border-subtle);
+  color: var(--color-secondary);
+  background: transparent;
+  font-size: 14px;
+  text-align: left;
+}
+
+.calendar-clear:hover {
+  color: var(--color-accent);
+}
+
+/* Colour picker: five brand colours, painted from CSS variables. */
+.color-field {
+  display: grid;
+  gap: 8px;
+}
+
+.color-field-label {
+  color: var(--color-secondary);
+  font-size: 12px;
+}
+
+.color-palette {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.color-swatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: border-color .15s ease, transform .15s ease;
+}
+
+.color-swatch.is-selected {
+  border-color: var(--color-accent);
+  box-shadow: inset 0 0 0 2px var(--color-surface);
+}
+
+.color-swatch:hover {
+  transform: scale(1.06);
+}
+
+.color-swatch:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* One button language for every dialog. */
+.dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.dialog-actions .primary-button,
+.dialog-actions .ghost-button,
+.dialog-actions .secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 85px;
+  height: 40px;
+  margin: 0;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.dialog-actions .primary-button {
+  border: 0;
+  color: var(--color-accent-foreground);
+  background: var(--color-accent);
+}
+
+.dialog-actions .primary-button:hover:not(:disabled) {
+  background: var(--color-brand-dark);
+}
+
+.dialog-actions .primary-button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.dialog-actions .ghost-button,
+.dialog-actions .secondary-button {
+  border: 1px dashed #E7E7EC;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+}
+
+.dialog-actions .ghost-button:hover:not(:disabled),
+.dialog-actions .secondary-button:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* Design accent (#6558C8) on the task details popover and the date picker. */
+.calendar-day.is-selected {
+  color: var(--color-accent);
+  background: var(--color-accent-subtle);
+  font-weight: 600;
+}
+
+.modal-subtitle {
+  margin: 4px 0 0;
+  color: var(--color-secondary);
+  font-size: 13px;
+}
