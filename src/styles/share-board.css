@@ -1,0 +1,367 @@
+/* Share board modal. */
+
+/* ---------- Share board modal ---------- */
+
+
+.share-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px auto;
+  gap: 8px;
+  align-items: end;
+  margin-bottom: 14px;
+}
+
+.share-form label {
+  margin: 0;
+}
+
+.share-form .primary-button {
+  height: 34px;
+  padding: 0 12px;
+  font-size: 10px;
+}
+
+.share-members {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.share-members li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+.share-member-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.share-members select {
+  height: 26px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+.share-role.owner {
+  padding: 2px 7px;
+  border-radius: 999px;
+  color: var(--color-accent);
+  background: var(--color-purple);
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.share-remove {
+  border: 0;
+  color: var(--color-red);
+  background: transparent;
+  font-size: 10px;
+}
+
+/* ---------- Share board modal (design) ---------- */
+
+.share-modal {
+  width: 600px;
+  padding: 22px;
+}
+.share-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.share-header h2 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.share-board-name {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.share-board-description {
+  margin: 7px 0;
+  color: var(--color-secondary);
+  font-size: 13px;
+}
+
+.share-invite {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.share-invite label {
+  margin: 0;
+  color: var(--color-secondary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.share-invite input,
+.share-invite select {
+  width: 100%;
+  height: 34px;
+  margin-top: 5px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border-input);
+  border-radius: 8px;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  font-size: 16px;
+}
+
+.share-invite .primary-button {
+  height: 34px;
+  padding: 0 12px;
+  font-size: 16px;
+}
+
+/* Read-only share panel: an editor/viewer sees the form and the member list, but
+   nothing can be changed (the backend would answer 403). */
+.share-invite.is-readonly {
+  opacity: .55;
+}
+
+.share-invite.is-readonly input,
+.share-invite.is-readonly select,
+.share-invite.is-readonly .dropdown-trigger {
+  cursor: not-allowed;
+  background: var(--color-surface-muted);
+}
+
+.share-invite .primary-button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.share-readonly {
+  margin: 10px 0 0;
+  color: var(--color-secondary);
+  font-size: 10px;
+}
+
+.share-role-select:disabled {
+  cursor: not-allowed;
+  color: var(--color-text-muted);
+}
+
+.share-section-title {
+  margin: 18px 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.share-members {
+  display: grid;
+  gap: 2px;
+  max-height: 230px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.share-members li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 6px;
+  border: 0;
+  border-radius: 8px;
+}
+
+.share-members li:hover {
+  background: var(--color-surface-muted);
+}
+
+.share-avatar {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.share-avatar-initials {
+  display: grid;
+  place-items: center;
+  color: var(--color-accent);
+  background: var(--color-purple);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.share-member-copy {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.share-member-copy strong {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.share-member-copy small {
+  overflow: hidden;
+  color: var(--color-secondary);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.share-role {
+  color: var(--color-secondary);
+  font-size: 10px;
+}
+
+/* Member role picker: the app's standard dropdown, kept compact inside the row. */
+.share-role-dropdown {
+  flex: 0 0 auto;
+}
+
+.share-role-dropdown .dropdown-trigger {
+  width: auto;
+  height: 26px;
+  padding: 0 4px;
+  border-color: transparent;
+  border-radius: 6px;
+  color: var(--color-secondary);
+  background: transparent;
+  font-size: 10px;
+}
+
+.share-role-dropdown .dropdown-trigger:hover {
+  border-color: var(--color-border-subtle);
+}
+
+.share-role-dropdown .dropdown-trigger:disabled {
+  cursor: not-allowed;
+  color: var(--color-text-muted);
+}
+
+.share-role-dropdown .dropdown-chevron {
+  font-size: 9px;
+}
+
+.share-role-dropdown .dropdown-panel {
+  left: auto;
+  right: 0;
+  min-width: 150px;
+}
+
+.share-remove {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--color-secondary);
+  background: transparent;
+  opacity: 0;
+  transition: opacity .15s ease, color .15s ease;
+}
+
+.share-members li:hover .share-remove,
+.share-remove:focus-visible {
+  opacity: 1;
+}
+
+.share-remove:hover {
+  color: var(--color-red);
+}
+
+.share-empty {
+  color: var(--color-secondary);
+  font-size: 11px;
+}
+
+.share-footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.share-link-label {
+  display: block;
+  color: var(--color-secondary);
+  font-size: 9px;
+}
+
+.share-link {
+  display: block;
+  margin-top: 4px;
+  color: var(--color-text-primary);
+  font-size: 10px;
+  word-break: break-all;
+}
+
+.share-footer-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Footer buttons follow the design: 85 × 40 px, 8 px radius, 1 px border. */
+.share-footer-actions .ghost-button,
+.share-footer-actions .primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 85px;
+  height: 40px;
+  padding: 0 8px;
+  border: 2px dashed var(--color-border-subtle);
+  border-radius: 8px;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.share-footer-actions .ghost-button {
+  color: var(--color-secondary);
+}
+
+.share-footer-actions .ghost-button:hover,
+.share-footer-actions .primary-button:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.share-footer-actions .primary-button:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+.share-members .member-avatar {
+  border: 0;
+}

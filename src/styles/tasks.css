@@ -1,0 +1,452 @@
+/* Task dialog, fields, subtasks and quick add panel. */
+
+/* ---------- Task dialog (design) ---------- */
+.task-dialog {
+  width: min(100%, 620px);
+  max-height: 92vh;
+  overflow: visible;
+  padding: 20px 22px 16px;
+  border-radius: 14px;
+  background: var(--color-surface);
+}
+
+.task-dialog-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.task-dialog-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.task-dialog-head p {
+  margin: 4px 0 0;
+  color: var(--color-secondary);
+  font-size: 11px;
+}
+
+.field {
+  display: grid;
+  gap: 5px;
+  margin: 0 0 12px;
+  color: var(--color-secondary);
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-secondary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.field-hint {
+  color: var(--color-secondary);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--color-border-input);
+  border-radius: 8px;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  font-family: inherit;
+  font-size: 16px;
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color: var(--color-accent);
+  outline: 0;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 14px;
+}
+
+.field-inline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px;
+  gap: 8px;
+}
+
+.time-input {
+  height: 34px;
+}
+
+.task-dialog-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.task-dialog-foot p {
+  margin: 0;
+  color: var(--color-secondary);
+  font-size: 12px;
+}
+
+.task-dialog-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* One size for both footer buttons: the shared .primary-button is 16px text with 13px
+   padding, so "Save changes" used to stand twice as tall as "Cancel". */
+.task-dialog-actions .ghost-button,
+.task-dialog-actions .primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 104px;
+  height: 34px;
+  margin: 0;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.task-dialog-actions .ghost-button {
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border-subtle);
+  color: var(--color-secondary);
+  background: var(--color-surface);
+  font-size: 11px;
+}
+
+.task-dialog-actions .ghost-button:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.task-dialog-actions .primary-button {
+  border: 1px solid transparent;
+  color: var(--color-white);
+  background: var(--color-accent);
+}
+
+.task-dialog-actions .primary-button:hover:not(:disabled) {
+  background: var(--color-brand-dark);
+}
+
+.task-dialog-actions .primary-button:disabled {
+  opacity: .65;
+  cursor: default;
+}
+
+.ghost-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 0;
+  border: 0;
+  color: var(--color-accent);
+  background: transparent;
+  font-size: 12px;
+}
+
+.checklist {
+  display: grid;
+  gap: 4px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checklist li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 6px;
+  color: var(--color-text-primary);
+  font-size: 12px;
+}
+
+.checklist li span {
+  flex: 1;
+}
+
+.checklist li button {
+  border: 0;
+  color: var(--color-secondary);
+  background: transparent;
+}
+
+/* ---------- Quick add panel (floats above a column) ---------- */
+.board-column {
+  position: relative;
+}
+
+.quick-add {
+  position: absolute;
+  z-index: 60;
+  top: 38px;
+  right: 6px;
+  left: 6px;
+  display: grid;
+  padding: 12px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 12px;
+  background: var(--color-surface);
+  box-shadow: 0 18px 40px rgb(37 38 44 / 18%);
+}
+
+.quick-add header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.quick-add-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-accent);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.quick-add .field {
+  margin-bottom: 10px;
+}
+
+.quick-add footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+/* ---------- Subtask checklist (TaskDetailsPopover & TaskForm) ---------- */
+.subtask-checklist {
+  margin-top: 12px;
+}
+
+.subtask-checklist-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--color-secondary);
+  font-weight: 500;
+}
+
+.subtask-checklist-count {
+  margin-left: auto;
+  font-size: 14px;
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.subtask-progress-bar {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-border-subtle);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.subtask-progress-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--color-accent);
+  transition: width .25s ease;
+}
+
+.subtask-empty {
+  margin: 4px 0;
+  color: var(--color-secondary);
+  font-size: 10px;
+}
+
+.subtask-list {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.subtask-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 6px;
+  font-size: 13px;
+  transition: background .15s;
+}
+
+.subtask-item:hover {
+  background: var(--color-surface-muted);
+}
+
+.subtask-done .subtask-title {
+  text-decoration: line-through;
+  color: var(--color-secondary);
+}
+
+.subtask-toggle {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  color: var(--color-secondary);
+  cursor: pointer;
+  transition: color .15s;
+}
+
+.subtask-toggle:hover {
+  color: var(--color-accent);
+}
+
+.subtask-done .subtask-toggle {
+  color: var(--color-accent);
+}
+
+.subtask-title {
+  flex: 1;
+}
+
+.subtask-delete {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-secondary);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .15s;
+}
+
+.subtask-item:hover .subtask-delete {
+  opacity: 1;
+}
+
+.subtask-add-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.subtask-add-input {
+  flex: 1;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--color-border-input);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 13px;
+}
+
+.subtask-add-btn {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--color-border-input);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-secondary);
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+
+.subtask-add-btn:not(:disabled):hover {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.subtask-add-btn:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+/* Checklist in TaskForm — existing items with toggle */
+.checklist-existing {
+  margin-bottom: 4px;
+}
+
+.checklist-existing li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+.checklist-existing li .checklist-title {
+  flex: 1;
+}
+
+.checklist-done .checklist-title {
+  text-decoration: line-through;
+  color: var(--color-secondary);
+}
+
+.checklist-toggle {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  color: var(--color-secondary);
+  cursor: pointer;
+}
+
+.checklist-done .checklist-toggle {
+  color: var(--color-accent);
+}
+
+.checklist-new-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  flex-shrink: 0;
+}
