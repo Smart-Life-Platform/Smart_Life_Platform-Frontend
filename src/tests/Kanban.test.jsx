@@ -211,12 +211,14 @@ describe('Kanban Components', () => {
     expect(screen.getByText('1')).toBeInTheDocument();
     expect(screen.getByText('Test Task 1')).toBeInTheDocument();
 
-    // The footer button opens the quick add panel, the header "+" the full dialog.
+    // Both the footer button and the header "+" open the quick add panel.
     fireEvent.click(screen.getByText('+ Add task'));
     expect(handleQuickAdd).toHaveBeenCalledWith(mockStatuses[0]);
 
     fireEvent.click(screen.getByLabelText('Add task to column'));
-    expect(handleCreate).toHaveBeenCalledWith(mockStatuses[0]);
+    expect(handleQuickAdd).toHaveBeenCalledTimes(2);
+    expect(handleQuickAdd).toHaveBeenCalledWith(mockStatuses[0]);
+    expect(handleCreate).not.toHaveBeenCalled();
   });
 
   test('Column menu offers rename, colour, move and archive', () => {
