@@ -1,4 +1,5 @@
 import { UilCalendarAlt, UilClock } from '@iconscout/react-unicons';
+import Dropdown from '../common/Dropdown';
 
 export default function TaskDetailsMeta({
   dueDate,
@@ -7,6 +8,8 @@ export default function TaskDetailsMeta({
   statuses = [],
   onStatusChange,
 }) {
+  const statusOptions = statuses.map((status) => ({ value: String(status.id), label: status.name }));
+
   return (
     <>
       <div className="task-popover-meta">
@@ -25,36 +28,20 @@ export default function TaskDetailsMeta({
       </div>
 
       {onStatusChange && (
-        <div style={{ marginTop: '8px' }}>
-          <label
-            style={{
-              fontSize: '10px',
-              color: 'var(--color-secondary)',
-              display: 'block',
-              marginBottom: '4px',
+        <div className="task-popover-status">
+          <span>Move to status</span>
+          <Dropdown
+            value={currentStatusId ? String(currentStatusId) : ''}
+            options={statusOptions}
+            placeholder="Select status"
+            ariaLabel="Move to status"
+            onChange={(value) => {
+              const nextStatus = statuses.find((status) => String(status.id) === value);
+              if (nextStatus) onStatusChange(nextStatus);
             }}
-          >
-            Move to status
-            <select
-              value={currentStatusId || ''}
-              onChange={(e) => {
-                const nextStatus = statuses.find((s) => String(s.id) === e.target.value);
-                if (nextStatus) {
-                  onStatusChange(nextStatus);
-                }
-              }}
-              style={{ marginTop: '4px', width: '100%', padding: '6px' }}
-            >
-              {statuses.map((status) => (
-                <option key={status.id} value={status.id}>
-                  {status.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          />
         </div>
       )}
     </>
   );
 }
-

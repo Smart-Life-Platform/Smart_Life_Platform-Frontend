@@ -2,6 +2,7 @@ import axios from 'axios';
 import { supabase } from '../lib/supabase';
 import { AUTH_STORAGE_KEY, readStoredAuth } from '../auth/authStorage';
 import { messageFromPayload } from '../utils/errorMessage';
+import { localeMessage } from '../utils/locale';
 
 const baseURL = (process.env.REACT_APP_API_BASE_URL || 'http://127.0.0.1:8000/api').replace(/\/+$/, '');
 
@@ -37,10 +38,10 @@ apiClient.interceptors.response.use(
         window.localStorage.removeItem(AUTH_STORAGE_KEY);
         if (window.location.pathname !== '/login') window.location.replace('/login');
       });
-      return Promise.reject(new Error('Сесія завершилася. Перенаправлення на сторінку входу.'));
+      return Promise.reject(new Error(localeMessage('sessionExpired')));
     }
-    if (status === 403) return Promise.reject(new Error('Недостатньо прав для цієї операції.'));
-    if (error.response) return Promise.reject(new Error(messageFromPayload(error.response.data) || 'Сервер відхилив запит.'));
-    return Promise.reject(new Error('Не вдалося підключитися до API.'));
+    if (status === 403) return Promise.reject(new Error(localeMessage('insufficientRights')));
+    if (error.response) return Promise.reject(new Error(messageFromPayload(error.response.data) || localeMessage('serverRejected')));
+    return Promise.reject(new Error(localeMessage('apiUnavailable')));
   }
 );

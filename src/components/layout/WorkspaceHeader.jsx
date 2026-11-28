@@ -2,7 +2,7 @@ import { UilBell, UilSearch } from '@iconscout/react-unicons';
 import { useLocation } from 'react-router-dom';
 import UserMenu from './UserMenu';
 import { useBoardSpaces } from '../../hooks/useBoardSpaces';
-import '../../styles/avenor.css';
+import '../../styles/workspace.css';
 
 const pageNames = {
   '/overview': 'Overview',

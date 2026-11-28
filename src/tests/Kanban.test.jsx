@@ -186,8 +186,9 @@ describe('Kanban Components', () => {
     fireEvent.click(screen.getByText('Delete'));
     expect(handleDelete).toHaveBeenCalledWith(mockTask);
 
-    const statusSelect = screen.getByLabelText(/Move to status/i);
-    fireEvent.change(statusSelect, { target: { value: '2' } });
+    const statusControl = screen.getByLabelText(/Move to status/i);
+    fireEvent.click(statusControl);
+    fireEvent.click(screen.getByRole('option', { name: 'In Progress' }));
     expect(handleStatusChange).toHaveBeenCalledWith(101, mockStatuses[1]);
   });
 
@@ -210,12 +211,87 @@ describe('Kanban Components', () => {
     expect(screen.getByText('1')).toBeInTheDocument();
     expect(screen.getByText('Test Task 1')).toBeInTheDocument();
 
-    // The footer button opens the quick add panel, the header "+" the full dialog.
+    // Both the footer button and the header "+" open the quick add panel.
     fireEvent.click(screen.getByText('+ Add task'));
     expect(handleQuickAdd).toHaveBeenCalledWith(mockStatuses[0]);
 
     fireEvent.click(screen.getByLabelText('Add task to column'));
-    expect(handleCreate).toHaveBeenCalledWith(mockStatuses[0]);
+    expect(handleQuickAdd).toHaveBeenCalledTimes(2);
+    expect(handleQuickAdd).toHaveBeenCalledWith(mockStatuses[0]);
+    expect(handleCreate).not.toHaveBeenCalled();
+  });
+
+  test('Column menu offers rename, colour, move and archive', () => {
+    const handleRename = jest.fn();
+    const handleColor = jest.fn();
+    const handleMove = jest.fn();
+    const handleArchive = jest.fn();
+
+    renderWithRouter(
+      <KanbanColumn
+        status={mockStatuses[1]}
+        tasks={[]}
+        categories={mockCategories}
+        statuses={mockStatuses}
+        canMoveLeft
+        canMoveRight
+        onRenameColumn={handleRename}
+        onChangeColumnColor={handleColor}
+        onMoveColumn={handleMove}
+        onArchiveColumn={handleArchive}
+      />
+    );
+
+    fireEvent.click(screen.getByLabelText('Actions for In Progress'));
+    expect(screen.getByRole('menu', { name: 'In Progress actions' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Rename column' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Change color' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Move column left' })).toBeEnabled();
+    expect(screen.getByRole('menuitem', { name: 'Move column right' })).toBeEnabled();
+    expect(screen.getByRole('menuitem', { name: 'Archive column' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Rename column' }));
+    expect(handleRename).toHaveBeenCalledWith(mockStatuses[1]);
+
+    fireEvent.click(screen.getByLabelText('Actions for In Progress'));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Move column right' }));
+    expect(handleMove).toHaveBeenCalledWith(mockStatuses[1], 1);
+
+    fireEvent.click(screen.getByLabelText('Actions for In Progress'));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Change color' }));
+    expect(screen.getByRole('group', { name: 'Column color' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('radio', { name: 'Blue' }));
+    expect(handleColor).toHaveBeenCalledWith(mockStatuses[1], '#5980B6');
+  });
+
+  test('First column cannot move left and viewers get no column menu', () => {
+    const { unmount } = renderWithRouter(
+      <KanbanColumn
+        status={mockStatuses[0]}
+        tasks={[]}
+        categories={mockCategories}
+        statuses={mockStatuses}
+        canMoveLeft={false}
+        canMoveRight
+        onMoveColumn={jest.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByLabelText('Actions for To Do'));
+    expect(screen.getByRole('menuitem', { name: 'Move column left' })).toBeDisabled();
+    expect(screen.getByRole('menuitem', { name: 'Move column right' })).toBeEnabled();
+    unmount();
+
+    renderWithRouter(
+      <KanbanColumn
+        status={mockStatuses[0]}
+        tasks={[]}
+        categories={mockCategories}
+        statuses={mockStatuses}
+        readOnly
+      />
+    );
+    expect(screen.queryByLabelText('Actions for To Do')).not.toBeInTheDocument();
   });
 
   test('KanbanBoard renders columns and handles empty state', () => {
@@ -268,14 +344,17 @@ describe('Kanban Components', () => {
     expect(screen.getByText('New status')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Enter status name')).toBeInTheDocument();
     expect(screen.queryByText('Position')).not.toBeInTheDocument();
+    // Colour comes from the five-colour palette, not a native colour input.
+    expect(screen.getByRole('radiogroup', { name: 'Color' })).toBeInTheDocument();
 
     fireEvent.change(screen.getByPlaceholderText('Enter status name'), {
       target: { value: 'In Review' },
     });
+    fireEvent.click(screen.getByRole('radio', { name: 'Green' }));
     await act(async () => {
       fireEvent.click(screen.getByText('Create status'));
     });
-    expect(handleSubmit).toHaveBeenCalledWith({ name: 'In Review', color: '#6d5ce7' });
+    expect(handleSubmit).toHaveBeenCalledWith({ name: 'In Review', color: '#4A9B79' });
   });
 });
 
