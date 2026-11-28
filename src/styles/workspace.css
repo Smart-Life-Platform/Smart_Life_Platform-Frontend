@@ -663,3 +663,10 @@
 .icon-list {
   --nav-icon: url('../assets/icons/overview.svg');
 }
+
+/* Dark theme fixes (moved here from the removed avenor.css) */
+.workspace-actions .global-search input { background: transparent; }
+.workspace-actions .global-search input::placeholder { color: var(--color-text-muted); }
+
+main.site-content { background: var(--color-canvas); }
+.site-content .workspace-page { background: var(--color-canvas); }

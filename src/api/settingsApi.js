@@ -20,3 +20,24 @@ export async function saveProfileSettings(userId, patch) {
   if (error) throw error;
   return data;
 }
+
+export async function fetchProfile(userId) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('timezone, settings, theme, language')
+    .eq('user_id', userId)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function saveProfile(userId, patch) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(patch)
+    .eq('user_id', userId)
+    .select('timezone, settings, theme, language')
+    .single();
+  if (error) throw error;
+  return data;
+}

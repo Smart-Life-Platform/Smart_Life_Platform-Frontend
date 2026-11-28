@@ -119,3 +119,117 @@ button { cursor: pointer; }
   --color-accent-subtle: #efedff;
   --color-toggle-off: #d1d5db;
 }
+
+
+/* ---------- Dark theme ----------
+   Switched by <html data-theme="dark"> (see src/utils/theme.js).
+   --color-white is intentionally NOT overridden: it stays white for text on coloured
+   buttons. Use --color-surface for card / input backgrounds. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-canvas: #17181f;
+  --color-surface: #21222d;
+  --color-surface-page: #17181f;
+  --color-surface-muted: #1c1d26;
+  --color-surface-lavender: #25233d;
+  --color-surface-lavender-light: #1f1f2c;
+  --color-surface-blue-tint: #1d2130;
+  --color-graphite: #e8e8ee;
+  --color-secondary: #9a9cab;
+  --color-border: #3d3d4c;
+  --color-border-subtle: #3d3d4c;
+  --color-border-input: #3d3d4c;
+  --color-accent: #8478f2;
+  --color-purple: #29264a;
+  --color-brand-primary: #8478f2;
+  --color-brand-soft: #29264a;
+  --color-brand-dark: #9a90f6;
+  --color-green: #5bb893;
+  --color-green-soft: #1d2d28;
+  --color-yellow: #d4a63f;
+  --color-blue: #7aa2dc;
+  --color-red: #e0707c;
+  --color-shadow: rgb(0 0 0 / 40%);
+  --color-overlay: rgb(0 0 0 / 60%);
+  --color-overlay-dark: rgba(0, 0, 0, .6);
+  --color-modal-overlay: #000000aa;
+  --color-modal-shadow: #00000066;
+  --color-modal-muted: #9a9cab;
+  --color-text-primary: #f0f0f5;
+  --color-text-muted: #8f91a0;
+  --color-text-tertiary: #a0a0a8;
+  --color-text-auth-muted: #a0a2b2;
+  --color-shadow-auth: rgba(0, 0, 0, .35);
+  --color-profile-shadow: rgba(0, 0, 0, .3);
+  --color-status-error-muted: #e0707c;
+  --color-status-danger: #ef5b67;
+  --color-status-danger-ring: rgba(239, 91, 103, .25);
+  --color-status-danger-surface: #34191d;
+  --color-status-danger-text: #f08a93;
+  --color-status-danger-light: #3a1c20;
+  --color-status-warning: #e3b04b;
+  --color-status-success: #5bc08a;
+  --color-status-success-text: #6cc79b;
+  --color-surface-overlay-light: rgb(33 34 45 / 60%);
+  --color-surface-overlay: rgb(33 34 45 / 80%);
+
+  --color-budget-page: #14161a;
+  --color-budget-text: #e8eceb;
+  --color-budget-muted: #8e9a9f;
+  --color-budget-border: #2a3033;
+
+  --color-calendar-muted: #9a9cab;
+  --color-calendar-subtle: #6f7180;
+  --color-calendar-border-strong: #3a3a4c;
+  --color-calendar-text: #b4b6c4;
+  --color-calendar-surface: #1c1c26;
+  --color-calendar-grid: #2f2f3d;
+  --color-calendar-grid-strong: #4a4a5e;
+  --color-calendar-grid-major: #444456;
+  --color-calendar-grid-minor: #2a2a36;
+  --color-calendar-heading: #c9cbd8;
+  --color-calendar-selected: #29264a;
+  --color-calendar-selected-border: #5a52b8;
+  --color-calendar-selected-strong: #9a90f5;
+  --color-calendar-selected-glow: rgb(124 112 240 / 25%);
+  --color-calendar-highlight: rgb(255 255 255 / 8%);
+
+  --color-category-default: #2c2a4a;
+  --color-task-text-muted: #a7aeb8;
+  --color-task-surface-muted: #262b30;
+  --color-task-meta: #7c7e8c;
+  --color-priority-high: #f08a93;
+  --color-priority-low: #6cc79b;
+  --color-badge-text: #f08fb2;
+  --color-badge-surface: #3a2430;
+
+  --color-control-muted: #9a9bb5;
+  --color-control-text: #c0c2d2;
+  --color-control-border: #34344a;
+  --color-control-placeholder: #8a8b98;
+  --color-control-surface: #24242e;
+  --color-control-icon: #8a8d9c;
+  --color-control-text-muted: #a0a2b0;
+  --color-control-muted-dark: #a4a6b6;
+  --color-border-brand-soft: #3d3a6e;
+  --color-border-brand: #4a4780;
+  --color-shadow-brand: rgb(0 0 0 / 40%);
+  --color-nav-text: #a0a2b2;
+  --color-nav-icon: #9a9dc8;
+
+  --color-menu-border: #3d3d4c;
+  --color-menu-shadow: rgba(0, 0, 0, .5);
+  --color-menu-divider: #2a2a36;
+  --color-menu-heading: #f3f4f8;
+  --color-menu-muted: #a0a2b0;
+  --color-menu-text: #e2e3ea;
+  --color-menu-hover: #262631;
+  --color-settings-muted: #9a9cab;
+  --color-toggle-off: #3b3b4a;
+}
+
+:root[data-theme='dark'] body {
+  color: var(--color-text-primary);
+  background: var(--color-canvas);
+}
