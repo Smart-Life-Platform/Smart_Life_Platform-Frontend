@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, waitFor, act } from '@testing-library/react';
 import LimitsSettings from './LimitsSettings';
 
 const categories = [
@@ -8,7 +8,9 @@ const categories = [
 ];
 const items = [{ category: categories[0], total: 4250 }];
 
-const setup = (onChange = jest.fn().mockResolvedValue(true)) => {
+const later = (value) => new Promise((resolve) => setTimeout(() => resolve(value), 0));
+
+const setup = (onChange = jest.fn(() => later(true))) => {
   render(<LimitsSettings categories={categories} items={items} onChange={onChange} />);
   return onChange;
 };
@@ -46,9 +48,8 @@ describe('LimitsSettings', () => {
     open('Food');
     fireEvent.change(within(dialog()).getByLabelText('Amount, ₴'), { target: { value: '7000' } });
     fireEvent.click(within(dialog()).getByRole('button', { name: 'Save' }));
-    await screen.findByText('Food');
     expect(onChange).toHaveBeenCalledWith(1, 7000);
-    expect(screen.queryByRole('dialog')).toBeNull();
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 
   it('від’ємна або порожня сума: Save вимкнений', () => {
@@ -74,10 +75,10 @@ describe('LimitsSettings', () => {
   });
 
   it('вікно лишається відкритим, якщо збереження не вдалось', async () => {
-    const onChange = setup(jest.fn().mockResolvedValue(false));
+    const onChange = setup(jest.fn(() => later(false)));
     open('Food');
     fireEvent.click(within(dialog()).getByRole('button', { name: 'Save' }));
-    await new Promise((r) => setTimeout(r, 0)); // дати завершитись асинхронному збереженню
+    await act(async () => { await later(); }); // дати завершитись асинхронному збереженню
     expect(onChange).toHaveBeenCalledWith(1, 6000);
     expect(screen.getByRole('dialog')).toBeTruthy();
   });

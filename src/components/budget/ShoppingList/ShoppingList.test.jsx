@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, waitFor, act } from '@testing-library/react';
 import ShoppingList from './ShoppingList';
 
 jest.mock('@iconscout/react-unicons', () => new Proxy({}, { get: () => () => null }));
@@ -15,9 +15,11 @@ const lists = [
   { id: 2, title: 'Supermarket', items: [] },
 ];
 
+const later = (value) => new Promise((resolve) => setTimeout(() => resolve(value), 0));
+
 const setup = (props = {}) => {
   const handlers = {
-    onToggle: jest.fn(), onAddItem: jest.fn().mockResolvedValue(true), onEditItem: jest.fn().mockResolvedValue(true),
+    onToggle: jest.fn(), onAddItem: jest.fn(() => later(true)), onEditItem: jest.fn(() => later(true)),
     onDeleteItem: jest.fn(), onAddList: jest.fn(), onDeleteList: jest.fn(),
   };
   render(<ShoppingList lists={lists} {...handlers} {...props} />);
@@ -69,9 +71,8 @@ describe('ShoppingList', () => {
     fireEvent.submit(nameInput.closest('form'));
     fireEvent.change(within(dialog()).getByLabelText('Quantity'), { target: { value: '4' } });
     fireEvent.click(within(dialog()).getByRole('button', { name: 'Add item' }));
-    await screen.findByText('Magazine');
     expect(onAddItem).toHaveBeenCalledWith(1, { name: 'Tomato', quantity: 4, unit: 'pcs' });
-    expect(screen.queryByRole('dialog')).toBeNull();
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull()); // вікно закривається після відповіді API
   });
 
   it('обирає одиницю виміру зі списку', async () => {
@@ -83,8 +84,8 @@ describe('ShoppingList', () => {
     fireEvent.click(within(dialog()).getByRole('button', { name: 'Unit' }));
     fireEvent.click(screen.getByRole('option', { name: 'kg' }));
     fireEvent.click(within(dialog()).getByRole('button', { name: 'Add item' }));
-    await screen.findByText('Magazine');
     expect(onAddItem).toHaveBeenCalledWith(1, { name: 'Flour', quantity: 1.5, unit: 'kg' });
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 
   it.each([['', 'Quantity must be greater than 0'], ['0', 'Quantity must be greater than 0'], ['-2', 'Quantity must be greater than 0']])(
@@ -112,14 +113,14 @@ describe('ShoppingList', () => {
   });
 
   it('вікно залишається відкритим, якщо збереження не вдалось', async () => {
-    const onAddItem = jest.fn().mockResolvedValue(false);
+    const onAddItem = jest.fn(() => later(false));
     setup({ onAddItem });
     const [nameInput] = screen.getAllByPlaceholderText('New position');
     fireEvent.change(nameInput, { target: { value: 'Salt' } });
     fireEvent.submit(nameInput.closest('form'));
     fireEvent.change(within(dialog()).getByLabelText('Quantity'), { target: { value: '1' } });
     fireEvent.click(within(dialog()).getByRole('button', { name: 'Add item' }));
-    await new Promise((r) => setTimeout(r, 0)); // дати завершитись асинхронному збереженню
+    await act(async () => { await later(); }); // дати завершитись асинхронному збереженню
     expect(onAddItem).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('dialog')).toBeTruthy();
   });
@@ -132,8 +133,8 @@ describe('ShoppingList', () => {
     expect(within(dialog()).getByLabelText('Quantity').value).toBe('1.5');
     fireEvent.change(within(dialog()).getByLabelText('Quantity'), { target: { value: '3' } });
     fireEvent.click(within(dialog()).getByRole('button', { name: 'Save changes' }));
-    await screen.findByText('Magazine');
     expect(onEditItem).toHaveBeenCalledWith(1, 11, { name: 'Flour', quantity: 3, unit: 'kg' });
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 
   it('Cancel закриває вікно без збереження', () => {
