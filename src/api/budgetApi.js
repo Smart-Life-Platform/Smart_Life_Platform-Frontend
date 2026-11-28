@@ -1,12 +1,12 @@
 import { apiClient } from './apiClient';
 
-// Supabase відповідає повільно, тому запитам бюджету даємо більше часу,
-// ніж 15 с за замовчуванням в apiClient 
 const SLOW = { timeout: 45000 };
 
 const list = (data) => (Array.isArray(data) ? data : data?.results || []);
 
 const normalizeCategory = (c) => ({ ...c, monthly_limit: Number(c.monthly_limit || 0) });
+const normalizeItem = (i) => ({ ...i, quantity: Number(i.quantity ?? 1), unit: i.unit || 'pcs' });
+const normalizeShoppingList = (l) => ({ ...l, items: (l.items || []).map(normalizeItem) });
 const normalizeRecord = (r) => ({ ...r, amount: Number(r.amount) });
 const normalizeSummary = (s) => ({
   ...s,
@@ -38,12 +38,14 @@ export const deleteBudgetRecord = (id) => apiClient.delete(`/budget/records/${id
 export const getBudgetSummary = (month) =>
   apiClient.get('/budget/summary/', { params: { month }, ...SLOW }).then((r) => normalizeSummary(r.data));
 
-export const getShoppingLists = () => apiClient.get('/budget/shopping-lists/', SLOW).then((r) => list(r.data));
+export const getShoppingLists = () =>
+  apiClient.get('/budget/shopping-lists/', SLOW).then((r) => list(r.data).map(normalizeShoppingList));
 export const createShoppingList = (title) =>
-  apiClient.post('/budget/shopping-lists/', { title }, SLOW).then((r) => r.data);
+  apiClient.post('/budget/shopping-lists/', { title }, SLOW).then((r) => normalizeShoppingList(r.data));
 export const deleteShoppingList = (id) => apiClient.delete(`/budget/shopping-lists/${id}/`, SLOW);
-export const createShoppingItem = (listId, name, quantity = 1) =>
-  apiClient.post('/budget/shopping-items/', { list_id: listId, name, quantity }, SLOW).then((r) => r.data);
-export const setShoppingItemPurchased = (itemId, isPurchased) =>
-  apiClient.patch(`/budget/shopping-items/${itemId}/`, { is_purchased: isPurchased }, SLOW).then((r) => r.data);
+export const createShoppingItem = (listId, { name, quantity = 1, unit = 'pcs' }) =>
+  apiClient.post('/budget/shopping-items/', { list_id: listId, name, quantity, unit }, SLOW).then((r) => normalizeItem(r.data));
+export const updateShoppingItem = (itemId, payload) =>
+  apiClient.patch(`/budget/shopping-items/${itemId}/`, payload, SLOW).then((r) => normalizeItem(r.data));
+export const setShoppingItemPurchased = (itemId, isPurchased) => updateShoppingItem(itemId, { is_purchased: isPurchased });
 export const deleteShoppingItem = (itemId) => apiClient.delete(`/budget/shopping-items/${itemId}/`, SLOW);

@@ -1,7 +1,7 @@
 import { apiClient } from './apiClient';
 import {
   getBudgetCategories, updateBudgetCategory, getBudgetRecords, createBudgetRecord, getBudgetSummary,
-  getShoppingLists, createShoppingList, createShoppingItem, setShoppingItemPurchased, deleteShoppingItem,
+  getShoppingLists, createShoppingList, createShoppingItem, updateShoppingItem, setShoppingItemPurchased, deleteShoppingItem,
 } from './budgetApi';
 
 jest.mock('./apiClient', () => ({
@@ -70,23 +70,34 @@ describe('summary', () => {
 });
 
 describe('shopping', () => {
-  it('getShoppingLists повертає масив із пагінованої відповіді', async () => {
-    apiClient.get.mockResolvedValueOnce({ data: { results: [{ id: 1, items: [] }] } });
-    expect(await getShoppingLists()).toEqual([{ id: 1, items: [] }]);
+  it('getShoppingLists нормалізує позиції: кількість — число, unit за замовчуванням pcs', async () => {
+    apiClient.get.mockResolvedValueOnce({ data: { results: [{ id: 1, items: [{ id: 5, quantity: '1.50', unit: 'kg' }, { id: 6, quantity: '2.00' }] }, { id: 2 }] } });
+    const lists = await getShoppingLists();
+    expect(lists[0].items).toEqual([{ id: 5, quantity: 1.5, unit: 'kg' }, { id: 6, quantity: 2, unit: 'pcs' }]);
+    expect(lists[1].items).toEqual([]);
   });
 
   it('createShoppingList відправляє title', async () => {
     apiClient.post.mockResolvedValueOnce({ data: { id: 1, title: 'Market' } });
-    await createShoppingList('Market');
+    const created = await createShoppingList('Market');
     expect(apiClient.post).toHaveBeenCalledWith('/budget/shopping-lists/', { title: 'Market' }, TIMEOUT);
+    expect(created.items).toEqual([]);
   });
 
-  it('createShoppingItem за замовчуванням має кількість 1, а вказана кількість передається', async () => {
-    apiClient.post.mockResolvedValue({ data: {} });
-    await createShoppingItem(7, 'Tomato');
-    expect(apiClient.post).toHaveBeenLastCalledWith('/budget/shopping-items/', { list_id: 7, name: 'Tomato', quantity: 1 }, TIMEOUT);
-    await createShoppingItem(7, 'Tomato', 4);
-    expect(apiClient.post).toHaveBeenLastCalledWith('/budget/shopping-items/', { list_id: 7, name: 'Tomato', quantity: 4 }, TIMEOUT);
+  it('createShoppingItem за замовчуванням: кількість 1 і одиниця pcs', async () => {
+    apiClient.post.mockResolvedValue({ data: { id: 1, quantity: '1.00', unit: 'pcs' } });
+    await createShoppingItem(7, { name: 'Tomato' });
+    expect(apiClient.post).toHaveBeenLastCalledWith('/budget/shopping-items/', { list_id: 7, name: 'Tomato', quantity: 1, unit: 'pcs' }, TIMEOUT);
+    const item = await createShoppingItem(7, { name: 'Flour', quantity: 1.5, unit: 'kg' });
+    expect(apiClient.post).toHaveBeenLastCalledWith('/budget/shopping-items/', { list_id: 7, name: 'Flour', quantity: 1.5, unit: 'kg' }, TIMEOUT);
+    expect(item.quantity).toBe(1);
+  });
+
+  it('updateShoppingItem редагує назву, кількість і одиницю', async () => {
+    apiClient.patch.mockResolvedValueOnce({ data: { id: 9, name: 'Kefir', quantity: '2.00', unit: 'L' } });
+    const item = await updateShoppingItem(9, { name: 'Kefir', quantity: 2, unit: 'L' });
+    expect(apiClient.patch).toHaveBeenCalledWith('/budget/shopping-items/9/', { name: 'Kefir', quantity: 2, unit: 'L' }, TIMEOUT);
+    expect(item).toMatchObject({ quantity: 2, unit: 'L' });
   });
 
   it('позначення купленим і видалення позиції', async () => {

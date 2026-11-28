@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import '../styles/budget.css';
 import '../styles/budget-api.css';
+import '../styles/budget-modals.css';
 import { accounts } from '../components/budget/accounts';
 import { monthKey, monthLabel } from '../components/budget/budgetUtils';
 import {
   getBudgetCategories, updateBudgetCategory,
   getBudgetRecords, createBudgetRecord, deleteBudgetRecord, getBudgetSummary,
   getShoppingLists, createShoppingList, deleteShoppingList,
-  createShoppingItem, setShoppingItemPurchased, deleteShoppingItem,
+  createShoppingItem, updateShoppingItem, setShoppingItemPurchased, deleteShoppingItem,
 } from '../api/budgetApi';
 import MonthSwitcher from '../components/budget/MonthSwitcher/MonthSwitcher';
 import AccountSelect from '../components/budget/AccountSelect/AccountSelect';
@@ -15,7 +16,7 @@ import BudgetOverview from '../components/budget/BudgetOverview/BudgetOverview';
 import CategoryExpenses from '../components/budget/CategoryExpenses/CategoryExpenses';
 import ExpensesChart from '../components/budget/ExpensesChart/ExpensesChart';
 import TransactionForm from '../components/budget/TransactionForm/TransactionForm';
-import TransactionFilters from '../components/budget/TransactionFilters/TransactionFilters';
+import TransactionFilters, { DEFAULT_FILTERS } from '../components/budget/TransactionFilters/TransactionFilters';
 import TransactionList from '../components/budget/TransactionList/TransactionList';
 import BudgetLimits from '../components/budget/BudgetLimits/BudgetLimits';
 import LimitsSettings from '../components/budget/LimitsSettings/LimitsSettings';
@@ -28,21 +29,11 @@ const TABS = [
   ['limits', 'Limits'],
 ];
 
-// Останні 12 місяців (для випадаючого списку в фільтрах транзакцій) + вибраний місяць
-function buildMonths(selected) {
-  const now = new Date();
-  const result = [];
-  for (let i = 0; i < 12; i += 1) result.push(new Date(now.getFullYear(), now.getMonth() - i, 1));
-  if (!result.some((m) => monthKey(m) === monthKey(selected))) result.push(selected);
-  return result.sort((a, b) => b - a);
-}
-
 export default function BudgetPage() {
   const [tab, setTab] = useState('overview');
   const [date, setDate] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-  // TODO: рахунків немає в ТЗ/API — фільтр поки лише в інтерфейсі (чекаємо рішення команди)
   const [accountId, setAccountId] = useState('all');
-  const [filters, setFilters] = useState({ type: 'all', category_id: 'all' });
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
 
   const [categories, setCategories] = useState([]);
   const [lists, setLists] = useState([]);
@@ -60,6 +51,7 @@ export default function BudgetPage() {
   const [monthReload, setMonthReload] = useState(0); // збільшуємо, щоб перезавантажити записи й підсумок
 
   const month = monthKey(date);
+  const allDates = filters.dates === 'all';
 
   // Categories are shared; shopping must not delay the budget overview.
   useEffect(() => {
@@ -90,12 +82,13 @@ export default function BudgetPage() {
   }, [month, monthReload]);
 
   useEffect(() => {
-    const key = `${month}:${monthReload}`;
+    // Для «All dates» місяць у ключі не потрібен: зміна місяця не перезавантажує всю історію
+    const key = allDates ? `all:${monthReload}` : `${month}:${monthReload}`;
     if (tab !== 'transactions' || recordsLoadedKey.current === key) return undefined;
     let cancelled = false;
     setRecordsLoading(true);
     setRecords([]);
-    getBudgetRecords({ month })
+    getBudgetRecords(allDates ? {} : { month })
       .then((data) => {
         if (cancelled) return;
         setRecords(data);
@@ -104,7 +97,7 @@ export default function BudgetPage() {
       .catch((e) => !cancelled && setError(e.message))
       .finally(() => !cancelled && setRecordsLoading(false));
     return () => { cancelled = true; };
-  }, [tab, month, monthReload]);
+  }, [tab, month, monthReload, allDates]);
 
   useEffect(() => {
     if (tab !== 'shopping' || shoppingLoadedKey.current === baseKey) return undefined;
@@ -148,7 +141,6 @@ export default function BudgetPage() {
   }, [summary, categories]);
   const loading = tab === 'shopping' ? shoppingLoading
     : baseLoading || (tab === 'transactions' ? recordsLoading : monthLoading);
-  const months = useMemo(() => buildMonths(date), [date]);
 
   const visibleRecords = records.filter(
     (r) =>
@@ -171,6 +163,7 @@ export default function BudgetPage() {
   const saveLimit = async (id, value) => {
     const updated = await run(() => updateBudgetCategory(id, { monthly_limit: value }));
     if (updated) setCategories((cs) => cs.map((c) => (c.id === id ? updated : c)));
+    return Boolean(updated); // вікно «Edit limit» лишається відкритим при помилці
   };
 
   // ----- списки покупок -----
@@ -184,9 +177,16 @@ export default function BudgetPage() {
     const done = await run(async () => { await deleteShoppingList(listId); return true; });
     if (done) setLists((ls) => ls.filter((l) => l.id !== listId));
   };
-  const addItem = async (listId, name, quantity = 1) => {
-    const item = await run(() => createShoppingItem(listId, name, quantity));
+  // values: { name, quantity, unit }; Boolean потрібен вікну «Add/Edit item», щоб не закриватися при помилці
+  const addItem = async (listId, values) => {
+    const item = await run(() => createShoppingItem(listId, values));
     if (item) patchList(listId, (l) => ({ ...l, items: [...l.items, item] }));
+    return Boolean(item);
+  };
+  const editItem = async (listId, itemId, values) => {
+    const item = await run(() => updateShoppingItem(itemId, values));
+    if (item) patchList(listId, (l) => ({ ...l, items: l.items.map((i) => (i.id === itemId ? item : i)) }));
+    return Boolean(item);
   };
   const toggleItem = async (listId, itemId) => {
     const current = lists.find((l) => l.id === listId)?.items.find((i) => i.id === itemId);
@@ -264,14 +264,7 @@ export default function BudgetPage() {
                     <h3 className="b-card__title">Transaction History</h3>
                     <small>{visibleRecords.length} Transactions</small>
                   </div>
-                  <TransactionFilters
-                    filters={filters}
-                    onChange={setFilters}
-                    categories={categories}
-                    months={months}
-                    date={date}
-                    onDateChange={setDate}
-                  />
+                  <TransactionFilters filters={filters} onChange={setFilters} categories={categories} date={date} />
                   <TransactionList records={visibleRecords} categories={categories} onDelete={removeRecord} />
                 </section>
               </div>
@@ -282,6 +275,7 @@ export default function BudgetPage() {
                 lists={lists}
                 onToggle={toggleItem}
                 onAddItem={addItem}
+                onEditItem={editItem}
                 onDeleteItem={removeItem}
                 onAddList={addList}
                 onDeleteList={removeList}
@@ -294,7 +288,7 @@ export default function BudgetPage() {
                   <BudgetLimits items={byCategory} categories={categories} />
                 </section>
                 <section className="b-card">
-                  <LimitsSettings categories={categories} onChange={saveLimit} />
+                  <LimitsSettings categories={categories} items={byCategory} onChange={saveLimit} />
                 </section>
               </div>
             )}
